@@ -28,6 +28,8 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 .metric{background:#f2f2f7;border-radius:10px;padding:14px;text-align:center}
 .metric-val{font-size:24px;font-weight:600}
 .metric-lbl{font-size:12px;color:#666;margin-top:2px}
+
+/* 予定カード */
 .yotei-card{background:#fff;border-radius:12px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.08);overflow:hidden}
 .yotei-header{padding:12px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #f2f2f7}
 .yotei-date{font-size:13px;color:#666}
@@ -41,20 +43,32 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 .yotei-time{font-size:13px;color:#666}
 .yotei-memo{font-size:13px;color:#444;margin-top:6px;padding-top:6px;border-top:1px solid #f2f2f7}
 .yotei-actions{display:flex;gap:8px;padding:10px 16px;background:#f9f9f9}
-.member-selector{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;padding:12px;border:1px solid #ddd;border-radius:10px;background:#f9f9f9;min-height:52px}
-.member-chip{padding:7px 14px;border-radius:20px;font-size:14px;cursor:pointer;border:1px solid #ddd;background:#fff;color:#666;user-select:none;-webkit-tap-highlight-color:transparent}
+
+/* メンバー選択 */
+.member-section{margin-bottom:12px}
+.member-label{font-size:13px;color:#666;margin-bottom:6px}
+.member-grid{display:flex;flex-wrap:wrap;gap:8px;padding:12px;border:1px solid #ddd;border-radius:10px;background:#f9f9f9;min-height:52px}
+.member-chip{padding:8px 14px;border-radius:20px;font-size:14px;cursor:pointer;border:1px solid #ddd;background:#fff;color:#444;-webkit-tap-highlight-color:transparent;transition:all 0.1s}
 .member-chip.selected{background:#EAF3DE;border-color:#97C459;color:#3B6D11;font-weight:500}
-.member-chip.leader{background:#E6F1FB;border-color:#85B7EB;color:#0C447C;font-weight:500}
-.selected-summary{font-size:12px;color:#666;margin-bottom:12px}
+.member-chip.leader{background:#E6F1FB;border-color:#85B7EB;color:#0C447C;font-weight:600}
+
+/* 代表選択ドロップダウン */
+.leader-select-wrap{margin-bottom:12px}
+
+/* 空き確認 */
 .avail-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
 .avail-chip{padding:10px 6px;border-radius:10px;font-size:13px;text-align:center;border:1px solid #ddd;background:#fff}
 .avail-chip.free{background:#EAF3DE;color:#3B6D11;border-color:#97C459}
 .avail-chip.busy{background:#FAECE7;color:#993C1D;border-color:#F0997B}
 .avail-name{font-weight:500;font-size:13px}
 .avail-status{font-size:11px;margin-top:2px}
+
+/* 日付フィルター */
 .date-filter{display:flex;gap:8px;margin-bottom:12px;overflow-x:auto;padding-bottom:4px}
 .date-chip{padding:6px 14px;border-radius:20px;font-size:13px;white-space:nowrap;border:1px solid #ddd;background:#fff;cursor:pointer;flex-shrink:0}
 .date-chip.active{background:#1D9E75;color:#fff;border-color:#1D9E75}
+
+/* モーダル */
 .modal-bg{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:200;align-items:flex-end;justify-content:center}
 .modal-bg.active{display:flex}
 .modal{background:#fff;border-radius:20px 20px 0 0;padding:20px;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;padding-bottom:calc(20px + env(safe-area-inset-bottom))}
@@ -70,6 +84,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 </head>
 <body>
 
+<!-- 入力 -->
 <div id="screen-input" class="screen active">
   <div class="page-title">日報入力</div>
   <div class="card">
@@ -89,9 +104,19 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
       <option value="1.5">1.5人工</option>
       <option value="2.0">2人工</option>
     </select>
-    <label>メンバー <span style="font-size:11px;color:#999">青＝代表　緑＝同行　長押しで代表</span></label>
-    <div id="member-selector" class="member-selector"></div>
-    <div id="selected-summary" class="selected-summary">0人選択中</div>
+
+    <div class="leader-select-wrap">
+      <label>代表者</label>
+      <select id="s-leader">
+        <option value="">代表者を選択してください</option>
+      </select>
+    </div>
+
+    <div class="member-section">
+      <div class="member-label">同行メンバー（タップで選択）</div>
+      <div id="member-selector" class="member-grid"></div>
+    </div>
+
     <label>メモ</label>
     <textarea id="s-memo" placeholder="作業内容など"></textarea>
     <div id="s-alert" class="alert"></div>
@@ -99,6 +124,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
   </div>
 </div>
 
+<!-- 予定一覧 -->
 <div id="screen-list" class="screen">
   <div class="page-title">予定一覧</div>
   <div class="date-filter" id="date-filter"></div>
@@ -106,6 +132,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
   <button class="btn btn-secondary" style="margin-top:8px" onclick="loadData()">更新</button>
 </div>
 
+<!-- 空き確認 -->
 <div id="screen-avail" class="screen">
   <div class="page-title">空き確認</div>
   <div class="card">
@@ -113,7 +140,9 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
     <input type="date" id="a-date" onchange="updateAvailability()">
   </div>
   <div class="card">
-    <div id="avail-container" class="avail-grid"><div style="color:#999;font-size:13px;grid-column:1/-1">更新ボタンを押してください</div></div>
+    <div id="avail-container" class="avail-grid">
+      <div style="color:#999;font-size:13px;grid-column:1/-1">更新ボタンを押してください</div>
+    </div>
     <div style="display:flex;gap:12px;font-size:12px;color:#999;margin-top:8px">
       <span><span style="display:inline-block;width:10px;height:10px;background:#EAF3DE;border:1px solid #97C459;border-radius:2px;margin-right:3px"></span>空き</span>
       <span><span style="display:inline-block;width:10px;height:10px;background:#FAECE7;border:1px solid #F0997B;border-radius:2px;margin-right:3px"></span>出勤</span>
@@ -122,6 +151,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
   <button class="btn btn-secondary" onclick="loadData()">更新</button>
 </div>
 
+<!-- 事務 -->
 <div id="screen-jimu" class="screen">
   <div class="page-title">事務</div>
   <div class="grid2">
@@ -144,6 +174,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
   <button class="btn btn-secondary" style="margin-top:8px" onclick="openSettings()">職人を管理</button>
 </div>
 
+<!-- タブバー -->
 <div class="tab-bar">
   <button class="tab active" onclick="switchTab('input')"><span class="tab-icon">📋</span>入力</button>
   <button class="tab" onclick="switchTab('list')"><span class="tab-icon">📅</span>予定一覧</button>
@@ -169,9 +200,16 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
       <option value="1.5">1.5人工</option>
       <option value="2.0">2人工</option>
     </select>
-    <label>メンバー <span style="font-size:11px;color:#999">青＝代表　緑＝同行　長押しで代表</span></label>
-    <div id="e-member-selector" class="member-selector"></div>
-    <div id="e-selected-summary" class="selected-summary">0人選択中</div>
+    <div class="leader-select-wrap">
+      <label>代表者</label>
+      <select id="e-leader">
+        <option value="">代表者を選択してください</option>
+      </select>
+    </div>
+    <div class="member-section">
+      <div class="member-label">同行メンバー（タップで選択）</div>
+      <div id="e-member-selector" class="member-grid"></div>
+    </div>
     <label>メモ</label>
     <textarea id="e-memo"></textarea>
     <div style="display:flex;gap:8px;margin-top:4px">
@@ -198,10 +236,8 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 const GAS_URL='https://script.google.com/macros/s/AKfycbwZmFAG-9rE1xYZ8BHP5dKpXVeoTKhffOAvWCrhmiYkPvYmBL-L0r-VbwPP-zGpHmY4zQ/exec';
 
 let allNippos=[];
-let selectedMembers=[];
-let leaderIndex=-1;
+let selectedMembers=[];   // 同行メンバーのインデックス
 let editSelectedMembers=[];
-let editLeaderIndex=-1;
 let editRowNums=[];
 let editDate='';
 let currentDateFilter='';
@@ -219,52 +255,42 @@ function switchTab(t){
   document.getElementById('screen-'+t).classList.add('active');
 }
 
-function renderMemberSelector(){
-  const el=document.getElementById('member-selector');
-  el.innerHTML=localData.shokunin.map((name,i)=>{
-    let cls='member-chip';
-    if(leaderIndex===i)cls+=' leader';
-    else if(selectedMembers.includes(i))cls+=' selected';
-    return`<div class="${cls}" onclick="toggleMember(${i})" oncontextmenu="setLeader(${i});return false">${name}</div>`;
-  }).join('');
-  const count=selectedMembers.length+(leaderIndex>=0?1:0);
-  document.getElementById('selected-summary').textContent=`${count}人選択中　代表：${leaderIndex>=0?localData.shokunin[leaderIndex]:'未選択'}`;
+// 代表セレクトと同行チップを初期化
+function initMemberUI(){
+  // 代表セレクト
+  ['s-leader','e-leader'].forEach(id=>{
+    const sel=document.getElementById(id);
+    if(!sel)return;
+    const cur=sel.value;
+    sel.innerHTML='<option value="">代表者を選択してください</option>'+
+      localData.shokunin.map(n=>`<option value="${n}"${n===cur?' selected':''}>${n}</option>`).join('');
+  });
+  renderMemberChips('member-selector', selectedMembers, toggleMember);
+  renderMemberChips('e-member-selector', editSelectedMembers, toggleEditMember);
 }
+
+function renderMemberChips(containerId, selectedArr, toggleFn){
+  const el=document.getElementById(containerId);
+  if(!el)return;
+  el.innerHTML=localData.shokunin.map((name,i)=>{
+    const isSel=selectedArr.includes(i);
+    return`<div class="member-chip${isSel?' selected':''}" onclick="${toggleFn.name}(${i})">${name}</div>`;
+  }).join('');
+}
+
 function toggleMember(i){
-  if(i===leaderIndex){leaderIndex=-1;renderMemberSelector();return;}
   const idx=selectedMembers.indexOf(i);
   if(idx>=0)selectedMembers.splice(idx,1);else selectedMembers.push(i);
-  renderMemberSelector();
-}
-function setLeader(i){
-  if(leaderIndex===i)leaderIndex=-1;
-  else{selectedMembers=selectedMembers.filter(x=>x!==i);leaderIndex=i;}
-  renderMemberSelector();
+  renderMemberChips('member-selector', selectedMembers, toggleMember);
 }
 
-function renderEditMemberSelector(){
-  const el=document.getElementById('e-member-selector');
-  el.innerHTML=localData.shokunin.map((name,i)=>{
-    let cls='member-chip';
-    if(editLeaderIndex===i)cls+=' leader';
-    else if(editSelectedMembers.includes(i))cls+=' selected';
-    return`<div class="${cls}" onclick="toggleEditMember(${i})" oncontextmenu="setEditLeader(${i});return false">${name}</div>`;
-  }).join('');
-  const count=editSelectedMembers.length+(editLeaderIndex>=0?1:0);
-  document.getElementById('e-selected-summary').textContent=`${count}人選択中　代表：${editLeaderIndex>=0?localData.shokunin[editLeaderIndex]:'未選択'}`;
-}
 function toggleEditMember(i){
-  if(i===editLeaderIndex){editLeaderIndex=-1;renderEditMemberSelector();return;}
   const idx=editSelectedMembers.indexOf(i);
   if(idx>=0)editSelectedMembers.splice(idx,1);else editSelectedMembers.push(i);
-  renderEditMemberSelector();
-}
-function setEditLeader(i){
-  if(editLeaderIndex===i)editLeaderIndex=-1;
-  else{editSelectedMembers=editSelectedMembers.filter(x=>x!==i);editLeaderIndex=i;}
-  renderEditMemberSelector();
+  renderMemberChips('e-member-selector', editSelectedMembers, toggleEditMember);
 }
 
+// 登録
 async function submitNippo(){
   const date=document.getElementById('s-date').value;
   const genba=document.getElementById('s-genba').value.trim();
@@ -273,11 +299,18 @@ async function submitNippo(){
   const end=document.getElementById('s-end').value;
   const kosu=parseFloat(document.getElementById('s-kosu').value);
   const memo=document.getElementById('s-memo').value;
-  const allMembers=[];
-  if(leaderIndex>=0)allMembers.push({name:localData.shokunin[leaderIndex],role:'代表'});
-  selectedMembers.forEach(i=>allMembers.push({name:localData.shokunin[i],role:'同行'}));
+  const leader=document.getElementById('s-leader').value;
+
   if(!date||!genba){showAlert('作業日と現場名は必須です','err');return;}
-  if(allMembers.length===0){showAlert('メンバーを選択してください','err');return;}
+  if(!leader){showAlert('代表者を選択してください','err');return;}
+
+  const allMembers=[];
+  allMembers.push({name:leader,role:'代表'});
+  selectedMembers.forEach(i=>{
+    if(localData.shokunin[i]!==leader)
+      allMembers.push({name:localData.shokunin[i],role:'同行'});
+  });
+
   const rows=allMembers.map(m=>({date,genba,loc,name:m.name,role:m.role,start,end,kosu,memo}));
   const btn=document.getElementById('submit-btn');
   btn.textContent='送信中...';btn.disabled=true;
@@ -289,8 +322,9 @@ async function submitNippo(){
       document.getElementById('s-genba').value='';
       document.getElementById('s-location').value='';
       document.getElementById('s-memo').value='';
-      selectedMembers=[];leaderIndex=-1;
-      renderMemberSelector();
+      document.getElementById('s-leader').value='';
+      selectedMembers=[];
+      renderMemberChips('member-selector', selectedMembers, toggleMember);
       await loadData();
     } else showAlert('エラー：'+json.message,'err');
   }catch(err){showAlert('送信エラー：'+err.message,'err');}
@@ -304,6 +338,7 @@ function showAlert(msg,type){
   if(type!=='err')setTimeout(()=>el.style.display='none',3000);
 }
 
+// データ取得
 async function loadData(){
   try{
     const res=await fetch(GAS_URL+'?t='+Date.now());
@@ -317,8 +352,8 @@ async function loadData(){
       kosu:parseFloat(r['人工'])||0,
       memo:r['メモ']||'',
       loc:r['作業場所']||'',
-      start:r['出勤']||'',
-      end:r['退勤']||''
+      start:String(r['出勤']||''),
+      end:String(r['退勤']||'')
     }));
     renderList();
     updateAvailability();
@@ -349,7 +384,6 @@ function renderList(){
   const groups=groupNippos(allNippos);
   const dates=[...new Set(groups.map(g=>g.date))].sort((a,b)=>b.localeCompare(a));
   const df=document.getElementById('date-filter');
-  if(!currentDateFilter&&dates.length>0)currentDateFilter='';
   df.innerHTML='<div class="date-chip'+(currentDateFilter===''?' active':'')+'" onclick="filterDate(\'\')">全て</div>'+
     dates.map(d=>`<div class="date-chip${currentDateFilter===d?' active':''}" onclick="filterDate('${d}')">${formatDate(d)}</div>`).join('');
   renderListWithDate(groups);
@@ -357,12 +391,7 @@ function renderList(){
 
 function filterDate(date){
   currentDateFilter=date;
-  const groups=groupNippos(allNippos);
-  const df=document.getElementById('date-filter');
-  df.querySelectorAll('.date-chip').forEach(c=>{
-    c.classList.toggle('active',c.textContent==='全て'?date==='':formatDate(date)===c.textContent);
-  });
-  renderListWithDate(groups);
+  renderList();
 }
 
 function renderListWithDate(groups){
@@ -373,7 +402,7 @@ function renderListWithDate(groups){
     const memberTags=g.members.map(m=>`<span class="member-tag ${m.role==='代表'?'tag-leader':'tag-member'}">${m.name}</span>`).join('');
     const totalKo=(g.kosu*g.members.length).toFixed(1);
     const rowNumsStr=JSON.stringify(g.rowNums);
-    const gStr=JSON.stringify(g).replace(/'/g,'&apos;');
+    const gEsc=encodeURIComponent(JSON.stringify(g));
     return`<div class="yotei-card">
       <div class="yotei-header">
         <div>
@@ -389,7 +418,7 @@ function renderListWithDate(groups){
         ${g.memo?`<div class="yotei-memo">📝 ${g.memo}</div>`:''}
       </div>
       <div class="yotei-actions">
-        <button class="btn btn-secondary btn-sm" onclick='openEditModal(${gStr})'>編集</button>
+        <button class="btn btn-secondary btn-sm" onclick="openEditModal('${gEsc}')">編集</button>
         <button class="btn btn-sm" style="background:#ff3b30" onclick='deleteGroup(${rowNumsStr})'>削除</button>
       </div>
     </div>`;
@@ -398,26 +427,17 @@ function renderListWithDate(groups){
 
 async function deleteGroup(rowNums){
   if(!confirm('この日報を削除しますか？'))return;
-  // 先にUIから削除
   allNippos=allNippos.filter(n=>!rowNums.includes(n.rowNum));
-  renderList();
-  updateAvailability();
-  updateJimu();
-  // スプレッドシートからも削除
+  renderList();updateAvailability();updateJimu();
   try{
     const res=await fetch(GAS_URL,{method:'POST',body:JSON.stringify({action:'delete',rowNums}),headers:{'Content-Type':'text/plain'}});
     const json=await res.json();
-    if(json.status!=='ok'){
-      alert('削除エラー：'+json.message);
-      await loadData(); // 失敗したら再取得
-    }
-  }catch(e){
-    alert('削除エラー：'+e.message);
-    await loadData();
-  }
+    if(json.status!=='ok'){alert('削除エラー：'+json.message);await loadData();}
+  }catch(e){alert('削除エラー：'+e.message);await loadData();}
 }
 
-function openEditModal(g){
+function openEditModal(gEsc){
+  const g=JSON.parse(decodeURIComponent(gEsc));
   editRowNums=g.rowNums;
   editDate=g.date;
   document.getElementById('e-genba').value=g.genba;
@@ -427,15 +447,16 @@ function openEditModal(g){
   document.getElementById('e-kosu').value=String(g.kosu||1.0);
   document.getElementById('e-memo').value=g.memo||'';
   document.getElementById('edit-title').textContent=`編集：${formatDate(g.date)} ${g.genba}`;
-  editSelectedMembers=[];editLeaderIndex=-1;
-  g.members.forEach(m=>{
+
+  // 代表と同行を復元
+  const leaderMember=g.members.find(m=>m.role==='代表');
+  document.getElementById('e-leader').value=leaderMember?leaderMember.name:'';
+  editSelectedMembers=[];
+  g.members.filter(m=>m.role==='同行').forEach(m=>{
     const idx=localData.shokunin.indexOf(m.name);
-    if(idx>=0){
-      if(m.role==='代表')editLeaderIndex=idx;
-      else editSelectedMembers.push(idx);
-    }
+    if(idx>=0)editSelectedMembers.push(idx);
   });
-  renderEditMemberSelector();
+  renderMemberChips('e-member-selector', editSelectedMembers, toggleEditMember);
   document.getElementById('edit-modal').classList.add('active');
 }
 function closeEditModal(){document.getElementById('edit-modal').classList.remove('active');}
@@ -447,11 +468,14 @@ async function saveEdit(){
   const end=document.getElementById('e-end').value;
   const kosu=parseFloat(document.getElementById('e-kosu').value);
   const memo=document.getElementById('e-memo').value;
-  const allMembers=[];
-  if(editLeaderIndex>=0)allMembers.push({name:localData.shokunin[editLeaderIndex],role:'代表'});
-  editSelectedMembers.forEach(i=>allMembers.push({name:localData.shokunin[i],role:'同行'}));
+  const leader=document.getElementById('e-leader').value;
   if(!genba){alert('現場名は必須です');return;}
-  if(allMembers.length===0){alert('メンバーを選択してください');return;}
+  if(!leader){alert('代表者を選択してください');return;}
+  const allMembers=[{name:leader,role:'代表'}];
+  editSelectedMembers.forEach(i=>{
+    if(localData.shokunin[i]!==leader)
+      allMembers.push({name:localData.shokunin[i],role:'同行'});
+  });
   const rows=allMembers.map(m=>({date:editDate,genba,loc,name:m.name,role:m.role,start,end,kosu,memo}));
   try{
     const res=await fetch(GAS_URL,{method:'POST',body:JSON.stringify({action:'update',rowNums:editRowNums,rows}),headers:{'Content-Type':'text/plain'}});
@@ -512,24 +536,42 @@ function exportCSV(){
 }
 
 function openSettings(){renderSettings();document.getElementById('settings-modal').classList.add('active');}
-function closeSettings(){document.getElementById('settings-modal').classList.remove('active');renderMemberSelector();}
+function closeSettings(){document.getElementById('settings-modal').classList.remove('active');initMemberUI();}
 function renderSettings(){
-  document.getElementById('shokunin-list').innerHTML=localData.shokunin.map((s,i)=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #eee"><span style="font-size:15px">${s}</span><button class="btn btn-secondary btn-sm" onclick="removeShokunin(${i})">削除</button></div>`).join('');
+  document.getElementById('shokunin-list').innerHTML=localData.shokunin.map((s,i)=>
+    `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #eee">
+      <span style="font-size:15px">${s}</span>
+      <button class="btn btn-secondary btn-sm" onclick="removeShokunin(${i})">削除</button>
+    </div>`).join('');
 }
-function addShokunin(){const v=document.getElementById('new-shokunin').value.trim();if(!v)return;localData.shokunin.push(v);saveLocal();document.getElementById('new-shokunin').value='';renderSettings();renderMemberSelector();}
-function removeShokunin(i){if(!confirm(localData.shokunin[i]+'を削除しますか？'))return;localData.shokunin.splice(i,1);saveLocal();renderSettings();renderMemberSelector();}
+function addShokunin(){
+  const v=document.getElementById('new-shokunin').value.trim();
+  if(!v)return;
+  localData.shokunin.push(v);saveLocal();
+  document.getElementById('new-shokunin').value='';
+  renderSettings();initMemberUI();
+}
+function removeShokunin(i){
+  if(!confirm(localData.shokunin[i]+'を削除しますか？'))return;
+  localData.shokunin.splice(i,1);saveLocal();
+  renderSettings();initMemberUI();
+}
 
 function initSelects(){
   document.getElementById('s-date').valueAsDate=new Date();
   document.getElementById('a-date').valueAsDate=new Date();
   const sel=document.getElementById('j-month');
   const now=new Date();let opts='';
-  for(let i=0;i<6;i++){const d=new Date(now.getFullYear(),now.getMonth()-i,1);const val=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;opts+=`<option value="${val}"${i===0?' selected':''}>${d.getFullYear()}年${d.getMonth()+1}月</option>`;}
+  for(let i=0;i<6;i++){
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    const val=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    opts+=`<option value="${val}"${i===0?' selected':''}>${d.getFullYear()}年${d.getMonth()+1}月</option>`;
+  }
   sel.innerHTML=opts;
 }
 
 initSelects();
-renderMemberSelector();
+initMemberUI();
 loadData();
 </script>
 </body>
