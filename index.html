@@ -44,6 +44,17 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 .yotei-memo{font-size:13px;color:#444;margin-top:6px;padding-top:6px;border-top:1px solid #f2f2f7}
 .yotei-actions{display:flex;gap:8px;padding:10px 16px;background:#f9f9f9}
 
+/* 夜勤バッジ */
+.yakin-badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;background:#2C2C5A;color:#E8D44D;margin-left:6px;vertical-align:middle}
+
+/* 夜勤トグル */
+.yakin-toggle{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:10px 12px;border:1px solid #ddd;border-radius:8px;background:#f9f9f9;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.yakin-toggle.active{background:#2C2C5A;border-color:#2C2C5A}
+.yakin-toggle.active .yakin-toggle-label{color:#E8D44D}
+.yakin-toggle.active .yakin-toggle-icon{opacity:1}
+.yakin-toggle-icon{font-size:20px;opacity:0.4;transition:opacity 0.15s}
+.yakin-toggle-label{font-size:15px;font-weight:500;color:#666;transition:color 0.15s}
+
 /* メンバー選択 */
 .member-section{margin-bottom:12px}
 .member-label{font-size:13px;color:#666;margin-bottom:6px}
@@ -86,167 +97,197 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 
 <!-- 入力 -->
 <div id="screen-input" class="screen active">
-  <div class="page-title">日報入力</div>
-  <div class="card">
-    <label>作業日</label>
-    <input type="date" id="s-date">
-    <label>現場名</label>
-    <input type="text" id="s-genba" placeholder="例：〇〇ビル">
-    <label>作業場所</label>
-    <input type="text" id="s-location" placeholder="例：2F北側">
-    <div class="grid2">
-      <div><label>出勤</label><input type="time" id="s-start" value="08:00"></div>
-      <div><label>退勤</label><input type="time" id="s-end" value="17:00"></div>
-    </div>
-    <label>人工（ひとり当たり）</label>
-    <select id="s-kosu">
-      <option value="1.0">1人工</option>
-      <option value="1.5">1.5人工</option>
-      <option value="2.0">2人工</option>
-    </select>
+<div class="page-title">日報入力</div>
+<div class="card">
+  <label>作業日</label>
+  <input type="date" id="s-date">
 
-    <div class="leader-select-wrap">
-      <label>代表者</label>
-      <select id="s-leader">
-        <option value="">代表者を選択してください</option>
-      </select>
-    </div>
+  <label>現場名</label>
+  <input type="text" id="s-genba" placeholder="例：〇〇ビル">
 
-    <div class="member-section">
-      <div class="member-label">同行メンバー（タップで選択）</div>
-      <div id="member-selector" class="member-grid"></div>
-    </div>
+  <label>作業場所</label>
+  <input type="text" id="s-location" placeholder="例：2F北側">
 
-    <label>メモ</label>
-    <textarea id="s-memo" placeholder="作業内容など"></textarea>
-    <div id="s-alert" class="alert"></div>
-    <button class="btn" id="submit-btn" onclick="submitNippo()">登録する</button>
+  <div class="grid2">
+    <div><label>出勤</label><input type="time" id="s-start" value="08:00"></div>
+    <div><label>退勤</label><input type="time" id="s-end" value="17:00"></div>
   </div>
+
+  <!-- 夜勤トグル -->
+  <div class="yakin-toggle" id="s-yakin-toggle" onclick="toggleYakin('s')">
+    <span class="yakin-toggle-icon">🌙</span>
+    <span class="yakin-toggle-label">夜勤</span>
+  </div>
+
+  <label>人工（ひとり当たり）</label>
+  <select id="s-kosu">
+    <option value="1.0">1人工</option>
+    <option value="1.5">1.5人工</option>
+    <option value="2.0">2人工</option>
+  </select>
+
+  <div class="leader-select-wrap">
+    <label>代表者</label>
+    <select id="s-leader">
+      <option value="">代表者を選択してください</option>
+    </select>
+  </div>
+
+  <div class="member-section">
+    <div class="member-label">同行メンバー（タップで選択）</div>
+    <div id="member-selector" class="member-grid"></div>
+  </div>
+
+  <label>メモ</label>
+  <textarea id="s-memo" placeholder="作業内容など"></textarea>
+  <div id="s-alert" class="alert"></div>
+  <button class="btn" id="submit-btn" onclick="submitNippo()">登録する</button>
+</div>
 </div>
 
 <!-- 予定一覧 -->
 <div id="screen-list" class="screen">
-  <div class="page-title">予定一覧</div>
-  <div class="date-filter" id="date-filter"></div>
-  <div id="list-container"><div class="empty">下の更新ボタンを押してください</div></div>
-  <button class="btn btn-secondary" style="margin-top:8px" onclick="loadData()">更新</button>
+<div class="page-title">予定一覧</div>
+<div class="date-filter" id="date-filter"></div>
+<div id="list-container"><div class="empty">下の更新ボタンを押してください</div></div>
+<button class="btn btn-secondary" style="margin-top:8px" onclick="loadData()">更新</button>
 </div>
 
 <!-- 空き確認 -->
 <div id="screen-avail" class="screen">
-  <div class="page-title">空き確認</div>
-  <div class="card">
-    <label>日付を選択</label>
-    <input type="date" id="a-date" onchange="updateAvailability()">
+<div class="page-title">空き確認</div>
+<div class="card">
+  <label>日付を選択</label>
+  <input type="date" id="a-date" onchange="updateAvailability()">
+</div>
+<div class="card">
+  <div id="avail-container" class="avail-grid">
+    <div style="color:#999;font-size:13px;grid-column:1/-1">更新ボタンを押してください</div>
   </div>
-  <div class="card">
-    <div id="avail-container" class="avail-grid">
-      <div style="color:#999;font-size:13px;grid-column:1/-1">更新ボタンを押してください</div>
-    </div>
-    <div style="display:flex;gap:12px;font-size:12px;color:#999;margin-top:8px">
-      <span><span style="display:inline-block;width:10px;height:10px;background:#EAF3DE;border:1px solid #97C459;border-radius:2px;margin-right:3px"></span>空き</span>
-      <span><span style="display:inline-block;width:10px;height:10px;background:#FAECE7;border:1px solid #F0997B;border-radius:2px;margin-right:3px"></span>出勤</span>
-    </div>
+  <div style="display:flex;gap:12px;font-size:12px;color:#999;margin-top:8px">
+    <span><span style="display:inline-block;width:10px;height:10px;background:#EAF3DE;border:1px solid #97C459;border-radius:2px;margin-right:3px"></span>空き</span>
+    <span><span style="display:inline-block;width:10px;height:10px;background:#FAECE7;border:1px solid #F0997B;border-radius:2px;margin-right:3px"></span>出勤</span>
   </div>
-  <button class="btn btn-secondary" onclick="loadData()">更新</button>
+</div>
+<button class="btn btn-secondary" onclick="loadData()">更新</button>
 </div>
 
 <!-- 事務 -->
 <div id="screen-jimu" class="screen">
-  <div class="page-title">事務</div>
-  <div class="grid2">
-    <div class="metric"><div class="metric-val" id="j-total-ko">－</div><div class="metric-lbl">今月 総人工</div></div>
-    <div class="metric"><div class="metric-val" id="j-total-days">－</div><div class="metric-lbl">今月 延べ人数</div></div>
-  </div>
-  <div class="filter-row">
-    <select id="j-month" onchange="updateJimu()"></select>
-    <select id="j-genba-filter" onchange="updateJimu()"><option value="">全現場</option></select>
-  </div>
-  <div class="card">
-    <div style="font-size:13px;color:#666;margin-bottom:10px;font-weight:500">職人別集計</div>
-    <table class="tbl">
-      <thead><tr><th>氏名</th><th>出勤日数</th><th>人工合計</th></tr></thead>
-      <tbody id="j-shokunin-tbl"><tr><td colspan="3" class="empty">更新してください</td></tr></tbody>
-    </table>
-  </div>
-  <button class="btn btn-secondary" style="margin-bottom:8px" onclick="loadData()">更新</button>
-  <button class="btn btn-secondary" style="margin-bottom:8px;margin-top:8px" onclick="exportCSV()">CSVダウンロード</button>
-  <button class="btn btn-secondary" style="margin-top:8px" onclick="openSettings()">職人を管理</button>
+<div class="page-title">事務</div>
+<div class="grid2">
+  <div class="metric"><div class="metric-val" id="j-total-ko">－</div><div class="metric-lbl">今月 総人工</div></div>
+  <div class="metric"><div class="metric-val" id="j-total-days">－</div><div class="metric-lbl">今月 延べ人数</div></div>
+</div>
+<div class="filter-row">
+  <select id="j-month" onchange="updateJimu()"></select>
+  <select id="j-genba-filter" onchange="updateJimu()"><option value="">全現場</option></select>
+</div>
+<div class="card">
+  <div style="font-size:13px;color:#666;margin-bottom:10px;font-weight:500">職人別集計</div>
+  <table class="tbl">
+    <thead><tr><th>氏名</th><th>出勤日数</th><th>人工合計</th></tr></thead>
+    <tbody id="j-shokunin-tbl"><tr><td colspan="3" class="empty">更新してください</td></tr></tbody>
+  </table>
+</div>
+<button class="btn btn-secondary" style="margin-bottom:8px" onclick="loadData()">更新</button>
+<button class="btn btn-secondary" style="margin-bottom:8px;margin-top:8px" onclick="exportCSV()">CSVダウンロード</button>
+<button class="btn btn-secondary" style="margin-top:8px" onclick="openSettings()">職人を管理</button>
 </div>
 
 <!-- タブバー -->
 <div class="tab-bar">
-  <button class="tab active" onclick="switchTab('input')"><span class="tab-icon">📋</span>入力</button>
-  <button class="tab" onclick="switchTab('list')"><span class="tab-icon">📅</span>予定一覧</button>
-  <button class="tab" onclick="switchTab('avail')"><span class="tab-icon">👥</span>空き確認</button>
-  <button class="tab" onclick="switchTab('jimu')"><span class="tab-icon">📊</span>事務</button>
+<button class="tab active" onclick="switchTab('input')"><span class="tab-icon">📋</span>入力</button>
+<button class="tab" onclick="switchTab('list')"><span class="tab-icon">📅</span>予定一覧</button>
+<button class="tab" onclick="switchTab('avail')"><span class="tab-icon">👥</span>空き確認</button>
+<button class="tab" onclick="switchTab('jimu')"><span class="tab-icon">📊</span>事務</button>
 </div>
 
 <!-- 編集モーダル -->
 <div id="edit-modal" class="modal-bg">
-  <div class="modal">
-    <div class="modal-title" id="edit-title">編集</div>
-    <label>現場名</label>
-    <input type="text" id="e-genba">
-    <label>作業場所</label>
-    <input type="text" id="e-location">
-    <div class="grid2">
-      <div><label>出勤</label><input type="time" id="e-start"></div>
-      <div><label>退勤</label><input type="time" id="e-end"></div>
-    </div>
-    <label>人工（ひとり当たり）</label>
-    <select id="e-kosu">
-      <option value="1.0">1人工</option>
-      <option value="1.5">1.5人工</option>
-      <option value="2.0">2人工</option>
-    </select>
-    <div class="leader-select-wrap">
-      <label>代表者</label>
-      <select id="e-leader">
-        <option value="">代表者を選択してください</option>
-      </select>
-    </div>
-    <div class="member-section">
-      <div class="member-label">同行メンバー（タップで選択）</div>
-      <div id="e-member-selector" class="member-grid"></div>
-    </div>
-    <label>メモ</label>
-    <textarea id="e-memo"></textarea>
-    <div style="display:flex;gap:8px;margin-top:4px">
-      <button class="btn btn-secondary btn-sm" style="flex:1" onclick="closeEditModal()">キャンセル</button>
-      <button class="btn btn-sm" style="flex:2" onclick="saveEdit()">保存する</button>
-    </div>
+<div class="modal">
+  <div class="modal-title" id="edit-title">編集</div>
+  <label>現場名</label>
+  <input type="text" id="e-genba">
+  <label>作業場所</label>
+  <input type="text" id="e-location">
+  <div class="grid2">
+    <div><label>出勤</label><input type="time" id="e-start"></div>
+    <div><label>退勤</label><input type="time" id="e-end"></div>
   </div>
+
+  <!-- 夜勤トグル（編集） -->
+  <div class="yakin-toggle" id="e-yakin-toggle" onclick="toggleYakin('e')">
+    <span class="yakin-toggle-icon">🌙</span>
+    <span class="yakin-toggle-label">夜勤</span>
+  </div>
+
+  <label>人工（ひとり当たり）</label>
+  <select id="e-kosu">
+    <option value="1.0">1人工</option>
+    <option value="1.5">1.5人工</option>
+    <option value="2.0">2人工</option>
+  </select>
+  <div class="leader-select-wrap">
+    <label>代表者</label>
+    <select id="e-leader">
+      <option value="">代表者を選択してください</option>
+    </select>
+  </div>
+  <div class="member-section">
+    <div class="member-label">同行メンバー（タップで選択）</div>
+    <div id="e-member-selector" class="member-grid"></div>
+  </div>
+  <label>メモ</label>
+  <textarea id="e-memo"></textarea>
+  <div style="display:flex;gap:8px;margin-top:4px">
+    <button class="btn btn-secondary btn-sm" style="flex:1" onclick="closeEditModal()">キャンセル</button>
+    <button class="btn btn-sm" style="flex:2" onclick="saveEdit()">保存する</button>
+  </div>
+</div>
 </div>
 
 <!-- 設定モーダル -->
 <div id="settings-modal" class="modal-bg">
-  <div class="modal">
-    <div class="modal-title">職人の管理</div>
-    <div style="display:flex;gap:8px;margin-bottom:12px">
-      <input type="text" id="new-shokunin" placeholder="氏名を入力" style="margin-bottom:0;flex:1">
-      <button class="btn btn-sm" onclick="addShokunin()">追加</button>
-    </div>
-    <div id="shokunin-list" style="margin-bottom:16px"></div>
-    <button class="btn btn-secondary" onclick="closeSettings()">閉じる</button>
+<div class="modal">
+  <div class="modal-title">職人の管理</div>
+  <div style="display:flex;gap:8px;margin-bottom:12px">
+    <input type="text" id="new-shokunin" placeholder="氏名を入力" style="margin-bottom:0;flex:1">
+    <button class="btn btn-sm" onclick="addShokunin()">追加</button>
   </div>
+  <div id="shokunin-list" style="margin-bottom:16px"></div>
+  <button class="btn btn-secondary" onclick="closeSettings()">閉じる</button>
+</div>
 </div>
 
 <script>
-const GAS_URL='https://script.google.com/macros/s/AKfycbwZmFAG-9rE1xYZ8BHP5dKpXVeoTKhffOAvWCrhmiYkPvYmBL-L0r-VbwPP-zGpHmY4zQ/exec';
-
+const GAS_URL='https://script.google.com/macros/s/AKfycbxcnKM3-ad2LJo-FqS3M4eMqZrX0MDDnKk4tL-ZGtpt4EqVMPI2I5LUY6yZYnKN0WbWQw/exec';
 let allNippos=[];
-let selectedMembers=[];   // 同行メンバーのインデックス
+let selectedMembers=[];
 let editSelectedMembers=[];
 let editRowNums=[];
 let editDate='';
 let currentDateFilter='';
+let yakinState={s:false, e:false}; // 夜勤状態
 
 let localData={
   shokunin:['小林','舟田','中島','前﨑','向','河原','東','真柄','川端（達）','吉元','江頭','藤木','加藤','中村','鈴木','林','奥田','小笠']
 };
 try{const d=localStorage.getItem('genba-local');if(d){const p=JSON.parse(d);if(p.shokunin)localData.shokunin=p.shokunin;}}catch(e){}
 function saveLocal(){try{localStorage.setItem('genba-local',JSON.stringify(localData));}catch(e){}}
+
+// 夜勤トグル
+function toggleYakin(prefix){
+  yakinState[prefix]=!yakinState[prefix];
+  const el=document.getElementById(prefix+'-yakin-toggle');
+  el.classList.toggle('active', yakinState[prefix]);
+}
+
+function setYakin(prefix, val){
+  yakinState[prefix]=val;
+  const el=document.getElementById(prefix+'-yakin-toggle');
+  el.classList.toggle('active', val);
+}
 
 function switchTab(t){
   const tabs=['input','list','avail','jimu'];
@@ -255,9 +296,7 @@ function switchTab(t){
   document.getElementById('screen-'+t).classList.add('active');
 }
 
-// 代表セレクトと同行チップを初期化
 function initMemberUI(){
-  // 代表セレクト
   ['s-leader','e-leader'].forEach(id=>{
     const sel=document.getElementById(id);
     if(!sel)return;
@@ -300,6 +339,7 @@ async function submitNippo(){
   const kosu=parseFloat(document.getElementById('s-kosu').value);
   const memo=document.getElementById('s-memo').value;
   const leader=document.getElementById('s-leader').value;
+  const yakin=yakinState.s;
 
   if(!date||!genba){showAlert('作業日と現場名は必須です','err');return;}
   if(!leader){showAlert('代表者を選択してください','err');return;}
@@ -311,7 +351,8 @@ async function submitNippo(){
       allMembers.push({name:localData.shokunin[i],role:'同行'});
   });
 
-  const rows=allMembers.map(m=>({date,genba,loc,name:m.name,role:m.role,start,end,kosu,memo}));
+  const rows=allMembers.map(m=>({date,genba,loc,name:m.name,role:m.role,start,end,kosu,memo,yakin}));
+
   const btn=document.getElementById('submit-btn');
   btn.textContent='送信中...';btn.disabled=true;
   try{
@@ -323,6 +364,7 @@ async function submitNippo(){
       document.getElementById('s-location').value='';
       document.getElementById('s-memo').value='';
       document.getElementById('s-leader').value='';
+      setYakin('s', false);
       selectedMembers=[];
       renderMemberChips('member-selector', selectedMembers, toggleMember);
       await loadData();
@@ -338,16 +380,20 @@ function showAlert(msg,type){
   if(type!=='err')setTimeout(()=>el.style.display='none',3000);
 }
 
-// 時間フォーマット変換
+// 時間フォーマット変換（修正版）
 function formatTime(v){
   if(!v && v!==0) return '';
   const s = String(v);
-  // 08:00 形式
+  // HH:MM 形式ならそのまま
   if(s.match(/^\d{1,2}:\d{2}/)) return s.slice(0,5);
-  // ISO形式 1899-12-30T08:00:00.000Z など
+  // ISO形式の場合、JSTに変換（UTC+9）
   if(s.includes('T')){
     const d = new Date(s);
-    if(!isNaN(d)) return String(d.getUTCHours()).padStart(2,'0')+':'+String(d.getUTCMinutes()).padStart(2,'0');
+    if(!isNaN(d)){
+      // JSTオフセット（+9時間）を加算してからフォーマット
+      const jst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
+      return String(jst.getUTCHours()).padStart(2,'0')+':'+String(jst.getUTCMinutes()).padStart(2,'0');
+    }
   }
   return '';
 }
@@ -367,7 +413,8 @@ async function loadData(){
       memo:r['メモ']||'',
       loc:r['作業場所']||'',
       start:formatTime(r['出勤']),
-      end:formatTime(r['退勤'])
+      end:formatTime(r['退勤']),
+      yakin:String(r['夜勤']||'')==='夜勤'
     }));
     renderList();
     updateAvailability();
@@ -379,8 +426,8 @@ async function loadData(){
 function groupNippos(nippos){
   const groups={};
   nippos.forEach(n=>{
-    const key=`${n.date}__${n.genba}__${n.loc}__${n.start}__${n.end}__${n.kosu}__${n.memo}`;
-    if(!groups[key])groups[key]={date:n.date,genba:n.genba,loc:n.loc,start:n.start,end:n.end,kosu:n.kosu,memo:n.memo,members:[],rowNums:[]};
+    const key=`${n.date}__${n.genba}__${n.loc}__${n.start}__${n.end}__${n.kosu}__${n.memo}__${n.yakin}`;
+    if(!groups[key])groups[key]={date:n.date,genba:n.genba,loc:n.loc,start:n.start,end:n.end,kosu:n.kosu,memo:n.memo,yakin:n.yakin,members:[],rowNums:[]};
     groups[key].members.push({name:n.name,role:n.role});
     groups[key].rowNums.push(n.rowNum);
   });
@@ -417,10 +464,11 @@ function renderListWithDate(groups){
     const totalKo=(g.kosu*g.members.length).toFixed(1);
     const rowNumsStr=JSON.stringify(g.rowNums);
     const gEsc=encodeURIComponent(JSON.stringify(g));
+    const yakinBadge=g.yakin?'<span class="yakin-badge">🌙 夜勤</span>':'';
     return`<div class="yotei-card">
       <div class="yotei-header">
         <div>
-          <div class="yotei-date">${formatDate(g.date)}</div>
+          <div class="yotei-date">${formatDate(g.date)}${yakinBadge}</div>
           <div class="yotei-genba">${g.genba}</div>
         </div>
         <div style="font-size:13px;color:#666">${totalKo}人工</div>
@@ -462,6 +510,9 @@ function openEditModal(gEsc){
   document.getElementById('e-memo').value=g.memo||'';
   document.getElementById('edit-title').textContent=`編集：${formatDate(g.date)} ${g.genba}`;
 
+  // 夜勤状態を復元
+  setYakin('e', !!g.yakin);
+
   // 代表と同行を復元
   const leaderMember=g.members.find(m=>m.role==='代表');
   document.getElementById('e-leader').value=leaderMember?leaderMember.name:'';
@@ -473,6 +524,7 @@ function openEditModal(gEsc){
   renderMemberChips('e-member-selector', editSelectedMembers, toggleEditMember);
   document.getElementById('edit-modal').classList.add('active');
 }
+
 function closeEditModal(){document.getElementById('edit-modal').classList.remove('active');}
 
 async function saveEdit(){
@@ -483,14 +535,19 @@ async function saveEdit(){
   const kosu=parseFloat(document.getElementById('e-kosu').value);
   const memo=document.getElementById('e-memo').value;
   const leader=document.getElementById('e-leader').value;
+  const yakin=yakinState.e;
+
   if(!genba){alert('現場名は必須です');return;}
   if(!leader){alert('代表者を選択してください');return;}
+
   const allMembers=[{name:leader,role:'代表'}];
   editSelectedMembers.forEach(i=>{
     if(localData.shokunin[i]!==leader)
       allMembers.push({name:localData.shokunin[i],role:'同行'});
   });
-  const rows=allMembers.map(m=>({date:editDate,genba,loc,name:m.name,role:m.role,start,end,kosu,memo}));
+
+  const rows=allMembers.map(m=>({date:editDate,genba,loc,name:m.name,role:m.role,start,end,kosu,memo,yakin}));
+
   try{
     const res=await fetch(GAS_URL,{method:'POST',body:JSON.stringify({action:'update',rowNums:editRowNums,rows}),headers:{'Content-Type':'text/plain'}});
     const json=await res.json();
@@ -543,14 +600,15 @@ function exportCSV(){
   const nippos=allNippos.filter(n=>n.date.startsWith(month)&&(!genbaF||n.genba===genbaF));
   if(nippos.length===0){alert('データがありません');return;}
   const BOM='\uFEFF';
-  const header='日付,氏名,役割,現場名,作業場所,出勤,退勤,人工,メモ\n';
-  const rows=nippos.sort((a,b)=>a.date.localeCompare(b.date)).map(n=>`${n.date},${n.name},${n.role},${n.genba},${n.loc},${n.start},${n.end},${n.kosu},"${(n.memo||'').replace(/"/g,'""')}"`).join('\n');
+  const header='日付,氏名,役割,現場名,作業場所,出勤,退勤,人工,夜勤,メモ\n';
+  const rows=nippos.sort((a,b)=>a.date.localeCompare(b.date)).map(n=>`${n.date},${n.name},${n.role},${n.genba},${n.loc},${n.start},${n.end},${n.kosu},${n.yakin?'夜勤':''},"${(n.memo||'').replace(/"/g,'""')}"`).join('\n');
   const blob=new Blob([BOM+header+rows],{type:'text/csv;charset=utf-8;'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`日報_${month}.csv`;a.click();
 }
 
 function openSettings(){renderSettings();document.getElementById('settings-modal').classList.add('active');}
 function closeSettings(){document.getElementById('settings-modal').classList.remove('active');initMemberUI();}
+
 function renderSettings(){
   document.getElementById('shokunin-list').innerHTML=localData.shokunin.map((s,i)=>
     `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #eee">
@@ -558,6 +616,7 @@ function renderSettings(){
       <button class="btn btn-secondary btn-sm" onclick="removeShokunin(${i})">削除</button>
     </div>`).join('');
 }
+
 function addShokunin(){
   const v=document.getElementById('new-shokunin').value.trim();
   if(!v)return;
@@ -565,6 +624,7 @@ function addShokunin(){
   document.getElementById('new-shokunin').value='';
   renderSettings();initMemberUI();
 }
+
 function removeShokunin(i){
   if(!confirm(localData.shokunin[i]+'を削除しますか？'))return;
   localData.shokunin.splice(i,1);saveLocal();
