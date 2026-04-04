@@ -338,6 +338,20 @@ function showAlert(msg,type){
   if(type!=='err')setTimeout(()=>el.style.display='none',3000);
 }
 
+// 時間フォーマット変換
+function formatTime(v){
+  if(!v && v!==0) return '';
+  const s = String(v);
+  // 08:00 形式
+  if(s.match(/^\d{1,2}:\d{2}/)) return s.slice(0,5);
+  // ISO形式 1899-12-30T08:00:00.000Z など
+  if(s.includes('T')){
+    const d = new Date(s);
+    if(!isNaN(d)) return String(d.getUTCHours()).padStart(2,'0')+':'+String(d.getUTCMinutes()).padStart(2,'0');
+  }
+  return '';
+}
+
 // データ取得
 async function loadData(){
   try{
@@ -352,8 +366,8 @@ async function loadData(){
       kosu:parseFloat(r['人工'])||0,
       memo:r['メモ']||'',
       loc:r['作業場所']||'',
-      start:String(r['出勤']||''),
-      end:String(r['退勤']||'')
+      start:formatTime(r['出勤']),
+      end:formatTime(r['退勤'])
     }));
     renderList();
     updateAvailability();
@@ -375,7 +389,7 @@ function groupNippos(nippos){
 
 function formatDate(d){
   if(!d)return'';
-  const dt=new Date(d+'T00:00:00');
+  const parts=d.split('-');const dt=new Date(parts[0],parts[1]-1,parts[2]);
   const days=['日','月','火','水','木','金','土'];
   return`${dt.getMonth()+1}/${dt.getDate()}(${days[dt.getDay()]})`;
 }
