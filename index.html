@@ -390,12 +390,33 @@ function formatTime(v){
   if(s.includes('T')){
     const d = new Date(s);
     if(!isNaN(d)){
-      // JSTオフセット（+9時間）を加算してからフォーマット
       const jst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
       return String(jst.getUTCHours()).padStart(2,'0')+':'+String(jst.getUTCMinutes()).padStart(2,'0');
     }
   }
   return '';
+}
+
+// 日付フォーマット変換（修正版）
+function parseWorkDate(v){
+  if(!v) return '';
+  const s = String(v);
+  // yyyy-MM-dd 形式ならそのまま
+  if(/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0,10);
+  // ISO形式（2026-04-05T15:00:00.000Z）→ JSTに変換
+  if(s.includes('T')){
+    const d = new Date(s);
+    if(!isNaN(d)){
+      const jst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
+      return jst.getUTCFullYear()+'-'+String(jst.getUTCMonth()+1).padStart(2,'0')+'-'+String(jst.getUTCDate()).padStart(2,'0');
+    }
+  }
+  // その他の日付形式を試す
+  const d = new Date(s);
+  if(!isNaN(d)){
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+  return s;
 }
 
 // データ取得
@@ -405,7 +426,7 @@ async function loadData(){
     const json=await res.json();
     allNippos=(json.rows||[]).map(r=>({
       rowNum:r.rowNum,
-      date:String(r['作業日']||'').slice(0,10),
+      date:parseWorkDate(r['作業日']),
       genba:r['現場名']||'',
       name:r['氏名']||'',
       role:r['役割']||'',
