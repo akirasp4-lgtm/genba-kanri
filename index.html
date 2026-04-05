@@ -61,6 +61,13 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 .yasumi-toggle-icon{font-size:20px;opacity:0.4;transition:opacity 0.15s}
 .yasumi-toggle-label{font-size:15px;font-weight:500;color:#666;transition:color 0.15s}
 .yasumi-badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;background:#E8384F;color:#fff;margin-left:6px;vertical-align:middle}
+.yotei-toggle{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:10px 12px;border:1px solid #ddd;border-radius:8px;background:#f9f9f9;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.yotei-toggle.active{background:#3B82F6;border-color:#3B82F6}
+.yotei-toggle.active .yotei-toggle-label{color:#fff}
+.yotei-toggle.active .yotei-toggle-icon{opacity:1}
+.yotei-toggle-icon{font-size:20px;opacity:0.4;transition:opacity 0.15s}
+.yotei-toggle-label{font-size:15px;font-weight:500;color:#666;transition:color 0.15s}
+.yotei-badge-tag{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;background:#3B82F6;color:#fff;margin-left:6px;vertical-align:middle}
 .member-section{margin-bottom:12px}
 .member-label{font-size:13px;color:#666;margin-bottom:6px}
 .member-grid{display:flex;flex-wrap:wrap;gap:8px;padding:12px;border:1px solid #ddd;border-radius:10px;background:#f9f9f9;min-height:52px}
@@ -125,6 +132,10 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
   <div class="yasumi-toggle" id="s-yasumi-toggle" onclick="toggleYasumi('s')">
     <span class="yasumi-toggle-icon">🏖️</span>
     <span class="yasumi-toggle-label">休み</span>
+  </div>
+  <div class="yotei-toggle" id="s-yotei-toggle" onclick="toggleYotei('s')">
+    <span class="yotei-toggle-icon">📅</span>
+    <span class="yotei-toggle-label">予定</span>
   </div>
   <label>人工（ひとり当たり）</label>
   <select id="s-kosu">
@@ -248,6 +259,10 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
     <span class="yasumi-toggle-icon">🏖️</span>
     <span class="yasumi-toggle-label">休み</span>
   </div>
+  <div class="yotei-toggle" id="e-yotei-toggle" onclick="toggleYotei('e')">
+    <span class="yotei-toggle-icon">📅</span>
+    <span class="yotei-toggle-label">予定</span>
+  </div>
   <label>人工（ひとり当たり）</label>
   <select id="e-kosu"><option value="1.0">1人工</option><option value="1.5">1.5人工</option><option value="2.0">2人工</option></select>
   <div class="leader-select-wrap">
@@ -280,7 +295,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 </div>
 
 <script>
-const GAS_URL='https://script.google.com/macros/s/AKfycbyAKQi8XzX_Dfvl5cpawUrKvq5tDBr0FZtfm1a5Be7Qju3XOelRb18IsJmUo_TFiot9pw/exec';
+const GAS_URL='https://script.google.com/macros/s/AKfycby1IdTLS4K0bEe0czY58JVi9KjmaOFE9uojKRYcqkIZgnjrLeAZmOjuwrv76eXVpJv4EQ/exec';
 const COMPANIES=['グローライズ','和信カインド','ビジネスサポート','ラーテル','GRHD'];
 
 let currentCompany='';
@@ -294,6 +309,7 @@ let currentDateFilter='';
 let listMonth=''; // yyyy-MM形式
 let yakinState={s:false, e:false};
 let yasumiState={s:false, e:false};
+let yoteiState={s:false, e:false};
 let isSubmitting=false;
 
 // ===== XSS対策: HTMLエスケープ =====
@@ -366,11 +382,14 @@ function filteredNippos(){
   return allNippos.filter(n=>n.company===currentCompany);
 }
 
-// ===== 夜勤・休みトグル =====
-function toggleYakin(p){yakinState[p]=!yakinState[p];document.getElementById(p+'-yakin-toggle').classList.toggle('active',yakinState[p]);if(yakinState[p]){yasumiState[p]=false;document.getElementById(p+'-yasumi-toggle').classList.remove('active');}}
+// ===== 夜勤・休み・予定トグル（排他的）=====
+function clearToggles(p){yakinState[p]=false;yasumiState[p]=false;yoteiState[p]=false;document.getElementById(p+'-yakin-toggle').classList.remove('active');document.getElementById(p+'-yasumi-toggle').classList.remove('active');document.getElementById(p+'-yotei-toggle').classList.remove('active');}
+function toggleYakin(p){const v=!yakinState[p];clearToggles(p);yakinState[p]=v;document.getElementById(p+'-yakin-toggle').classList.toggle('active',v);}
 function setYakin(p,v){yakinState[p]=v;document.getElementById(p+'-yakin-toggle').classList.toggle('active',v);}
-function toggleYasumi(p){yasumiState[p]=!yasumiState[p];document.getElementById(p+'-yasumi-toggle').classList.toggle('active',yasumiState[p]);if(yasumiState[p]){yakinState[p]=false;document.getElementById(p+'-yakin-toggle').classList.remove('active');}}
+function toggleYasumi(p){const v=!yasumiState[p];clearToggles(p);yasumiState[p]=v;document.getElementById(p+'-yasumi-toggle').classList.toggle('active',v);}
 function setYasumi(p,v){yasumiState[p]=v;document.getElementById(p+'-yasumi-toggle').classList.toggle('active',v);}
+function toggleYotei(p){const v=!yoteiState[p];clearToggles(p);yoteiState[p]=v;document.getElementById(p+'-yotei-toggle').classList.toggle('active',v);}
+function setYotei(p,v){yoteiState[p]=v;document.getElementById(p+'-yotei-toggle').classList.toggle('active',v);}
 
 function switchTab(t){
   const tabs=['input','list','avail','jimu'];
@@ -415,14 +434,15 @@ async function submitNippo(){
   const leader=document.getElementById('s-leader').value;
   const yakin=yakinState.s;
   const yasumi=yasumiState.s;
-  const effectiveKosu=yasumi?0:kosu;
+  const yotei=yoteiState.s;
+  const effectiveKosu=(yasumi||yotei)?0:kosu;
   if(!date||!genba){showAlert('作業日と元請名は必須です','err');return;}
   if(!leader){showAlert('代表者を選択してください','err');return;}
   const members=[{name:leader,role:'代表'}];
   const shokunin=getShokunin();
   selectedMembers.forEach(i=>{if(shokunin[i]!==leader)members.push({name:shokunin[i],role:'同行'});});
   const groupId=uuid();
-  const rows=members.map(m=>({date,genba,loc,name:m.name,role:m.role,start,end,kosu:effectiveKosu,memo,yakin,yasumi,company:currentCompany,id:groupId}));
+  const rows=members.map(m=>({date,genba,loc,name:m.name,role:m.role,start,end,kosu:effectiveKosu,memo,yakin,yasumi,yotei,company:currentCompany,id:groupId}));
   const btn=document.getElementById('submit-btn');
   isSubmitting=true;btn.textContent='送信中...';btn.disabled=true;
   try{
@@ -432,7 +452,7 @@ async function submitNippo(){
       showAlert(`✓ ${members.length}人分を登録しました！（${currentCompany}）`,'ok');
       document.getElementById('s-genba').value='';document.getElementById('s-location').value='';
       document.getElementById('s-memo').value='';document.getElementById('s-leader').value='';
-      setYakin('s',false);setYasumi('s',false);selectedMembers=[];renderMemberChips('member-selector',selectedMembers,toggleMember);
+      setYakin('s',false);setYasumi('s',false);setYotei('s',false);selectedMembers=[];renderMemberChips('member-selector',selectedMembers,toggleMember);
       await loadData();
     } else showAlert('エラー：'+json.message,'err');
   }catch(err){showAlert('送信エラー：'+err.message,'err');}
@@ -481,6 +501,7 @@ async function loadData(){
       memo:String(r['メモ']||''),
       yakin:String(r['夜勤']||'')==='夜勤',
       yasumi:String(r['夜勤']||'')==='休み',
+      yotei:String(r['夜勤']||'')==='予定',
       company:String(r['会社']||'')
     }));
     // メンバーをサーバーから取得
@@ -495,8 +516,8 @@ function groupNippos(nippos){
   const groups={};
   nippos.forEach(n=>{
     // IDでグループ化（同じIDは同一登録）
-    const key=n.id||`${n.date}__${n.genba}__${n.loc}__${n.start}__${n.end}__${n.kosu}__${n.memo}__${n.yakin}__${n.yasumi}`;
-    if(!groups[key])groups[key]={date:n.date,genba:n.genba,loc:n.loc,start:n.start,end:n.end,kosu:n.kosu,memo:n.memo,yakin:n.yakin,yasumi:n.yasumi,company:n.company,members:[],ids:[]};
+    const key=n.id||`${n.date}__${n.genba}__${n.loc}__${n.start}__${n.end}__${n.kosu}__${n.memo}__${n.yakin}__${n.yasumi}__${n.yotei}`;
+    if(!groups[key])groups[key]={date:n.date,genba:n.genba,loc:n.loc,start:n.start,end:n.end,kosu:n.kosu,memo:n.memo,yakin:n.yakin,yasumi:n.yasumi,yotei:n.yotei,company:n.company,members:[],ids:[]};
     groups[key].members.push({name:n.name,role:n.role});
     if(n.id)groups[key].ids.push(n.id);
   });
@@ -542,10 +563,11 @@ function renderListWithDate(groups){
     const totalKo=(g.kosu*g.members.length).toFixed(1);
     const yakinBadge=g.yakin?'<span class="yakin-badge">🌙 夜勤</span>':'';
     const yasumiBadge=g.yasumi?'<span class="yasumi-badge">🏖️ 休み</span>':'';
+    const yoteiBadge=g.yotei?'<span class="yotei-badge-tag">📅 予定</span>':'';
     const companyBadge=(currentCompany==='全社'&&g.company)?`<span class="company-badge">${esc(g.company)}</span>`:'';
     return`<div class="yotei-card">
       <div class="yotei-header"><div>
-        <div class="yotei-date">${formatDate(g.date)}${yakinBadge}${yasumiBadge}${companyBadge}</div>
+        <div class="yotei-date">${formatDate(g.date)}${yakinBadge}${yasumiBadge}${yoteiBadge}${companyBadge}</div>
         <div class="yotei-genba">${esc(g.genba)}</div>
       </div><div style="font-size:13px;color:#666">${totalKo}人工</div></div>
       <div class="yotei-body">
@@ -601,6 +623,7 @@ function openEditModal(idx){
   document.getElementById('edit-title').textContent=`編集：${formatDate(g.date)} ${g.genba}`;
   setYakin('e',!!g.yakin);
   setYasumi('e',!!g.yasumi);
+  setYotei('e',!!g.yotei);
   const leader=g.members.find(m=>m.role==='代表');
   document.getElementById('e-leader').value=leader?leader.name:'';
   editSelectedMembers=[];
@@ -624,7 +647,8 @@ async function saveEdit(){
   const leader=document.getElementById('e-leader').value;
   const yakin=yakinState.e;
   const yasumi=yasumiState.e;
-  const effectiveKosu=yasumi?0:kosu;
+  const yotei=yoteiState.e;
+  const effectiveKosu=(yasumi||yotei)?0:kosu;
   if(!genba){alert('元請名は必須です');return;}
   if(!leader){alert('代表者を選択してください');return;}
   const members=[{name:leader,role:'代表'}];
@@ -632,7 +656,7 @@ async function saveEdit(){
   editSelectedMembers.forEach(i=>{if(shokunin[i]!==leader)members.push({name:shokunin[i],role:'同行'});});
   const newId=uuid();
   const company=currentCompany==='全社'?'':currentCompany;
-  const rows=members.map(m=>({date:editDate,genba,loc,name:m.name,role:m.role,start,end,kosu:effectiveKosu,memo,yakin,yasumi,company,id:newId}));
+  const rows=members.map(m=>({date:editDate,genba,loc,name:m.name,role:m.role,start,end,kosu:effectiveKosu,memo,yakin,yasumi,yotei,company,id:newId}));
   btn.textContent='保存中...';btn.disabled=true;
   try{
     const res=await fetch(GAS_URL,{method:'POST',body:JSON.stringify({action:'update',ids:editIds,rows}),headers:{'Content-Type':'text/plain'}});
