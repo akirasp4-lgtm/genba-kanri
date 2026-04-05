@@ -292,17 +292,26 @@ try{
   }
 }catch(e){}
 function saveLocal(){try{localStorage.setItem('genba-local-v2',JSON.stringify(localData));}catch(e){}}
-function getShokunin(){return localData.shokunin[currentCompany]||[];}
+function getShokunin(){
+  if(currentCompany==='全社'){
+    // 全社の場合は全会社のメンバーを重複なしで返す
+    const all=[];
+    COMPANIES.forEach(c=>{(localData.shokunin[c]||[]).forEach(n=>{if(!all.includes(n))all.push(n);});});
+    return all;
+  }
+  return localData.shokunin[currentCompany]||[];
+}
 
 // 会社セレクター
 function initCompanyBar(){
-  try{const c=localStorage.getItem('genba-company');if(c&&COMPANIES.includes(c))currentCompany=c;}catch(e){}
+  try{const c=localStorage.getItem('genba-company');if(c&&(COMPANIES.includes(c)||c==='全社'))currentCompany=c;}catch(e){}
   if(!currentCompany)currentCompany=COMPANIES[0];
   renderCompanyBar();
 }
 
 function renderCompanyBar(){
-  document.getElementById('company-bar').innerHTML=COMPANIES.map(c=>
+  const allChip='<div class="company-chip'+(currentCompany==='全社'?' active':'')+'" onclick="switchCompany(\'全社\')">全社</div>';
+  document.getElementById('company-bar').innerHTML=allChip+COMPANIES.map(c=>
     `<div class="company-chip${c===currentCompany?' active':''}" onclick="switchCompany('${c}')">${c}</div>`
   ).join('');
 }
@@ -322,6 +331,7 @@ function switchCompany(c){
 
 // 会社でフィルターしたデータを返す
 function filteredNippos(){
+  if(currentCompany==='全社') return allNippos;
   return allNippos.filter(n=>n.company===currentCompany);
 }
 
