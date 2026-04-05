@@ -85,6 +85,8 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 .avail-chip{padding:10px 6px;border-radius:10px;font-size:13px;text-align:center;border:1px solid #ddd;background:#fff}
 .avail-chip.free{background:#EAF3DE;color:#3B6D11;border-color:#97C459}
 .avail-chip.busy{background:#FAECE7;color:#993C1D;border-color:#F0997B}
+.avail-chip.yasumi{background:#FFF9E6;color:#8B7000;border-color:#F0D860}
+.avail-chip.souko{background:#F3EAE0;color:#8B5E3C;border-color:#C49A6C}
 .avail-name{font-weight:500;font-size:13px}
 .avail-status{font-size:11px;margin-top:2px}
 .date-filter{display:flex;gap:8px;margin-bottom:12px;overflow-x:auto;padding-bottom:4px}
@@ -193,9 +195,11 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
   <div id="avail-container" class="avail-grid">
     <div style="color:#999;font-size:13px;grid-column:1/-1">更新ボタンを押してください</div>
   </div>
-  <div style="display:flex;gap:12px;font-size:12px;color:#999;margin-top:8px">
+  <div style="display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:#999;margin-top:8px">
     <span><span style="display:inline-block;width:10px;height:10px;background:#EAF3DE;border:1px solid #97C459;border-radius:2px;margin-right:3px"></span>空き</span>
     <span><span style="display:inline-block;width:10px;height:10px;background:#FAECE7;border:1px solid #F0997B;border-radius:2px;margin-right:3px"></span>出勤</span>
+    <span><span style="display:inline-block;width:10px;height:10px;background:#FFF9E6;border:1px solid #F0D860;border-radius:2px;margin-right:3px"></span>休み</span>
+    <span><span style="display:inline-block;width:10px;height:10px;background:#F3EAE0;border:1px solid #C49A6C;border-radius:2px;margin-right:3px"></span>倉庫</span>
   </div>
 </div>
 <button class="btn btn-secondary" onclick="loadData()">更新</button>
@@ -693,12 +697,15 @@ async function saveEdit(){
 function updateAvailability(){
   const date=document.getElementById('a-date').value;
   const cn=filteredNippos();
-  const busySet=new Set(cn.filter(n=>n.date===date&&!n.souko).map(n=>n.name));
+  const dayEntries=cn.filter(n=>n.date===date);
   const con=document.getElementById('avail-container');
   if(allNippos.length===0){con.innerHTML='<div style="color:#999;font-size:13px;grid-column:1/-1">更新ボタンを押してください</div>';return;}
   con.innerHTML=getShokunin().map(s=>{
-    const busy=busySet.has(s);
-    return`<div class="avail-chip ${busy?'busy':'free'}"><div class="avail-name">${esc(s)}</div><div class="avail-status">${busy?'出勤':'空き'}</div></div>`;
+    const entry=dayEntries.find(n=>n.name===s);
+    if(!entry) return`<div class="avail-chip free"><div class="avail-name">${esc(s)}</div><div class="avail-status">空き</div></div>`;
+    if(entry.yasumi) return`<div class="avail-chip yasumi"><div class="avail-name">${esc(s)}</div><div class="avail-status">休み</div></div>`;
+    if(entry.souko) return`<div class="avail-chip souko"><div class="avail-name">${esc(s)}</div><div class="avail-status">倉庫</div></div>`;
+    return`<div class="avail-chip busy"><div class="avail-name">${esc(s)}</div><div class="avail-status">出勤</div></div>`;
   }).join('');
 }
 
