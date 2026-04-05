@@ -432,15 +432,16 @@ async function loadData(){
     const json=await res.json();
     allNippos=(json.rows||[]).map(r=>({
       id:String(r['ID']||''),
+      timestamp:String(r['登録日時']||''),
       date:parseWorkDate(r['作業日']),
       genba:String(r['現場名']||''),
+      loc:String(r['作業場所']||''),
       name:String(r['氏名']||''),
       role:String(r['役割']||''),
-      kosu:parseFloat(r['人工'])||0,
-      memo:String(r['メモ']||''),
-      loc:String(r['作業場所']||''),
       start:formatTime(r['出勤']),
       end:formatTime(r['退勤']),
+      kosu:parseFloat(r['人工'])||0,
+      memo:String(r['メモ']||''),
       yakin:String(r['夜勤']||'')==='夜勤',
       company:String(r['会社']||'')
     }));
@@ -624,9 +625,10 @@ function exportCSV(){
   const nippos=filteredNippos().filter(n=>n.date.startsWith(month)&&(!genbaF||n.genba===genbaF));
   if(nippos.length===0){alert('データがありません');return;}
   const BOM='\uFEFF';
-  const header='日付,氏名,役割,現場名,作業場所,出勤,退勤,人工,夜勤,メモ,会社\n';
+  const header='登録日時,作業日,現場名,作業場所,氏名,役割,出勤,退勤,人工,メモ,夜勤,会社,ID\n';
+  const csvEsc=v=>{const s=String(v||'');return s.includes(',')||s.includes('"')||s.includes('\n')?'"'+s.replace(/"/g,'""')+'"':s;};
   const rows=nippos.sort((a,b)=>a.date.localeCompare(b.date)).map(n=>
-    `${n.date},${n.name},${n.role},"${n.genba}","${n.loc}",${n.start},${n.end},${n.kosu},${n.yakin?'夜勤':''},"${(n.memo||'').replace(/"/g,'""')}","${n.company}"`
+    [n.timestamp,n.date,n.genba,n.loc,n.name,n.role,n.start,n.end,n.kosu,n.memo,n.yakin?'夜勤':'',n.company,n.id].map(csvEsc).join(',')
   ).join('\n');
   const blob=new Blob([BOM+header+rows],{type:'text/csv;charset=utf-8;'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);
