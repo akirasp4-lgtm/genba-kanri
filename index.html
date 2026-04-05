@@ -314,8 +314,19 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 </div>
 
 <script>
-const GAS_URL='https://script.google.com/macros/s/AKfycbwRgQfFTbRl56x7Ezww1lm-eIx2zMY3QvVWkre2z6MGnHEUslnEtGIDSOgFTL3vRUlsyw/exec';
-const COMPANIES=['グローライズ','和信カインド','ビジネスサポート','ラーテル','GRHD'];
+// === 会社ごとのGAS URL ===
+// 各スプレッドシートのデプロイURLをここに設定
+const GAS_URLS={
+  'グローライズ':'https://script.google.com/macros/s/AKfycbwXxTuncDMiosPQcMaSPx3ECri6hxTfjeAkUYLmf_Six7cIvsiPU6FDTzVXUYUht0e23g/exec',
+  '和信カインド':'__URL_和信カインド__',
+  'ビジネスサポート':'__URL_ビジネスサポート__',
+  'ラーテル':'__URL_ラーテル__',
+  'GRHD':'__URL_GRHD__'
+};
+const COMPANIES=Object.keys(GAS_URLS);
+
+// 現在の会社のGAS URLを返す
+function getGasUrl(company){return GAS_URLS[company||currentCompany]||'';}
 
 let currentCompany='';
 let allNippos=[];
@@ -359,22 +370,47 @@ function getShokunin(){
   return allMembers.filter(m=>m.company===currentCompany).map(m=>m.name);
 }
 
+// ===== URLパラメータで会社制限 =====
+// 例: ?c=グローライズ → グローライズのみ
+// 例: ?c=グローライズ,和信カインド → 2社
+// パラメータなし or ?c=all → 全社表示（管理者）
+let allowedCompanies=[];
+let isAdmin=false;
+function parseCompanyParam(){
+  const params=new URLSearchParams(window.location.search);
+  const c=params.get('c');
+  if(!c||c==='all'){
+    allowedCompanies=[...COMPANIES];
+    isAdmin=true;
+  } else {
+    allowedCompanies=c.split(',').map(s=>s.trim()).filter(s=>COMPANIES.includes(s));
+    if(allowedCompanies.length===0)allowedCompanies=[COMPANIES[0]];
+    isAdmin=false;
+  }
+}
+parseCompanyParam();
+
 // ===== 会社セレクター =====
 function initCompanyBar(){
-  try{const c=localStorage.getItem('genba-company');if(c&&(COMPANIES.includes(c)||c==='全社'))currentCompany=c;}catch(e){}
-  if(!currentCompany)currentCompany=COMPANIES[0];
+  try{const c=localStorage.getItem('genba-company');if(c&&(allowedCompanies.includes(c)||(c==='全社'&&isAdmin)))currentCompany=c;}catch(e){}
+  if(!currentCompany||(!allowedCompanies.includes(currentCompany)&&currentCompany!=='全社'))currentCompany=allowedCompanies[0];
+  if(currentCompany==='全社'&&!isAdmin)currentCompany=allowedCompanies[0];
   renderCompanyBar();
   updateNoticeBar();
 }
 
 function renderCompanyBar(){
-  const allChip='<div class="company-chip'+(currentCompany==='全社'?' active':'')+'" onclick="switchCompany(\'全社\')">全社</div>';
-  document.getElementById('company-bar').innerHTML=allChip+COMPANIES.map(c=>
+  let html='';
+  if(isAdmin)html+='<div class="company-chip'+(currentCompany==='全社'?' active':'')+'" onclick="switchCompany(\'全社\')">全社</div>';
+  html+=allowedCompanies.map(c=>
     `<div class="company-chip${c===currentCompany?' active':''}" onclick="switchCompany('${esc(c)}')">${esc(c)}</div>`
   ).join('');
+  document.getElementById('company-bar').innerHTML=html;
 }
 
 function switchCompany(c){
+  if(c!=='全社'&&!allowedCompanies.includes(c))return;
+  if(c==='全社'&&!isAdmin)return;
   currentCompany=c;
   try{localStorage.setItem('genba-company',c);}catch(e){}
   selectedMembers=[];
@@ -469,7 +505,7 @@ async function submitNippo(){
   const btn=document.getElementById('submit-btn');
   isSubmitting=true;btn.textContent='送信中...';btn.disabled=true;
   try{
-    const res=await fetch(GAS_URL,{method:'POST',body:JSON.stringify({action:'add',rows}),headers:{'Content-Type':'text/plain'}});
+    const res=await fetch(getGasUrl(),{method:'POST',body:JSON.stringify({action:'add',rows}),headers:{'Content-Type':'text/plain'}});
     const json=await res.json();
     if(json.status==='ok'){
       showAlert(`✓ ${members.length}人分を登録しました！（${currentCompany}）`,'ok');
@@ -505,31 +541,48 @@ function parseWorkDate(v){
 }
 
 // ===== データ取得（メンバーも同時取得）=====
+function parseRows(rows, company){
+  return (rows||[]).map(r=>({
+    id:String(r['ID']||''),
+    timestamp:String(r['登録日時']||''),
+    date:parseWorkDate(r['作業日']),
+    genba:String(r['元請名']||''),
+    loc:String(r['現場名']||''),
+    name:String(r['氏名']||''),
+    role:String(r['役割']||''),
+    start:formatTime(r['出勤']),
+    end:formatTime(r['退勤']),
+    kosu:parseFloat(r['人工'])||0,
+    memo:String(r['メモ']||''),
+    yakin:String(r['夜勤']||'')==='夜勤',
+    yasumi:String(r['夜勤']||'')==='休み',
+    yotei:String(r['夜勤']||'')==='予定',
+    souko:String(r['夜勤']||'')==='倉庫',
+    company:String(r['会社']||'')||company
+  }));
+}
+
+async function fetchCompanyData(company){
+  const url=getGasUrl(company);
+  if(!url||url.startsWith('__'))return{rows:[],members:[]};
+  const res=await fetch(url+'?t='+Date.now());
+  const json=await res.json();
+  return{rows:parseRows(json.rows,company),members:(json.members||[]).map(m=>({name:m.name,company:m.company||company}))};
+}
+
 async function loadData(){
   setLoading(true);
   try{
-    const res=await fetch(GAS_URL+'?t='+Date.now());
-    const json=await res.json();
-    allNippos=(json.rows||[]).map(r=>({
-      id:String(r['ID']||''),
-      timestamp:String(r['登録日時']||''),
-      date:parseWorkDate(r['作業日']),
-      genba:String(r['元請名']||''),
-      loc:String(r['現場名']||''),
-      name:String(r['氏名']||''),
-      role:String(r['役割']||''),
-      start:formatTime(r['出勤']),
-      end:formatTime(r['退勤']),
-      kosu:parseFloat(r['人工'])||0,
-      memo:String(r['メモ']||''),
-      yakin:String(r['夜勤']||'')==='夜勤',
-      yasumi:String(r['夜勤']||'')==='休み',
-      yotei:String(r['夜勤']||'')==='予定',
-      souko:String(r['夜勤']||'')==='倉庫',
-      company:String(r['会社']||'')
-    }));
-    // メンバーをサーバーから取得
-    if(json.members){allMembers=json.members;}
+    if(currentCompany==='全社'){
+      // 全社：全URLから並列取得
+      const results=await Promise.allSettled(allowedCompanies.map(c=>fetchCompanyData(c)));
+      allNippos=[];allMembers=[];
+      results.forEach(r=>{if(r.status==='fulfilled'){allNippos.push(...r.value.rows);allMembers.push(...r.value.members);}});
+    } else {
+      const data=await fetchCompanyData(currentCompany);
+      allNippos=data.rows;
+      allMembers=data.members;
+    }
     initMemberUI();
     renderList();updateAvailability();updateJimu();updateGenbaFilter();
   }catch(e){console.error(e);}
@@ -623,7 +676,7 @@ async function deleteGroup(idx){
   const ids=[...new Set(g.ids)];
   setLoading(true);
   try{
-    const res=await fetch(GAS_URL,{method:'POST',body:JSON.stringify({action:'delete',ids}),headers:{'Content-Type':'text/plain'}});
+    const res=await fetch(getGasUrl(g.company),{method:'POST',body:JSON.stringify({action:'delete',ids}),headers:{'Content-Type':'text/plain'}});
     const json=await res.json();
     if(json.status==='ok'){
       if(json.deleted===0){alert('削除対象が見つかりませんでした。スプレッドシートのID列を確認してください。');}
@@ -686,7 +739,7 @@ async function saveEdit(){
   const rows=members.map(m=>({date:editDate,genba,loc,name:m.name,role:m.role,start,end,kosu:effectiveKosu,memo,yakin,yasumi,yotei,souko,company,id:newId}));
   btn.textContent='保存中...';btn.disabled=true;
   try{
-    const res=await fetch(GAS_URL,{method:'POST',body:JSON.stringify({action:'update',ids:editIds,rows}),headers:{'Content-Type':'text/plain'}});
+    const res=await fetch(getGasUrl(company||currentCompany),{method:'POST',body:JSON.stringify({action:'update',ids:editIds,rows}),headers:{'Content-Type':'text/plain'}});
     const json=await res.json();
     if(json.status==='ok'){closeEditModal();await loadData();}
     else alert('保存エラー：'+json.message);
@@ -721,9 +774,14 @@ function updateJimu(){
   const genbaF=document.getElementById('j-genba-filter').value;
   const nippos=filteredNippos().filter(n=>n.date.startsWith(month)&&(!genbaF||n.genba===genbaF));
   const byName={};
-  nippos.forEach(n=>{if(!byName[n.name])byName[n.name]={days:0,kosu:0};byName[n.name].days++;byName[n.name].kosu+=n.kosu;});
+  nippos.forEach(n=>{
+    if(!byName[n.name])byName[n.name]={days:0,kosu:0};
+    if(!n.yasumi&&!n.yotei)byName[n.name].days++;
+    byName[n.name].kosu+=n.kosu;
+  });
+  const workNippos=nippos.filter(n=>!n.yasumi&&!n.yotei);
   const totalKo=nippos.reduce((s,n)=>s+n.kosu,0);
-  document.getElementById('j-total-days').textContent=nippos.length;
+  document.getElementById('j-total-days').textContent=workNippos.length;
   document.getElementById('j-total-ko').textContent=totalKo.toFixed(1);
   const entries=Object.entries(byName).sort((a,b)=>b[1].kosu-a[1].kosu);
   document.getElementById('j-shokunin-tbl').innerHTML=entries.length?
@@ -732,11 +790,12 @@ function updateJimu(){
 }
 
 async function downloadSheetCSV(){
+  if(currentCompany==='全社'){alert('会社を選択してからダウンロードしてください');return;}
   const sheetName=document.getElementById('csv-sheet').value;
   const btn=document.getElementById('csv-btn');
   btn.textContent='取得中...';btn.disabled=true;
   try{
-    const res=await fetch(GAS_URL,{method:'POST',body:JSON.stringify({action:'get_sheet',sheet:sheetName}),headers:{'Content-Type':'text/plain'}});
+    const res=await fetch(getGasUrl(),{method:'POST',body:JSON.stringify({action:'get_sheet',sheet:sheetName}),headers:{'Content-Type':'text/plain'}});
     const json=await res.json();
     if(json.status==='ok'&&json.data){
       const BOM='\uFEFF';
@@ -753,10 +812,13 @@ async function downloadSheetCSV(){
 async function runSummary(){
   const btn=document.getElementById('summary-btn');btn.textContent='集計中...';btn.disabled=true;
   try{
-    const res=await fetch(GAS_URL,{method:'POST',body:JSON.stringify({action:'summarize'}),headers:{'Content-Type':'text/plain'}});
-    const json=await res.json();
-    if(json.status==='ok')alert('集計シートを更新しました！\nスプレッドシートの「会社別集計」「月別集計」シートを確認してください。');
-    else alert('エラー：'+json.message);
+    const targets=currentCompany==='全社'?allowedCompanies:[currentCompany];
+    const results=await Promise.allSettled(targets.map(c=>
+      fetch(getGasUrl(c),{method:'POST',body:JSON.stringify({action:'summarize'}),headers:{'Content-Type':'text/plain'}}).then(r=>r.json())
+    ));
+    const failed=results.filter(r=>r.status==='rejected'||r.value?.status!=='ok');
+    if(failed.length===0)alert('集計シートを更新しました！');
+    else alert(`${targets.length-failed.length}/${targets.length}社の集計を更新しました。`);
   }catch(e){alert('集計エラー：'+e.message);}
   btn.textContent='集計を更新';btn.disabled=false;
 }
@@ -764,10 +826,14 @@ async function runSummary(){
 async function archiveOldData(){
   if(!confirm('3ヶ月以上前のデータをアーカイブシートに移動します。\nよろしいですか？'))return;
   try{
-    const res=await fetch(GAS_URL,{method:'POST',body:JSON.stringify({action:'archive',months:3}),headers:{'Content-Type':'text/plain'}});
-    const json=await res.json();
-    if(json.status==='ok'){alert(`${json.archived}件のデータをアーカイブしました`);await loadData();}
-    else alert('エラー：'+json.message);
+    const targets=currentCompany==='全社'?allowedCompanies:[currentCompany];
+    const results=await Promise.allSettled(targets.map(c=>
+      fetch(getGasUrl(c),{method:'POST',body:JSON.stringify({action:'archive',months:3}),headers:{'Content-Type':'text/plain'}}).then(r=>r.json())
+    ));
+    let total=0;
+    results.forEach(r=>{if(r.status==='fulfilled'&&r.value?.archived)total+=r.value.archived;});
+    alert(`${total}件のデータをアーカイブしました`);
+    await loadData();
   }catch(e){alert('アーカイブエラー：'+e.message);}
 }
 
@@ -791,7 +857,7 @@ async function addShokunin(){
   const v=document.getElementById('new-shokunin').value.trim();
   if(!v)return;
   try{
-    const res=await fetch(GAS_URL,{method:'POST',body:JSON.stringify({action:'add_member',name:v,company:currentCompany}),headers:{'Content-Type':'text/plain'}});
+    const res=await fetch(getGasUrl(),{method:'POST',body:JSON.stringify({action:'add_member',name:v,company:currentCompany}),headers:{'Content-Type':'text/plain'}});
     const json=await res.json();
     if(json.status==='ok'){
       allMembers.push({name:v,company:currentCompany});
@@ -805,7 +871,7 @@ async function removeShokunin(i){
   const name=getShokunin()[i];
   if(!confirm(name+'を削除しますか？'))return;
   try{
-    const res=await fetch(GAS_URL,{method:'POST',body:JSON.stringify({action:'remove_member',name,company:currentCompany}),headers:{'Content-Type':'text/plain'}});
+    const res=await fetch(getGasUrl(),{method:'POST',body:JSON.stringify({action:'remove_member',name,company:currentCompany}),headers:{'Content-Type':'text/plain'}});
     const json=await res.json();
     if(json.status==='ok'){
       allMembers=allMembers.filter(m=>!(m.name===name&&m.company===currentCompany));
