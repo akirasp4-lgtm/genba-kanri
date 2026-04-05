@@ -53,6 +53,13 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 .yakin-toggle.active .yakin-toggle-icon{opacity:1}
 .yakin-toggle-icon{font-size:20px;opacity:0.4;transition:opacity 0.15s}
 .yakin-toggle-label{font-size:15px;font-weight:500;color:#666;transition:color 0.15s}
+.yasumi-toggle{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:10px 12px;border:1px solid #ddd;border-radius:8px;background:#f9f9f9;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.yasumi-toggle.active{background:#E8384F;border-color:#E8384F}
+.yasumi-toggle.active .yasumi-toggle-label{color:#fff}
+.yasumi-toggle.active .yasumi-toggle-icon{opacity:1}
+.yasumi-toggle-icon{font-size:20px;opacity:0.4;transition:opacity 0.15s}
+.yasumi-toggle-label{font-size:15px;font-weight:500;color:#666;transition:color 0.15s}
+.yasumi-badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;background:#E8384F;color:#fff;margin-left:6px;vertical-align:middle}
 .member-section{margin-bottom:12px}
 .member-label{font-size:13px;color:#666;margin-bottom:6px}
 .member-grid{display:flex;flex-wrap:wrap;gap:8px;padding:12px;border:1px solid #ddd;border-radius:10px;background:#f9f9f9;min-height:52px}
@@ -113,6 +120,10 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
   <div class="yakin-toggle" id="s-yakin-toggle" onclick="toggleYakin('s')">
     <span class="yakin-toggle-icon">🌙</span>
     <span class="yakin-toggle-label">夜勤</span>
+  </div>
+  <div class="yasumi-toggle" id="s-yasumi-toggle" onclick="toggleYasumi('s')">
+    <span class="yasumi-toggle-icon">🏖️</span>
+    <span class="yasumi-toggle-label">休み</span>
   </div>
   <label>人工（ひとり当たり）</label>
   <select id="s-kosu">
@@ -232,6 +243,10 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
     <span class="yakin-toggle-icon">🌙</span>
     <span class="yakin-toggle-label">夜勤</span>
   </div>
+  <div class="yasumi-toggle" id="e-yasumi-toggle" onclick="toggleYasumi('e')">
+    <span class="yasumi-toggle-icon">🏖️</span>
+    <span class="yasumi-toggle-label">休み</span>
+  </div>
   <label>人工（ひとり当たり）</label>
   <select id="e-kosu"><option value="1.0">1人工</option><option value="1.5">1.5人工</option><option value="2.0">2人工</option></select>
   <div class="leader-select-wrap">
@@ -264,7 +279,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 </div>
 
 <script>
-const GAS_URL='https://script.google.com/macros/s/AKfycbxFw48FESoMGg1r91b01Io7ZTw3hPjXL57wCiaUrbci4FXOAi4qlFVpg3nv-S58zTnM/exec';
+const GAS_URL='https://script.google.com/macros/s/AKfycby40Hub0Ql-pyMw-EVKB5uLHcamOU_3DPw5P7ri3prLJpjcCO4BjOBsEAdJLB3K7yx9Eg/exec';
 const COMPANIES=['グローライズ','和信カインド','ビジネスサポート','ラーテル','GRHD'];
 
 let currentCompany='';
@@ -277,6 +292,7 @@ let editDate='';
 let currentDateFilter='';
 let listMonth=''; // yyyy-MM形式
 let yakinState={s:false, e:false};
+let yasumiState={s:false, e:false};
 let isSubmitting=false;
 
 // ===== XSS対策: HTMLエスケープ =====
@@ -349,9 +365,11 @@ function filteredNippos(){
   return allNippos.filter(n=>n.company===currentCompany);
 }
 
-// ===== 夜勤トグル =====
-function toggleYakin(p){yakinState[p]=!yakinState[p];document.getElementById(p+'-yakin-toggle').classList.toggle('active',yakinState[p]);}
+// ===== 夜勤・休みトグル =====
+function toggleYakin(p){yakinState[p]=!yakinState[p];document.getElementById(p+'-yakin-toggle').classList.toggle('active',yakinState[p]);if(yakinState[p]){yasumiState[p]=false;document.getElementById(p+'-yasumi-toggle').classList.remove('active');}}
 function setYakin(p,v){yakinState[p]=v;document.getElementById(p+'-yakin-toggle').classList.toggle('active',v);}
+function toggleYasumi(p){yasumiState[p]=!yasumiState[p];document.getElementById(p+'-yasumi-toggle').classList.toggle('active',yasumiState[p]);if(yasumiState[p]){yakinState[p]=false;document.getElementById(p+'-yakin-toggle').classList.remove('active');}}
+function setYasumi(p,v){yasumiState[p]=v;document.getElementById(p+'-yasumi-toggle').classList.toggle('active',v);}
 
 function switchTab(t){
   const tabs=['input','list','avail','jimu'];
@@ -395,13 +413,15 @@ async function submitNippo(){
   const memo=document.getElementById('s-memo').value;
   const leader=document.getElementById('s-leader').value;
   const yakin=yakinState.s;
+  const yasumi=yasumiState.s;
+  const effectiveKosu=yasumi?0:kosu;
   if(!date||!genba){showAlert('作業日と現場名は必須です','err');return;}
   if(!leader){showAlert('代表者を選択してください','err');return;}
   const members=[{name:leader,role:'代表'}];
   const shokunin=getShokunin();
   selectedMembers.forEach(i=>{if(shokunin[i]!==leader)members.push({name:shokunin[i],role:'同行'});});
   const groupId=uuid();
-  const rows=members.map(m=>({date,genba,loc,name:m.name,role:m.role,start,end,kosu,memo,yakin,company:currentCompany,id:groupId}));
+  const rows=members.map(m=>({date,genba,loc,name:m.name,role:m.role,start,end,kosu:effectiveKosu,memo,yakin,yasumi,company:currentCompany,id:groupId}));
   const btn=document.getElementById('submit-btn');
   isSubmitting=true;btn.textContent='送信中...';btn.disabled=true;
   try{
@@ -411,7 +431,7 @@ async function submitNippo(){
       showAlert(`✓ ${members.length}人分を登録しました！（${currentCompany}）`,'ok');
       document.getElementById('s-genba').value='';document.getElementById('s-location').value='';
       document.getElementById('s-memo').value='';document.getElementById('s-leader').value='';
-      setYakin('s',false);selectedMembers=[];renderMemberChips('member-selector',selectedMembers,toggleMember);
+      setYakin('s',false);setYasumi('s',false);selectedMembers=[];renderMemberChips('member-selector',selectedMembers,toggleMember);
       await loadData();
     } else showAlert('エラー：'+json.message,'err');
   }catch(err){showAlert('送信エラー：'+err.message,'err');}
@@ -459,6 +479,7 @@ async function loadData(){
       kosu:parseFloat(r['人工'])||0,
       memo:String(r['メモ']||''),
       yakin:String(r['夜勤']||'')==='夜勤',
+      yasumi:String(r['夜勤']||'')==='休み',
       company:String(r['会社']||'')
     }));
     // メンバーをサーバーから取得
@@ -473,8 +494,8 @@ function groupNippos(nippos){
   const groups={};
   nippos.forEach(n=>{
     // IDでグループ化（同じIDは同一登録）
-    const key=n.id||`${n.date}__${n.genba}__${n.loc}__${n.start}__${n.end}__${n.kosu}__${n.memo}__${n.yakin}`;
-    if(!groups[key])groups[key]={date:n.date,genba:n.genba,loc:n.loc,start:n.start,end:n.end,kosu:n.kosu,memo:n.memo,yakin:n.yakin,company:n.company,members:[],ids:[]};
+    const key=n.id||`${n.date}__${n.genba}__${n.loc}__${n.start}__${n.end}__${n.kosu}__${n.memo}__${n.yakin}__${n.yasumi}`;
+    if(!groups[key])groups[key]={date:n.date,genba:n.genba,loc:n.loc,start:n.start,end:n.end,kosu:n.kosu,memo:n.memo,yakin:n.yakin,yasumi:n.yasumi,company:n.company,members:[],ids:[]};
     groups[key].members.push({name:n.name,role:n.role});
     if(n.id)groups[key].ids.push(n.id);
   });
@@ -519,10 +540,11 @@ function renderListWithDate(groups){
     const memberTags=g.members.map(m=>`<span class="member-tag ${m.role==='代表'?'tag-leader':'tag-member'}">${esc(m.name)}</span>`).join('');
     const totalKo=(g.kosu*g.members.length).toFixed(1);
     const yakinBadge=g.yakin?'<span class="yakin-badge">🌙 夜勤</span>':'';
+    const yasumiBadge=g.yasumi?'<span class="yasumi-badge">🏖️ 休み</span>':'';
     const companyBadge=(currentCompany==='全社'&&g.company)?`<span class="company-badge">${esc(g.company)}</span>`:'';
     return`<div class="yotei-card">
       <div class="yotei-header"><div>
-        <div class="yotei-date">${formatDate(g.date)}${yakinBadge}${companyBadge}</div>
+        <div class="yotei-date">${formatDate(g.date)}${yakinBadge}${yasumiBadge}${companyBadge}</div>
         <div class="yotei-genba">${esc(g.genba)}</div>
       </div><div style="font-size:13px;color:#666">${totalKo}人工</div></div>
       <div class="yotei-body">
@@ -551,13 +573,16 @@ async function deleteGroup(idx){
   const g=groups[idx];if(!g)return;
   if(!confirm('この日報を削除しますか？'))return;
   const ids=[...new Set(g.ids)];
-  allNippos=allNippos.filter(n=>!ids.includes(n.id));
-  renderList();updateAvailability();updateJimu();
+  setLoading(true);
   try{
     const res=await fetch(GAS_URL,{method:'POST',body:JSON.stringify({action:'delete',ids}),headers:{'Content-Type':'text/plain'}});
     const json=await res.json();
-    if(json.status!=='ok'){alert('削除エラー：'+json.message);await loadData();}
+    if(json.status==='ok'){
+      if(json.deleted===0){alert('削除対象が見つかりませんでした。スプレッドシートのID列を確認してください。');}
+      await loadData();
+    } else {alert('削除エラー：'+json.message);await loadData();}
   }catch(e){alert('削除エラー：'+e.message);await loadData();}
+  setLoading(false);
 }
 
 // ===== 編集 =====
@@ -574,6 +599,7 @@ function openEditModal(idx){
   document.getElementById('e-memo').value=g.memo||'';
   document.getElementById('edit-title').textContent=`編集：${formatDate(g.date)} ${g.genba}`;
   setYakin('e',!!g.yakin);
+  setYasumi('e',!!g.yasumi);
   const leader=g.members.find(m=>m.role==='代表');
   document.getElementById('e-leader').value=leader?leader.name:'';
   editSelectedMembers=[];
@@ -596,6 +622,8 @@ async function saveEdit(){
   const memo=document.getElementById('e-memo').value;
   const leader=document.getElementById('e-leader').value;
   const yakin=yakinState.e;
+  const yasumi=yasumiState.e;
+  const effectiveKosu=yasumi?0:kosu;
   if(!genba){alert('現場名は必須です');return;}
   if(!leader){alert('代表者を選択してください');return;}
   const members=[{name:leader,role:'代表'}];
@@ -603,7 +631,7 @@ async function saveEdit(){
   editSelectedMembers.forEach(i=>{if(shokunin[i]!==leader)members.push({name:shokunin[i],role:'同行'});});
   const newId=uuid();
   const company=currentCompany==='全社'?'':currentCompany;
-  const rows=members.map(m=>({date:editDate,genba,loc,name:m.name,role:m.role,start,end,kosu,memo,yakin,company,id:newId}));
+  const rows=members.map(m=>({date:editDate,genba,loc,name:m.name,role:m.role,start,end,kosu:effectiveKosu,memo,yakin,yasumi,company,id:newId}));
   btn.textContent='保存中...';btn.disabled=true;
   try{
     const res=await fetch(GAS_URL,{method:'POST',body:JSON.stringify({action:'update',ids:editIds,rows}),headers:{'Content-Type':'text/plain'}});
