@@ -138,6 +138,11 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 <!-- 予定一覧 -->
 <div id="screen-list" class="screen">
 <div class="page-title">予定一覧</div>
+<div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:12px">
+  <button class="btn btn-secondary btn-sm" onclick="changeListMonth(-1)">◀</button>
+  <span id="list-month-label" style="font-size:15px;font-weight:600;min-width:100px;text-align:center"></span>
+  <button class="btn btn-secondary btn-sm" onclick="changeListMonth(1)">▶</button>
+</div>
 <div class="date-filter" id="date-filter"></div>
 <div id="list-container"><div class="empty">下の更新ボタンを押してください</div></div>
 <button class="btn btn-secondary" style="margin-top:8px" onclick="loadData()">更新</button>
@@ -270,6 +275,7 @@ let editSelectedMembers=[];
 let editIds=[];
 let editDate='';
 let currentDateFilter='';
+let listMonth=''; // yyyy-MM形式
 let yakinState={s:false, e:false};
 let isSubmitting=false;
 
@@ -482,12 +488,25 @@ function formatDate(d){
 }
 
 function renderList(){
-  const groups=groupNippos(filteredNippos());
+  if(!listMonth){const now=new Date();listMonth=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');}
+  // 月ラベル更新
+  const lp=listMonth.split('-');
+  document.getElementById('list-month-label').textContent=lp[0]+'年'+Number(lp[1])+'月';
+  // 当月のデータだけ抽出
+  const groups=groupNippos(filteredNippos()).filter(g=>g.date.startsWith(listMonth));
   const dates=[...new Set(groups.map(g=>g.date))].sort((a,b)=>b.localeCompare(a));
   const df=document.getElementById('date-filter');
   df.innerHTML='<div class="date-chip'+(currentDateFilter===''?' active':'')+'" onclick="filterDate(\'\')">全て</div>'+
     dates.map(d=>`<div class="date-chip${currentDateFilter===d?' active':''}" onclick="filterDate('${d}')">${formatDate(d)}</div>`).join('');
   renderListWithDate(groups);
+}
+
+function changeListMonth(delta){
+  const p=listMonth.split('-');
+  const d=new Date(Number(p[0]),Number(p[1])-1+delta,1);
+  listMonth=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+  currentDateFilter='';
+  renderList();
 }
 
 function filterDate(d){currentDateFilter=d;renderList();}
@@ -522,7 +541,7 @@ function renderListWithDate(groups){
 
 // グローバルにグループを保持して安全にアクセス
 function getDisplayedGroups(){
-  const groups=groupNippos(filteredNippos());
+  const groups=groupNippos(filteredNippos()).filter(g=>g.date.startsWith(listMonth));
   return currentDateFilter?groups.filter(g=>g.date===currentDateFilter):groups;
 }
 
