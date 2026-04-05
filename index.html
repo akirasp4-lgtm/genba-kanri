@@ -109,10 +109,10 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 <div class="card">
   <label>作業日</label>
   <input type="date" id="s-date">
+  <label>元請名</label>
+  <input type="text" id="s-genba" placeholder="例：〇〇電気">
   <label>現場名</label>
-  <input type="text" id="s-genba" placeholder="例：〇〇ビル">
-  <label>作業場所</label>
-  <input type="text" id="s-location" placeholder="例：2F北側">
+  <input type="text" id="s-location" placeholder="例：〇〇ビル新築工事">
   <div class="grid2">
     <div><label>出勤</label><input type="time" id="s-start" value="08:00"></div>
     <div><label>退勤</label><input type="time" id="s-end" value="17:00"></div>
@@ -187,7 +187,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 </div>
 <div class="filter-row">
   <select id="j-month" onchange="updateJimu()"></select>
-  <select id="j-genba-filter" onchange="updateJimu()"><option value="">全現場</option></select>
+  <select id="j-genba-filter" onchange="updateJimu()"><option value="">全元請</option></select>
 </div>
 <div class="card">
   <div style="font-size:13px;color:#666;margin-bottom:10px;font-weight:500">職人別集計</div>
@@ -233,8 +233,8 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 <div id="edit-modal" class="modal-bg">
 <div class="modal">
   <div class="modal-title" id="edit-title">編集</div>
-  <label>現場名</label><input type="text" id="e-genba">
-  <label>作業場所</label><input type="text" id="e-location">
+  <label>元請名</label><input type="text" id="e-genba">
+  <label>現場名</label><input type="text" id="e-location">
   <div class="grid2">
     <div><label>出勤</label><input type="time" id="e-start"></div>
     <div><label>退勤</label><input type="time" id="e-end"></div>
@@ -279,7 +279,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 </div>
 
 <script>
-const GAS_URL='https://script.google.com/macros/s/AKfycby40Hub0Ql-pyMw-EVKB5uLHcamOU_3DPw5P7ri3prLJpjcCO4BjOBsEAdJLB3K7yx9Eg/exec';
+const GAS_URL='https://script.google.com/macros/s/AKfycbxmAHVjZkr4Sf8S3gU8sw9HZ-1s-mAlP2jV9b3d3BHptkvZAeLB-Rg3Qt0LCzTqy1K8Ww/exec';
 const COMPANIES=['グローライズ','和信カインド','ビジネスサポート','ラーテル','GRHD'];
 
 let currentCompany='';
@@ -415,7 +415,7 @@ async function submitNippo(){
   const yakin=yakinState.s;
   const yasumi=yasumiState.s;
   const effectiveKosu=yasumi?0:kosu;
-  if(!date||!genba){showAlert('作業日と現場名は必須です','err');return;}
+  if(!date||!genba){showAlert('作業日と元請名は必須です','err');return;}
   if(!leader){showAlert('代表者を選択してください','err');return;}
   const members=[{name:leader,role:'代表'}];
   const shokunin=getShokunin();
@@ -470,8 +470,8 @@ async function loadData(){
       id:String(r['ID']||''),
       timestamp:String(r['登録日時']||''),
       date:parseWorkDate(r['作業日']),
-      genba:String(r['現場名']||''),
-      loc:String(r['作業場所']||''),
+      genba:String(r['元請名']||''),
+      loc:String(r['現場名']||''),
       name:String(r['氏名']||''),
       role:String(r['役割']||''),
       start:formatTime(r['出勤']),
@@ -624,7 +624,7 @@ async function saveEdit(){
   const yakin=yakinState.e;
   const yasumi=yasumiState.e;
   const effectiveKosu=yasumi?0:kosu;
-  if(!genba){alert('現場名は必須です');return;}
+  if(!genba){alert('元請名は必須です');return;}
   if(!leader){alert('代表者を選択してください');return;}
   const members=[{name:leader,role:'代表'}];
   const shokunin=getShokunin();
@@ -658,7 +658,7 @@ function updateGenbaFilter(){
   const cn=filteredNippos();
   const gs=[...new Set(cn.map(n=>n.genba).filter(Boolean))].sort();
   const gf=document.getElementById('j-genba-filter');const cur=gf.value;
-  gf.innerHTML='<option value="">全現場</option>'+gs.map(g=>`<option${g===cur?' selected':''}>${esc(g)}</option>`).join('');
+  gf.innerHTML='<option value="">全元請</option>'+gs.map(g=>`<option${g===cur?' selected':''}>${esc(g)}</option>`).join('');
 }
 
 function updateJimu(){
