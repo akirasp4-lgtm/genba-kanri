@@ -181,7 +181,17 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
   </table>
 </div>
 <button class="btn btn-secondary" style="margin-bottom:8px" onclick="loadData()">更新</button>
-<button class="btn btn-secondary" style="margin-bottom:8px;margin-top:8px" onclick="exportCSV()">CSVダウンロード</button>
+<div class="card" style="margin-top:8px">
+  <div style="font-size:13px;color:#666;margin-bottom:10px;font-weight:500">CSVダウンロード</div>
+  <select id="csv-sheet" style="margin-bottom:8px">
+    <option value="日報データ">日報データ</option>
+    <option value="アーカイブ">アーカイブ</option>
+    <option value="月別集計">月別集計</option>
+    <option value="会社別集計">会社別集計</option>
+    <option value="職人マスタ">職人マスタ</option>
+  </select>
+  <button class="btn btn-secondary" id="csv-btn" onclick="downloadSheetCSV()">ダウンロード</button>
+</div>
 <button class="btn btn-secondary" style="margin-top:8px" onclick="openSettings()">職人を管理</button>
 <div class="archive-section" style="background:#E8F4FD;border-color:#85B7EB">
   <div class="archive-title" style="color:#0C447C">📊 スプレッドシート集計</div>
@@ -249,7 +259,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 </div>
 
 <script>
-const GAS_URL='https://script.google.com/macros/s/AKfycbzoczH-BCT3yoe_TppkyoOvqAXc2FbaRCBuZJLpwtnKfLXq_iUud486kC7ORNRSj3xZtQ/exec';
+const GAS_URL='https://script.google.com/macros/s/AKfycbyxaTkaraRygVgDRD4wm7CP48d8kzXwLaGRLOUHlZS9w7zTAb9zhdoKt-hKumVNrUmUHw/exec';
 const COMPANIES=['グローライズ','和信カインド','ビジネスサポート','ラーテル','GRHD'];
 
 let currentCompany='';
@@ -619,21 +629,23 @@ function updateJimu(){
     `<tr><td colspan="3" class="empty">データなし</td></tr>`;
 }
 
-function exportCSV(){
-  const month=document.getElementById('j-month').value;
-  const genbaF=document.getElementById('j-genba-filter').value;
-  const nippos=filteredNippos().filter(n=>n.date.startsWith(month)&&(!genbaF||n.genba===genbaF));
-  if(nippos.length===0){alert('データがありません');return;}
-  const BOM='\uFEFF';
-  const header='登録日時,作業日,現場名,作業場所,氏名,役割,出勤,退勤,人工,メモ,夜勤,会社,ID\n';
-  const csvEsc=v=>{const s=String(v||'');return s.includes(',')||s.includes('"')||s.includes('\n')?'"'+s.replace(/"/g,'""')+'"':s;};
-  const rows=nippos.sort((a,b)=>a.date.localeCompare(b.date)).map(n=>
-    [n.timestamp,n.date,n.genba,n.loc,n.name,n.role,n.start,n.end,n.kosu,n.memo,n.yakin?'夜勤':'',n.company,n.id].map(csvEsc).join(',')
-  ).join('\n');
-  const blob=new Blob([BOM+header+rows],{type:'text/csv;charset=utf-8;'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
-  const cname=currentCompany==='全社'?'全社':currentCompany;
-  a.download=`日報_${cname}_${month}.csv`;a.click();
+async function downloadSheetCSV(){
+  const sheetName=document.getElementById('csv-sheet').value;
+  const btn=document.getElementById('csv-btn');
+  btn.textContent='取得中...';btn.disabled=true;
+  try{
+    const res=await fetch(GAS_URL,{method:'POST',body:JSON.stringify({action:'get_sheet',sheet:sheetName}),headers:{'Content-Type':'text/plain'}});
+    const json=await res.json();
+    if(json.status==='ok'&&json.data){
+      const BOM='\uFEFF';
+      const csvEsc=v=>{const s=String(v==null?'':v);return s.includes(',')||s.includes('"')||s.includes('\n')?'"'+s.replace(/"/g,'""')+'"':s;};
+      const csv=json.data.map(row=>row.map(csvEsc).join(',')).join('\n');
+      const blob=new Blob([BOM+csv],{type:'text/csv;charset=utf-8;'});
+      const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+      a.download=`${sheetName}.csv`;a.click();
+    } else alert('エラー：'+(json.message||'データなし'));
+  }catch(e){alert('ダウンロードエラー：'+e.message);}
+  btn.textContent='ダウンロード';btn.disabled=false;
 }
 
 async function runSummary(){
