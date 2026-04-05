@@ -68,6 +68,13 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 .yotei-toggle-icon{font-size:20px;opacity:0.4;transition:opacity 0.15s}
 .yotei-toggle-label{font-size:15px;font-weight:500;color:#666;transition:color 0.15s}
 .yotei-badge-tag{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;background:#3B82F6;color:#fff;margin-left:6px;vertical-align:middle}
+.souko-toggle{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:10px 12px;border:1px solid #ddd;border-radius:8px;background:#f9f9f9;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.souko-toggle.active{background:#8B5E3C;border-color:#8B5E3C}
+.souko-toggle.active .souko-toggle-label{color:#fff}
+.souko-toggle.active .souko-toggle-icon{opacity:1}
+.souko-toggle-icon{font-size:20px;opacity:0.4;transition:opacity 0.15s}
+.souko-toggle-label{font-size:15px;font-weight:500;color:#666;transition:color 0.15s}
+.souko-badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;background:#8B5E3C;color:#fff;margin-left:6px;vertical-align:middle}
 .member-section{margin-bottom:12px}
 .member-label{font-size:13px;color:#666;margin-bottom:6px}
 .member-grid{display:flex;flex-wrap:wrap;gap:8px;padding:12px;border:1px solid #ddd;border-radius:10px;background:#f9f9f9;min-height:52px}
@@ -124,6 +131,10 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
   <div class="grid2">
     <div><label>出勤</label><input type="time" id="s-start" value="08:00"></div>
     <div><label>退勤</label><input type="time" id="s-end" value="17:00"></div>
+  </div>
+  <div class="souko-toggle" id="s-souko-toggle" onclick="toggleSouko('s')">
+    <span class="souko-toggle-icon">🏭</span>
+    <span class="souko-toggle-label">倉庫</span>
   </div>
   <div class="yakin-toggle" id="s-yakin-toggle" onclick="toggleYakin('s')">
     <span class="yakin-toggle-icon">🌙</span>
@@ -251,6 +262,10 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
     <div><label>出勤</label><input type="time" id="e-start"></div>
     <div><label>退勤</label><input type="time" id="e-end"></div>
   </div>
+  <div class="souko-toggle" id="e-souko-toggle" onclick="toggleSouko('e')">
+    <span class="souko-toggle-icon">🏭</span>
+    <span class="souko-toggle-label">倉庫</span>
+  </div>
   <div class="yakin-toggle" id="e-yakin-toggle" onclick="toggleYakin('e')">
     <span class="yakin-toggle-icon">🌙</span>
     <span class="yakin-toggle-label">夜勤</span>
@@ -295,7 +310,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 </div>
 
 <script>
-const GAS_URL='https://script.google.com/macros/s/AKfycby1IdTLS4K0bEe0czY58JVi9KjmaOFE9uojKRYcqkIZgnjrLeAZmOjuwrv76eXVpJv4EQ/exec';
+const GAS_URL='https://script.google.com/macros/s/AKfycbwRgQfFTbRl56x7Ezww1lm-eIx2zMY3QvVWkre2z6MGnHEUslnEtGIDSOgFTL3vRUlsyw/exec';
 const COMPANIES=['グローライズ','和信カインド','ビジネスサポート','ラーテル','GRHD'];
 
 let currentCompany='';
@@ -310,6 +325,7 @@ let listMonth=''; // yyyy-MM形式
 let yakinState={s:false, e:false};
 let yasumiState={s:false, e:false};
 let yoteiState={s:false, e:false};
+let soukoState={s:false, e:false};
 let isSubmitting=false;
 
 // ===== XSS対策: HTMLエスケープ =====
@@ -382,8 +398,10 @@ function filteredNippos(){
   return allNippos.filter(n=>n.company===currentCompany);
 }
 
-// ===== 夜勤・休み・予定トグル（排他的）=====
-function clearToggles(p){yakinState[p]=false;yasumiState[p]=false;yoteiState[p]=false;document.getElementById(p+'-yakin-toggle').classList.remove('active');document.getElementById(p+'-yasumi-toggle').classList.remove('active');document.getElementById(p+'-yotei-toggle').classList.remove('active');}
+// ===== 倉庫・夜勤・休み・予定トグル（排他的）=====
+function clearToggles(p){soukoState[p]=false;yakinState[p]=false;yasumiState[p]=false;yoteiState[p]=false;document.getElementById(p+'-souko-toggle').classList.remove('active');document.getElementById(p+'-yakin-toggle').classList.remove('active');document.getElementById(p+'-yasumi-toggle').classList.remove('active');document.getElementById(p+'-yotei-toggle').classList.remove('active');}
+function toggleSouko(p){const v=!soukoState[p];clearToggles(p);soukoState[p]=v;document.getElementById(p+'-souko-toggle').classList.toggle('active',v);}
+function setSouko(p,v){soukoState[p]=v;document.getElementById(p+'-souko-toggle').classList.toggle('active',v);}
 function toggleYakin(p){const v=!yakinState[p];clearToggles(p);yakinState[p]=v;document.getElementById(p+'-yakin-toggle').classList.toggle('active',v);}
 function setYakin(p,v){yakinState[p]=v;document.getElementById(p+'-yakin-toggle').classList.toggle('active',v);}
 function toggleYasumi(p){const v=!yasumiState[p];clearToggles(p);yasumiState[p]=v;document.getElementById(p+'-yasumi-toggle').classList.toggle('active',v);}
@@ -435,6 +453,7 @@ async function submitNippo(){
   const yakin=yakinState.s;
   const yasumi=yasumiState.s;
   const yotei=yoteiState.s;
+  const souko=soukoState.s;
   const effectiveKosu=(yasumi||yotei)?0:kosu;
   if(!date||!genba){showAlert('作業日と元請名は必須です','err');return;}
   if(!leader){showAlert('代表者を選択してください','err');return;}
@@ -442,7 +461,7 @@ async function submitNippo(){
   const shokunin=getShokunin();
   selectedMembers.forEach(i=>{if(shokunin[i]!==leader)members.push({name:shokunin[i],role:'同行'});});
   const groupId=uuid();
-  const rows=members.map(m=>({date,genba,loc,name:m.name,role:m.role,start,end,kosu:effectiveKosu,memo,yakin,yasumi,yotei,company:currentCompany,id:groupId}));
+  const rows=members.map(m=>({date,genba,loc,name:m.name,role:m.role,start,end,kosu:effectiveKosu,memo,yakin,yasumi,yotei,souko,company:currentCompany,id:groupId}));
   const btn=document.getElementById('submit-btn');
   isSubmitting=true;btn.textContent='送信中...';btn.disabled=true;
   try{
@@ -452,7 +471,7 @@ async function submitNippo(){
       showAlert(`✓ ${members.length}人分を登録しました！（${currentCompany}）`,'ok');
       document.getElementById('s-genba').value='';document.getElementById('s-location').value='';
       document.getElementById('s-memo').value='';document.getElementById('s-leader').value='';
-      setYakin('s',false);setYasumi('s',false);setYotei('s',false);selectedMembers=[];renderMemberChips('member-selector',selectedMembers,toggleMember);
+      setYakin('s',false);setYasumi('s',false);setYotei('s',false);setSouko('s',false);selectedMembers=[];renderMemberChips('member-selector',selectedMembers,toggleMember);
       await loadData();
     } else showAlert('エラー：'+json.message,'err');
   }catch(err){showAlert('送信エラー：'+err.message,'err');}
@@ -502,6 +521,7 @@ async function loadData(){
       yakin:String(r['夜勤']||'')==='夜勤',
       yasumi:String(r['夜勤']||'')==='休み',
       yotei:String(r['夜勤']||'')==='予定',
+      souko:String(r['夜勤']||'')==='倉庫',
       company:String(r['会社']||'')
     }));
     // メンバーをサーバーから取得
@@ -516,8 +536,8 @@ function groupNippos(nippos){
   const groups={};
   nippos.forEach(n=>{
     // IDでグループ化（同じIDは同一登録）
-    const key=n.id||`${n.date}__${n.genba}__${n.loc}__${n.start}__${n.end}__${n.kosu}__${n.memo}__${n.yakin}__${n.yasumi}__${n.yotei}`;
-    if(!groups[key])groups[key]={date:n.date,genba:n.genba,loc:n.loc,start:n.start,end:n.end,kosu:n.kosu,memo:n.memo,yakin:n.yakin,yasumi:n.yasumi,yotei:n.yotei,company:n.company,members:[],ids:[]};
+    const key=n.id||`${n.date}__${n.genba}__${n.loc}__${n.start}__${n.end}__${n.kosu}__${n.memo}__${n.yakin}__${n.yasumi}__${n.yotei}__${n.souko}`;
+    if(!groups[key])groups[key]={date:n.date,genba:n.genba,loc:n.loc,start:n.start,end:n.end,kosu:n.kosu,memo:n.memo,yakin:n.yakin,yasumi:n.yasumi,yotei:n.yotei,souko:n.souko,company:n.company,members:[],ids:[]};
     groups[key].members.push({name:n.name,role:n.role});
     if(n.id)groups[key].ids.push(n.id);
   });
@@ -564,10 +584,11 @@ function renderListWithDate(groups){
     const yakinBadge=g.yakin?'<span class="yakin-badge">🌙 夜勤</span>':'';
     const yasumiBadge=g.yasumi?'<span class="yasumi-badge">🏖️ 休み</span>':'';
     const yoteiBadge=g.yotei?'<span class="yotei-badge-tag">📅 予定</span>':'';
+    const soukoBadge=g.souko?'<span class="souko-badge">🏭 倉庫</span>':'';
     const companyBadge=(currentCompany==='全社'&&g.company)?`<span class="company-badge">${esc(g.company)}</span>`:'';
     return`<div class="yotei-card">
       <div class="yotei-header"><div>
-        <div class="yotei-date">${formatDate(g.date)}${yakinBadge}${yasumiBadge}${yoteiBadge}${companyBadge}</div>
+        <div class="yotei-date">${formatDate(g.date)}${soukoBadge}${yakinBadge}${yasumiBadge}${yoteiBadge}${companyBadge}</div>
         <div class="yotei-genba">${esc(g.genba)}</div>
       </div><div style="font-size:13px;color:#666">${totalKo}人工</div></div>
       <div class="yotei-body">
@@ -624,6 +645,7 @@ function openEditModal(idx){
   setYakin('e',!!g.yakin);
   setYasumi('e',!!g.yasumi);
   setYotei('e',!!g.yotei);
+  setSouko('e',!!g.souko);
   const leader=g.members.find(m=>m.role==='代表');
   document.getElementById('e-leader').value=leader?leader.name:'';
   editSelectedMembers=[];
@@ -648,6 +670,7 @@ async function saveEdit(){
   const yakin=yakinState.e;
   const yasumi=yasumiState.e;
   const yotei=yoteiState.e;
+  const souko=soukoState.e;
   const effectiveKosu=(yasumi||yotei)?0:kosu;
   if(!genba){alert('元請名は必須です');return;}
   if(!leader){alert('代表者を選択してください');return;}
@@ -656,7 +679,7 @@ async function saveEdit(){
   editSelectedMembers.forEach(i=>{if(shokunin[i]!==leader)members.push({name:shokunin[i],role:'同行'});});
   const newId=uuid();
   const company=currentCompany==='全社'?'':currentCompany;
-  const rows=members.map(m=>({date:editDate,genba,loc,name:m.name,role:m.role,start,end,kosu:effectiveKosu,memo,yakin,yasumi,yotei,company,id:newId}));
+  const rows=members.map(m=>({date:editDate,genba,loc,name:m.name,role:m.role,start,end,kosu:effectiveKosu,memo,yakin,yasumi,yotei,souko,company,id:newId}));
   btn.textContent='保存中...';btn.disabled=true;
   try{
     const res=await fetch(GAS_URL,{method:'POST',body:JSON.stringify({action:'update',ids:editIds,rows}),headers:{'Content-Type':'text/plain'}});
@@ -670,7 +693,7 @@ async function saveEdit(){
 function updateAvailability(){
   const date=document.getElementById('a-date').value;
   const cn=filteredNippos();
-  const busySet=new Set(cn.filter(n=>n.date===date).map(n=>n.name));
+  const busySet=new Set(cn.filter(n=>n.date===date&&!n.souko).map(n=>n.name));
   const con=document.getElementById('avail-container');
   if(allNippos.length===0){con.innerHTML='<div style="color:#999;font-size:13px;grid-column:1/-1">更新ボタンを押してください</div>';return;}
   con.innerHTML=getShokunin().map(s=>{
