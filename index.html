@@ -675,7 +675,8 @@ function openEditModal(idx){
   document.getElementById('e-location').value=g.loc||'';
   document.getElementById('e-start').value=g.start||'08:00';
   document.getElementById('e-end').value=g.end||'17:00';
-  document.getElementById('e-kosu').value=String(g.kosu||1.0);
+  const kosuVal=g.kosu>0?g.kosu:1.0;
+  document.getElementById('e-kosu').value=kosuVal.toFixed(1);
   document.getElementById('e-memo').value=g.memo||'';
   document.getElementById('edit-title').textContent=`編集：${formatDate(g.date)} ${g.genba}`;
   setYakin('e',!!g.yakin);
