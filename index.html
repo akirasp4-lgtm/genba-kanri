@@ -315,7 +315,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 
 <script>
 // === GAS URL（全社共通）===
-const GAS_URL='https://script.google.com/macros/s/AKfycbw695zsvcOmGXIHcdYSGuak_A2d8NO2y9hVaInf8ytBx3GA90pTuc8UdaM_1yBZPA7Suw/exec';
+const GAS_URL='https://script.google.com/macros/s/AKfycbxnaK5cJ6zoDtWDmIF0hgd08aMxAOBKNrmJc5l_qHRsTGhSutfDoAI1BNhDoIayZho_6Q/exec';
 const COMPANIES=['グローライズ','和信カインド','ビジネスサポート','ラーテル','GRHD'];
 
 // GAS URLを返す（全社共通）
@@ -749,19 +749,40 @@ function updateGenbaFilter(){
   gf.innerHTML='<option value="">全元請</option>'+gs.map(g=>`<option${g===cur?' selected':''}>${esc(g)}</option>`).join('');
 }
 
+// 人工計算ヘルパー：同じ人・同じ日の非夜勤は最大1回分のみ。夜勤は別カウント。
+function calcEffectiveKosu(nippos){
+  const byNameDate={};
+  nippos.forEach(n=>{
+    if(n.yasumi||n.yotei)return;
+    const key=n.name+'__'+n.date;
+    if(!byNameDate[key])byNameDate[key]={day:0,night:0,dayCount:false,nightCount:false};
+    if(n.yakin){
+      byNameDate[key].night=Math.max(byNameDate[key].night,n.kosu);
+      byNameDate[key].nightCount=true;
+    } else {
+      byNameDate[key].day=Math.max(byNameDate[key].day,n.kosu);
+      byNameDate[key].dayCount=true;
+    }
+  });
+  const byName={};
+  Object.entries(byNameDate).forEach(([key,v])=>{
+    const name=key.split('__')[0];
+    if(!byName[name])byName[name]={days:0,kosu:0};
+    if(v.dayCount)byName[name].days++;
+    if(v.nightCount)byName[name].days++;
+    byName[name].kosu+=v.day+v.night;
+  });
+  return byName;
+}
+
 function updateJimu(){
   const month=document.getElementById('j-month').value;
   const genbaF=document.getElementById('j-genba-filter').value;
   const nippos=filteredNippos().filter(n=>n.date.startsWith(month)&&(!genbaF||n.genba===genbaF));
-  const byName={};
-  nippos.forEach(n=>{
-    if(!byName[n.name])byName[n.name]={days:0,kosu:0};
-    if(!n.yasumi&&!n.yotei)byName[n.name].days++;
-    byName[n.name].kosu+=n.kosu;
-  });
-  const workNippos=nippos.filter(n=>!n.yasumi&&!n.yotei);
-  const totalKo=nippos.reduce((s,n)=>s+n.kosu,0);
-  document.getElementById('j-total-days').textContent=workNippos.length;
+  const byName=calcEffectiveKosu(nippos);
+  const totalKo=Object.values(byName).reduce((s,v)=>s+v.kosu,0);
+  const totalDays=Object.values(byName).reduce((s,v)=>s+v.days,0);
+  document.getElementById('j-total-days').textContent=totalDays;
   document.getElementById('j-total-ko').textContent=totalKo.toFixed(1);
   const entries=Object.entries(byName).sort((a,b)=>b[1].kosu-a[1].kosu);
   document.getElementById('j-shokunin-tbl').innerHTML=entries.length?
