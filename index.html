@@ -25,6 +25,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 .btn{width:100%;padding:14px;border-radius:10px;font-size:16px;font-weight:600;cursor:pointer;border:none;background:#1D9E75;color:#fff}
 .btn:disabled{opacity:0.5;cursor:not-allowed}
 .btn-secondary{background:#f2f2f7;color:#1a1a1a;border:1px solid #ddd}
+.btn-danger{background:#ff3b30;color:#fff;border:none}
 .btn-sm{width:auto;padding:6px 14px;font-size:13px;font-weight:500;border-radius:8px}
 .alert{border-radius:10px;padding:12px;font-size:14px;margin-bottom:12px;display:none}
 .alert-ok{background:#EAF3DE;color:#3B6D11}
@@ -48,6 +49,8 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 .yotei-actions{display:flex;gap:8px;padding:10px 16px;background:#f9f9f9}
 .yakin-badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;background:#2C2C5A;color:#E8D44D;margin-left:6px;vertical-align:middle}
 .company-badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:500;background:#f0f0f0;color:#666;margin-left:4px;vertical-align:middle}
+.yasumi-badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;background:#E8384F;color:#fff;margin-left:6px;vertical-align:middle}
+.souko-badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;background:#8B5E3C;color:#fff;margin-left:6px;vertical-align:middle}
 .yakin-toggle{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:10px 12px;border:1px solid #ddd;border-radius:8px;background:#f9f9f9;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .yakin-toggle.active{background:#2C2C5A;border-color:#2C2C5A}
 .yakin-toggle.active .yakin-toggle-label{color:#E8D44D}
@@ -60,35 +63,18 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 .yasumi-toggle.active .yasumi-toggle-icon{opacity:1}
 .yasumi-toggle-icon{font-size:20px;opacity:0.4;transition:opacity 0.15s}
 .yasumi-toggle-label{font-size:15px;font-weight:500;color:#666;transition:color 0.15s}
-.yasumi-badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;background:#E8384F;color:#fff;margin-left:6px;vertical-align:middle}
-.yotei-toggle{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:10px 12px;border:1px solid #ddd;border-radius:8px;background:#f9f9f9;cursor:pointer;-webkit-tap-highlight-color:transparent}
-.yotei-toggle.active{background:#3B82F6;border-color:#3B82F6}
-.yotei-toggle.active .yotei-toggle-label{color:#fff}
-.yotei-toggle.active .yotei-toggle-icon{opacity:1}
-.yotei-toggle-icon{font-size:20px;opacity:0.4;transition:opacity 0.15s}
-.yotei-toggle-label{font-size:15px;font-weight:500;color:#666;transition:color 0.15s}
-.yotei-badge-tag{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;background:#3B82F6;color:#fff;margin-left:6px;vertical-align:middle}
 .souko-toggle{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:10px 12px;border:1px solid #ddd;border-radius:8px;background:#f9f9f9;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .souko-toggle.active{background:#8B5E3C;border-color:#8B5E3C}
 .souko-toggle.active .souko-toggle-label{color:#fff}
 .souko-toggle.active .souko-toggle-icon{opacity:1}
 .souko-toggle-icon{font-size:20px;opacity:0.4;transition:opacity 0.15s}
 .souko-toggle-label{font-size:15px;font-weight:500;color:#666;transition:color 0.15s}
-.souko-badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;background:#8B5E3C;color:#fff;margin-left:6px;vertical-align:middle}
 .member-section{margin-bottom:12px}
 .member-label{font-size:13px;color:#666;margin-bottom:6px}
 .member-grid{display:flex;flex-wrap:wrap;gap:8px;padding:12px;border:1px solid #ddd;border-radius:10px;background:#f9f9f9;min-height:52px}
 .member-chip{padding:8px 14px;border-radius:20px;font-size:14px;cursor:pointer;border:1px solid #ddd;background:#fff;color:#444;-webkit-tap-highlight-color:transparent;transition:all 0.1s}
 .member-chip.selected{background:#EAF3DE;border-color:#97C459;color:#3B6D11;font-weight:500}
 .leader-select-wrap{margin-bottom:12px}
-.avail-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
-.avail-chip{padding:10px 6px;border-radius:10px;font-size:13px;text-align:center;border:1px solid #ddd;background:#fff}
-.avail-chip.free{background:#EAF3DE;color:#3B6D11;border-color:#97C459}
-.avail-chip.busy{background:#FAECE7;color:#993C1D;border-color:#F0997B}
-.avail-chip.yasumi{background:#FFF9E6;color:#8B7000;border-color:#F0D860}
-.avail-chip.souko{background:#F3EAE0;color:#8B5E3C;border-color:#C49A6C}
-.avail-name{font-weight:500;font-size:13px}
-.avail-status{font-size:11px;margin-top:2px}
 .date-filter{display:flex;gap:8px;margin-bottom:12px;overflow-x:auto;padding-bottom:4px}
 .date-chip{padding:6px 14px;border-radius:20px;font-size:13px;white-space:nowrap;border:1px solid #ddd;background:#fff;cursor:pointer;flex-shrink:0}
 .date-chip.active{background:#1D9E75;color:#fff;border-color:#1D9E75}
@@ -112,10 +98,30 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 @keyframes loadAnim{0%{width:0;margin-left:0}50%{width:60%}100%{width:0;margin-left:100%}}
 .notice-bar{background:#FFF3CD;color:#856404;padding:8px 16px;font-size:13px;text-align:center;display:none}
 .notice-bar.active{display:block}
+.week-table{width:100%;border-collapse:collapse;font-size:13px}
+.week-table th{padding:6px 4px;text-align:center;font-weight:600;border-bottom:2px solid #ddd;font-size:12px;color:#666}
+.week-table td{padding:4px 2px;text-align:center;border-bottom:1px solid #f0f0f0;font-size:12px}
+.week-table .name-col{text-align:left;font-weight:500;padding-left:8px;min-width:60px;white-space:nowrap}
+.week-cell{border-radius:4px;padding:3px 2px;font-size:11px;font-weight:500}
+.week-cell.free{background:#EAF3DE;color:#3B6D11}
+.week-cell.busy{background:#FAECE7;color:#993C1D}
+.week-cell.yasumi{background:#FFF9E6;color:#8B7000}
+.week-cell.souko{background:#F3EAE0;color:#8B5E3C}
+.week-sun th,.week-sun{color:#E8384F!important}
+.week-sat th,.week-sat{color:#3B82F6!important}
+/* 現場別管理 */
+.gm-day-row{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid #f0f0f0}
+.gm-day-row:last-child{border-bottom:none}
+.gm-day-check{width:22px;height:22px;flex-shrink:0;cursor:pointer;accent-color:#ff3b30}
+.gm-day-info{flex:1;min-width:0}
+.gm-day-date{font-size:14px;font-weight:600}
+.gm-day-members{font-size:12px;color:#666;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gm-edit-btn{flex-shrink:0;padding:6px 12px;font-size:12px;font-weight:500;border-radius:8px;border:1px solid #ddd;background:#f2f2f7;color:#1a1a1a;cursor:pointer}
+.gm-delete-bar{background:#fff;border-top:2px solid #ff3b30;padding:10px 12px;display:none;position:sticky;bottom:64px;z-index:50}
+.gm-delete-bar.active{display:block}
 </style>
 </head>
 <body>
-
 <div class="company-bar" id="company-bar"></div>
 <div class="loading-bar" id="loading-bar"></div>
 <div class="notice-bar" id="notice-bar">会社を選択して入力してください</div>
@@ -124,48 +130,24 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 <div id="screen-input" class="screen active">
 <div class="page-title">日報入力</div>
 <div class="card">
-  <label>作業日</label>
-  <input type="date" id="s-date">
-  <label>元請名</label>
-  <input type="text" id="s-genba" placeholder="例：〇〇電気">
-  <label>現場名</label>
-  <input type="text" id="s-location" placeholder="例：〇〇ビル新築工事">
+  <div class="grid2">
+    <div><label>開始日</label><input type="date" id="s-date"></div>
+    <div><label>終了日（連続入力）</label><input type="date" id="s-date-end"></div>
+  </div>
+  <label>元請名</label><input type="text" id="s-genba" placeholder="例：〇〇電気">
+  <label>現場名</label><input type="text" id="s-location" placeholder="例：〇〇ビル新築工事">
   <div class="grid2">
     <div><label>出勤</label><input type="time" id="s-start" value="08:00"></div>
     <div><label>退勤</label><input type="time" id="s-end" value="17:00"></div>
   </div>
-  <div class="souko-toggle" id="s-souko-toggle" onclick="toggleSouko('s')">
-    <span class="souko-toggle-icon">🏭</span>
-    <span class="souko-toggle-label">倉庫</span>
-  </div>
-  <div class="yakin-toggle" id="s-yakin-toggle" onclick="toggleYakin('s')">
-    <span class="yakin-toggle-icon">🌙</span>
-    <span class="yakin-toggle-label">夜勤</span>
-  </div>
-  <div class="yasumi-toggle" id="s-yasumi-toggle" onclick="toggleYasumi('s')">
-    <span class="yasumi-toggle-icon">🏖️</span>
-    <span class="yasumi-toggle-label">休み</span>
-  </div>
-  <div class="yotei-toggle" id="s-yotei-toggle" onclick="toggleYotei('s')">
-    <span class="yotei-toggle-icon">📅</span>
-    <span class="yotei-toggle-label">予定</span>
-  </div>
+  <div class="souko-toggle" id="s-souko-toggle" onclick="toggleSouko('s')"><span class="souko-toggle-icon">🏭</span><span class="souko-toggle-label">倉庫</span></div>
+  <div class="yakin-toggle" id="s-yakin-toggle" onclick="toggleYakin('s')"><span class="yakin-toggle-icon">🌙</span><span class="yakin-toggle-label">夜勤</span></div>
+  <div class="yasumi-toggle" id="s-yasumi-toggle" onclick="toggleYasumi('s')"><span class="yasumi-toggle-icon">🏖️</span><span class="yasumi-toggle-label">休み</span></div>
   <label>人工（ひとり当たり）</label>
-  <select id="s-kosu">
-    <option value="1.0">1人工</option>
-    <option value="1.5">1.5人工</option>
-    <option value="2.0">2人工</option>
-  </select>
-  <div class="leader-select-wrap">
-    <label>代表者</label>
-    <select id="s-leader"><option value="">代表者を選択してください</option></select>
-  </div>
-  <div class="member-section">
-    <div class="member-label">同行メンバー（タップで選択）</div>
-    <div id="member-selector" class="member-grid"></div>
-  </div>
-  <label>メモ</label>
-  <textarea id="s-memo" placeholder="作業内容など"></textarea>
+  <select id="s-kosu"><option value="1.0">1人工</option><option value="1.5">1.5人工</option><option value="2.0">2人工</option></select>
+  <div class="leader-select-wrap"><label>代表者</label><select id="s-leader"><option value="">代表者を選択してください</option></select></div>
+  <div class="member-section"><div class="member-label">同行メンバー（タップで選択）</div><div id="member-selector" class="member-grid"></div></div>
+  <label>メモ</label><textarea id="s-memo" placeholder="作業内容など"></textarea>
   <div id="s-alert" class="alert"></div>
   <button class="btn" id="submit-btn" onclick="submitNippo()">登録する</button>
 </div>
@@ -187,14 +169,13 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 <!-- 空き確認 -->
 <div id="screen-avail" class="screen">
 <div class="page-title">空き確認</div>
-<div class="card">
-  <label>日付を選択</label>
-  <input type="date" id="a-date" onchange="updateAvailability()">
+<div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:12px">
+  <button class="btn btn-secondary btn-sm" onclick="changeAvailWeek(-1)">◀</button>
+  <span id="avail-week-label" style="font-size:15px;font-weight:600;min-width:180px;text-align:center"></span>
+  <button class="btn btn-secondary btn-sm" onclick="changeAvailWeek(1)">▶</button>
 </div>
-<div class="card">
-  <div id="avail-container" class="avail-grid">
-    <div style="color:#999;font-size:13px;grid-column:1/-1">更新ボタンを押してください</div>
-  </div>
+<div class="card" style="overflow-x:auto">
+  <div id="avail-weekly" style="min-width:600px"></div>
   <div style="display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:#999;margin-top:8px">
     <span><span style="display:inline-block;width:10px;height:10px;background:#EAF3DE;border:1px solid #97C459;border-radius:2px;margin-right:3px"></span>空き</span>
     <span><span style="display:inline-block;width:10px;height:10px;background:#FAECE7;border:1px solid #F0997B;border-radius:2px;margin-right:3px"></span>出勤</span>
@@ -203,6 +184,30 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
   </div>
 </div>
 <button class="btn btn-secondary" onclick="loadData()">更新</button>
+</div>
+
+<!-- 現場別管理 -->
+<div id="screen-genba" class="screen">
+<div class="page-title">現場別管理</div>
+<div class="card">
+  <label>元請名</label>
+  <select id="gm-genba" onchange="onGmGenbaChange()" style="margin-bottom:8px"><option value="">元請を選択</option></select>
+  <label>現場名</label>
+  <select id="gm-location" onchange="renderGmList()" style="margin-bottom:0"><option value="">現場を選択</option></select>
+</div>
+<div id="gm-list-wrap" style="display:none">
+  <div class="card" style="padding:12px 16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <span style="font-size:13px;color:#666;font-weight:500">日程一覧</span>
+      <button class="btn btn-secondary btn-sm" id="gm-select-all-btn" onclick="toggleGmSelectAll()">全選択</button>
+    </div>
+    <div id="gm-day-list"></div>
+  </div>
+  <div class="gm-delete-bar" id="gm-delete-bar">
+    <button class="btn btn-danger" id="gm-delete-btn" onclick="deleteGmChecked()">チェックした日を削除</button>
+  </div>
+</div>
+<button class="btn btn-secondary" style="margin-top:8px" onclick="loadData()">更新</button>
 </div>
 
 <!-- 事務 -->
@@ -227,10 +232,8 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 <div class="card" style="margin-top:8px">
   <div style="font-size:13px;color:#666;margin-bottom:10px;font-weight:500">CSVダウンロード</div>
   <select id="csv-sheet" style="margin-bottom:8px">
-    <option value="日報データ">日報データ</option>
-    <option value="アーカイブ">アーカイブ</option>
-    <option value="月別集計">月別集計</option>
-    <option value="会社別集計">会社別集計</option>
+    <option value="日報データ">日報データ</option><option value="アーカイブ">アーカイブ</option>
+    <option value="月別集計">月別集計</option><option value="会社別集計">会社別集計</option>
     <option value="職人マスタ">職人マスタ</option>
   </select>
   <button class="btn btn-secondary" id="csv-btn" onclick="downloadSheetCSV()">ダウンロード</button>
@@ -238,7 +241,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 <button class="btn btn-secondary" style="margin-top:8px" onclick="openSettings()">職人を管理</button>
 <div class="archive-section" style="background:#E8F4FD;border-color:#85B7EB">
   <div class="archive-title" style="color:#0C447C">📊 スプレッドシート集計</div>
-  <div class="archive-desc" style="color:#0C447C">会社別・月別の出勤日数・人工をスプレッドシートに自動集計します。<br>毎朝6時にも自動更新されます。</div>
+  <div class="archive-desc" style="color:#0C447C">会社別・月別の出勤日数・人工をスプレッドシートに自動集計します。毎朝6時にも自動更新されます。</div>
   <button class="btn btn-secondary btn-sm" id="summary-btn" onclick="runSummary()">集計を更新</button>
 </div>
 <div class="archive-section">
@@ -250,10 +253,11 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 
 <!-- タブバー -->
 <div class="tab-bar">
-<button class="tab active" onclick="switchTab('input')"><span class="tab-icon">📋</span>入力</button>
-<button class="tab" onclick="switchTab('list')"><span class="tab-icon">📅</span>予定一覧</button>
-<button class="tab" onclick="switchTab('avail')"><span class="tab-icon">👥</span>空き確認</button>
-<button class="tab" onclick="switchTab('jimu')"><span class="tab-icon">📊</span>事務</button>
+  <button class="tab active" onclick="switchTab('input')"><span class="tab-icon">📋</span>入力</button>
+  <button class="tab" onclick="switchTab('list')"><span class="tab-icon">📅</span>予定一覧</button>
+  <button class="tab" onclick="switchTab('avail')"><span class="tab-icon">👥</span>空き確認</button>
+  <button class="tab" onclick="switchTab('genba')"><span class="tab-icon">🏗️</span>現場管理</button>
+  <button class="tab" onclick="switchTab('jimu')"><span class="tab-icon">📊</span>事務</button>
 </div>
 
 <!-- 編集モーダル -->
@@ -266,32 +270,13 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
     <div><label>出勤</label><input type="time" id="e-start"></div>
     <div><label>退勤</label><input type="time" id="e-end"></div>
   </div>
-  <div class="souko-toggle" id="e-souko-toggle" onclick="toggleSouko('e')">
-    <span class="souko-toggle-icon">🏭</span>
-    <span class="souko-toggle-label">倉庫</span>
-  </div>
-  <div class="yakin-toggle" id="e-yakin-toggle" onclick="toggleYakin('e')">
-    <span class="yakin-toggle-icon">🌙</span>
-    <span class="yakin-toggle-label">夜勤</span>
-  </div>
-  <div class="yasumi-toggle" id="e-yasumi-toggle" onclick="toggleYasumi('e')">
-    <span class="yasumi-toggle-icon">🏖️</span>
-    <span class="yasumi-toggle-label">休み</span>
-  </div>
-  <div class="yotei-toggle" id="e-yotei-toggle" onclick="toggleYotei('e')">
-    <span class="yotei-toggle-icon">📅</span>
-    <span class="yotei-toggle-label">予定</span>
-  </div>
+  <div class="souko-toggle" id="e-souko-toggle" onclick="toggleSouko('e')"><span class="souko-toggle-icon">🏭</span><span class="souko-toggle-label">倉庫</span></div>
+  <div class="yakin-toggle" id="e-yakin-toggle" onclick="toggleYakin('e')"><span class="yakin-toggle-icon">🌙</span><span class="yakin-toggle-label">夜勤</span></div>
+  <div class="yasumi-toggle" id="e-yasumi-toggle" onclick="toggleYasumi('e')"><span class="yasumi-toggle-icon">🏖️</span><span class="yasumi-toggle-label">休み</span></div>
   <label>人工（ひとり当たり）</label>
   <select id="e-kosu"><option value="1.0">1人工</option><option value="1.5">1.5人工</option><option value="2.0">2人工</option></select>
-  <div class="leader-select-wrap">
-    <label>代表者</label>
-    <select id="e-leader"><option value="">代表者を選択してください</option></select>
-  </div>
-  <div class="member-section">
-    <div class="member-label">同行メンバー（タップで選択）</div>
-    <div id="e-member-selector" class="member-grid"></div>
-  </div>
+  <div class="leader-select-wrap"><label>代表者</label><select id="e-leader"><option value="">代表者を選択してください</option></select></div>
+  <div class="member-section"><div class="member-label">同行メンバー（タップで選択）</div><div id="e-member-selector" class="member-grid"></div></div>
   <label>メモ</label><textarea id="e-memo"></textarea>
   <div style="display:flex;gap:8px;margin-top:4px">
     <button class="btn btn-secondary btn-sm" style="flex:1" onclick="closeEditModal()">キャンセル</button>
@@ -314,90 +299,54 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 </div>
 
 <script>
-// === GAS URL（全社共通）===
 const GAS_URL='https://script.google.com/macros/s/AKfycbxvPPJFfItxKWPE7p3-HL3L82C11qz2hvNiXPxA9v4cynAhGyzWbYsSBFep1LB_WuA3FA/exec';
 const COMPANIES=['グローライズ','和信カインド','ビジネスサポート','ラーテル','GRHD'];
-
-// GAS URLを返す（全社共通）
 function getGasUrl(){return GAS_URL;}
 
 let currentCompany='';
 let allNippos=[];
-let allMembers=[]; // サーバーから取得した全メンバー
+let allMembers=[];
 let selectedMembers=[];
 let editSelectedMembers=[];
 let editIds=[];
 let editDate='';
 let currentDateFilter='';
-let listMonth=''; // yyyy-MM形式
-let yakinState={s:false, e:false};
-let yasumiState={s:false, e:false};
-let yoteiState={s:false, e:false};
-let soukoState={s:false, e:false};
+let listMonth='';
+let yakinState={s:false,e:false};
+let yasumiState={s:false,e:false};
+let soukoState={s:false,e:false};
 let isSubmitting=false;
 
-// ===== XSS対策: HTMLエスケープ =====
-function esc(str){
-  const d=document.createElement('div');
-  d.textContent=String(str||'');
-  return d.innerHTML;
-}
+function esc(str){const d=document.createElement('div');d.textContent=String(str||'');return d.innerHTML;}
+function uuid(){return 'xxxx-xxxx-xxxx'.replace(/x/g,()=>Math.floor(Math.random()*16).toString(16))+'-'+Date.now().toString(36);}
+function setLoading(on){document.getElementById('loading-bar').classList.toggle('active',on);}
 
-// ===== UUID生成 =====
-function uuid(){
-  return 'xxxx-xxxx-xxxx'.replace(/x/g,()=>Math.floor(Math.random()*16).toString(16))+'-'+Date.now().toString(36);
-}
-
-// ===== ローディング =====
-function setLoading(on){
-  document.getElementById('loading-bar').classList.toggle('active',on);
-}
-
-// ===== 会社ごとのメンバーを返す =====
 function getShokunin(){
-  if(currentCompany==='全社'){
-    const all=[];
-    allMembers.forEach(m=>{if(!all.includes(m.name))all.push(m.name);});
-    return all;
-  }
+  if(currentCompany==='全社'){const all=[];allMembers.forEach(m=>{if(!all.includes(m.name))all.push(m.name);});return all;}
   return allMembers.filter(m=>m.company===currentCompany).map(m=>m.name);
 }
 
-// ===== URLパラメータで会社制限 =====
-// 例: ?c=グローライズ → グローライズのみ
-// 例: ?c=グローライズ,和信カインド → 2社
-// パラメータなし or ?c=all → 全社表示（管理者）
 let allowedCompanies=[];
 let isAdmin=false;
 function parseCompanyParam(){
   const params=new URLSearchParams(window.location.search);
   const c=params.get('c');
-  if(!c||c==='all'){
-    allowedCompanies=[...COMPANIES];
-    isAdmin=true;
-  } else {
-    allowedCompanies=c.split(',').map(s=>s.trim()).filter(s=>COMPANIES.includes(s));
-    if(allowedCompanies.length===0)allowedCompanies=[COMPANIES[0]];
-    isAdmin=false;
-  }
+  if(!c||c==='all'){allowedCompanies=[...COMPANIES];isAdmin=true;}
+  else{allowedCompanies=c.split(',').map(s=>s.trim()).filter(s=>COMPANIES.includes(s));if(allowedCompanies.length===0)allowedCompanies=[COMPANIES[0]];isAdmin=false;}
 }
 parseCompanyParam();
 
-// ===== 会社セレクター =====
 function initCompanyBar(){
   try{const c=localStorage.getItem('genba-company');if(c&&(allowedCompanies.includes(c)||(c==='全社'&&isAdmin)))currentCompany=c;}catch(e){}
   if(!currentCompany||(!allowedCompanies.includes(currentCompany)&&currentCompany!=='全社'))currentCompany=allowedCompanies[0];
   if(currentCompany==='全社'&&!isAdmin)currentCompany=allowedCompanies[0];
-  renderCompanyBar();
-  updateNoticeBar();
+  renderCompanyBar();updateNoticeBar();
 }
 
 function renderCompanyBar(){
   let html='';
   if(isAdmin)html+='<div class="company-chip'+(currentCompany==='全社'?' active':'')+'" onclick="switchCompany(\'全社\')">全社</div>';
-  html+=allowedCompanies.map(c=>
-    `<div class="company-chip${c===currentCompany?' active':''}" onclick="switchCompany('${esc(c)}')">${esc(c)}</div>`
-  ).join('');
+  html+=allowedCompanies.map(c=>`<div class="company-chip${c===currentCompany?' active':''}" onclick="switchCompany('${esc(c)}')">${esc(c)}</div>`).join('');
   document.getElementById('company-bar').innerHTML=html;
 }
 
@@ -406,55 +355,48 @@ function switchCompany(c){
   if(c==='全社'&&!isAdmin)return;
   currentCompany=c;
   try{localStorage.setItem('genba-company',c);}catch(e){}
-  selectedMembers=[];
-  editSelectedMembers=[];
-  renderCompanyBar();
-  initMemberUI();
-  renderList();
-  updateAvailability();
-  updateJimu();
-  updateGenbaFilter();
-  updateNoticeBar();
+  selectedMembers=[];editSelectedMembers=[];
+  renderCompanyBar();initMemberUI();renderList();updateAvailability();updateJimu();updateGenbaFilter();updateGmSelects();updateNoticeBar();
 }
 
 function updateNoticeBar(){
-  const nb=document.getElementById('notice-bar');
   const isAll=currentCompany==='全社';
-  nb.classList.toggle('active',isAll);
-  // 全社モードでは入力タブの登録ボタンを無効化
+  document.getElementById('notice-bar').classList.toggle('active',isAll);
   const btn=document.getElementById('submit-btn');
   if(btn){btn.disabled=isAll;btn.textContent=isAll?'会社を選択してください':'登録する';}
 }
 
 function filteredNippos(){
-  if(currentCompany==='全社') return allNippos;
+  if(currentCompany==='全社')return allNippos;
   return allNippos.filter(n=>n.company===currentCompany);
 }
 
-// ===== 倉庫・夜勤・休み・予定トグル（排他的）=====
-function clearToggles(p){soukoState[p]=false;yakinState[p]=false;yasumiState[p]=false;yoteiState[p]=false;document.getElementById(p+'-souko-toggle').classList.remove('active');document.getElementById(p+'-yakin-toggle').classList.remove('active');document.getElementById(p+'-yasumi-toggle').classList.remove('active');document.getElementById(p+'-yotei-toggle').classList.remove('active');}
+function clearToggles(p){
+  soukoState[p]=false;yakinState[p]=false;yasumiState[p]=false;
+  document.getElementById(p+'-souko-toggle').classList.remove('active');
+  document.getElementById(p+'-yakin-toggle').classList.remove('active');
+  document.getElementById(p+'-yasumi-toggle').classList.remove('active');
+}
 function toggleSouko(p){const v=!soukoState[p];clearToggles(p);soukoState[p]=v;document.getElementById(p+'-souko-toggle').classList.toggle('active',v);}
 function setSouko(p,v){soukoState[p]=v;document.getElementById(p+'-souko-toggle').classList.toggle('active',v);}
 function toggleYakin(p){const v=!yakinState[p];clearToggles(p);yakinState[p]=v;document.getElementById(p+'-yakin-toggle').classList.toggle('active',v);}
 function setYakin(p,v){yakinState[p]=v;document.getElementById(p+'-yakin-toggle').classList.toggle('active',v);}
 function toggleYasumi(p){const v=!yasumiState[p];clearToggles(p);yasumiState[p]=v;document.getElementById(p+'-yasumi-toggle').classList.toggle('active',v);}
 function setYasumi(p,v){yasumiState[p]=v;document.getElementById(p+'-yasumi-toggle').classList.toggle('active',v);}
-function toggleYotei(p){const v=!yoteiState[p];clearToggles(p);yoteiState[p]=v;document.getElementById(p+'-yotei-toggle').classList.toggle('active',v);}
-function setYotei(p,v){yoteiState[p]=v;document.getElementById(p+'-yotei-toggle').classList.toggle('active',v);}
 
 function switchTab(t){
-  const tabs=['input','list','avail','jimu'];
+  const tabs=['input','list','avail','genba','jimu'];
   document.querySelectorAll('.tab').forEach((el,i)=>el.classList.toggle('active',tabs[i]===t));
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('screen-'+t).classList.add('active');
+  if(t==='genba')updateGmSelects();
 }
 
 function initMemberUI(){
   ['s-leader','e-leader'].forEach(id=>{
     const sel=document.getElementById(id);if(!sel)return;
     const cur=sel.value;
-    sel.innerHTML='<option value="">代表者を選択してください</option>'+
-      getShokunin().map(n=>`<option value="${esc(n)}"${n===cur?' selected':''}>${esc(n)}</option>`).join('');
+    sel.innerHTML='<option value="">代表者を選択してください</option>'+getShokunin().map(n=>`<option value="${esc(n)}"${n===cur?' selected':''}>${esc(n)}</option>`).join('');
   });
   renderMemberChips('member-selector',selectedMembers,toggleMember);
   renderMemberChips('e-member-selector',editSelectedMembers,toggleEditMember);
@@ -462,20 +404,30 @@ function initMemberUI(){
 
 function renderMemberChips(id,arr,fn){
   const el=document.getElementById(id);if(!el)return;
-  el.innerHTML=getShokunin().map((name,i)=>{
-    const sel=arr.includes(i);
-    return`<div class="member-chip${sel?' selected':''}" onclick="${fn.name}(${i})">${esc(name)}</div>`;
-  }).join('');
+  el.innerHTML=getShokunin().map((name,i)=>`<div class="member-chip${arr.includes(i)?' selected':''}" onclick="${fn.name}(${i})">${esc(name)}</div>`).join('');
 }
 
 function toggleMember(i){const x=selectedMembers.indexOf(i);if(x>=0)selectedMembers.splice(x,1);else selectedMembers.push(i);renderMemberChips('member-selector',selectedMembers,toggleMember);}
 function toggleEditMember(i){const x=editSelectedMembers.indexOf(i);if(x>=0)editSelectedMembers.splice(x,1);else editSelectedMembers.push(i);renderMemberChips('e-member-selector',editSelectedMembers,toggleEditMember);}
 
-// ===== 登録（二重送信防止 + UUID） =====
+function getDateRange(startStr,endStr){
+  const dates=[];
+  const s=startStr.split('-').map(Number);
+  const start=new Date(s[0],s[1]-1,s[2]);
+  if(!endStr){dates.push(startStr);return dates;}
+  const e=endStr.split('-').map(Number);
+  const end=new Date(e[0],e[1]-1,e[2]);
+  for(let d=new Date(start);d<=end;d.setDate(d.getDate()+1)){
+    dates.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'));
+  }
+  return dates;
+}
+
 async function submitNippo(){
   if(isSubmitting)return;
   if(currentCompany==='全社'){showAlert('会社を選択してから登録してください','err');return;}
-  const date=document.getElementById('s-date').value;
+  const dateStart=document.getElementById('s-date').value;
+  const dateEnd=document.getElementById('s-date-end').value;
   const genba=document.getElementById('s-genba').value.trim();
   const loc=document.getElementById('s-location').value.trim();
   const start=document.getElementById('s-start').value;
@@ -483,30 +435,33 @@ async function submitNippo(){
   const kosu=parseFloat(document.getElementById('s-kosu').value);
   const memo=document.getElementById('s-memo').value;
   const leader=document.getElementById('s-leader').value;
-  const yakin=yakinState.s;
-  const yasumi=yasumiState.s;
-  const yotei=yoteiState.s;
-  const souko=soukoState.s;
-  const effectiveKosu=(yasumi||yotei)?0:kosu;
-  if(!date||!genba){showAlert('作業日と元請名は必須です','err');return;}
+  const yakin=yakinState.s;const yasumi=yasumiState.s;const souko=soukoState.s;
+  const effectiveKosu=yasumi?0:kosu;
+  if(!dateStart||!genba){showAlert('開始日と元請名は必須です','err');return;}
   if(!leader){showAlert('代表者を選択してください','err');return;}
   const members=[{name:leader,role:'代表'}];
   const shokunin=getShokunin();
   selectedMembers.forEach(i=>{if(shokunin[i]!==leader)members.push({name:shokunin[i],role:'同行'});});
-  const groupId=uuid();
-  const rows=members.map(m=>({date,genba,loc,name:m.name,role:m.role,start,end,kosu:effectiveKosu,memo,yakin,yasumi,yotei,souko,company:currentCompany,id:groupId}));
+  const dates=getDateRange(dateStart,dateEnd);
+  const rows=[];
+  dates.forEach(date=>{
+    const dayId=uuid();
+    members.forEach(m=>{rows.push({date,genba,loc,name:m.name,role:m.role,start,end,kosu:effectiveKosu,memo,yakin,yasumi,yotei:false,souko,company:currentCompany,id:dayId});});
+  });
   const btn=document.getElementById('submit-btn');
-  isSubmitting=true;btn.textContent='送信中...';btn.disabled=true;
+  isSubmitting=true;btn.textContent=`送信中（${dates.length}日分）...`;btn.disabled=true;
   try{
     const res=await fetch(getGasUrl(),{method:'POST',body:JSON.stringify({action:'add',rows}),headers:{'Content-Type':'text/plain'}});
     const json=await res.json();
     if(json.status==='ok'){
-      showAlert(`✓ ${members.length}人分を登録しました！（${currentCompany}）`,'ok');
+      showAlert(`✓ ${dates.length}日×${members.length}人分を登録しました！（${currentCompany}）`,'ok');
       document.getElementById('s-genba').value='';document.getElementById('s-location').value='';
       document.getElementById('s-memo').value='';document.getElementById('s-leader').value='';
-      setYakin('s',false);setYasumi('s',false);setYotei('s',false);setSouko('s',false);selectedMembers=[];renderMemberChips('member-selector',selectedMembers,toggleMember);
+      document.getElementById('s-date-end').value='';
+      setYakin('s',false);setYasumi('s',false);setSouko('s',false);
+      selectedMembers=[];renderMemberChips('member-selector',selectedMembers,toggleMember);
       await loadData();
-    } else showAlert('エラー：'+json.message,'err');
+    }else showAlert('エラー：'+json.message,'err');
   }catch(err){showAlert('送信エラー：'+err.message,'err');}
   isSubmitting=false;btn.textContent='登録する';btn.disabled=(currentCompany==='全社');
 }
@@ -533,24 +488,15 @@ function parseWorkDate(v){
   return s;
 }
 
-// ===== データ取得（メンバーも同時取得）=====
-function parseRows(rows, company){
-  return (rows||[]).map(r=>({
-    id:String(r['ID']||''),
-    timestamp:String(r['登録日時']||''),
-    date:parseWorkDate(r['作業日']),
-    genba:String(r['元請名']||''),
-    loc:String(r['現場名']||''),
-    name:String(r['氏名']||''),
-    role:String(r['役割']||''),
-    start:formatTime(r['出勤']),
-    end:formatTime(r['退勤']),
-    kosu:parseFloat(r['人工'])||0,
-    memo:String(r['メモ']||''),
-    yakin:String(r['夜勤']||'')==='夜勤',
-    yasumi:String(r['夜勤']||'')==='休み',
-    yotei:String(r['夜勤']||'')==='予定',
-    souko:String(r['夜勤']||'')==='倉庫',
+function parseRows(rows,company){
+  return(rows||[]).map(r=>({
+    id:String(r['ID']||''),timestamp:String(r['登録日時']||''),
+    date:parseWorkDate(r['作業日']),genba:String(r['元請名']||''),loc:String(r['現場名']||''),
+    name:String(r['氏名']||''),role:String(r['役割']||''),
+    start:formatTime(r['出勤']),end:formatTime(r['退勤']),
+    kosu:parseFloat(r['人工'])||0,memo:String(r['メモ']||''),
+    yakin:String(r['夜勤']||'')==='夜勤',yasumi:String(r['夜勤']||'')==='休み',
+    yotei:String(r['夜勤']||'')==='予定',souko:String(r['夜勤']||'')==='倉庫',
     company:String(r['会社']||'')||company
   }));
 }
@@ -561,9 +507,8 @@ async function loadData(){
     const res=await fetch(GAS_URL+'?t='+Date.now());
     const json=await res.json();
     allNippos=parseRows(json.rows,'');
-    if(json.members){allMembers=json.members;}
-    initMemberUI();
-    renderList();updateAvailability();updateJimu();updateGenbaFilter();
+    if(json.members)allMembers=json.members;
+    initMemberUI();renderList();updateAvailability();updateJimu();updateGenbaFilter();updateGmSelects();
   }catch(e){console.error(e);}
   setLoading(false);
 }
@@ -571,7 +516,6 @@ async function loadData(){
 function groupNippos(nippos){
   const groups={};
   nippos.forEach(n=>{
-    // IDでグループ化（同じIDは同一登録）
     const key=n.id||`${n.date}__${n.genba}__${n.loc}__${n.start}__${n.end}__${n.kosu}__${n.memo}__${n.yakin}__${n.yasumi}__${n.yotei}__${n.souko}`;
     if(!groups[key])groups[key]={date:n.date,genba:n.genba,loc:n.loc,start:n.start,end:n.end,kosu:n.kosu,memo:n.memo,yakin:n.yakin,yasumi:n.yasumi,yotei:n.yotei,souko:n.souko,company:n.company,members:[],ids:[]};
     groups[key].members.push({name:n.name,role:n.role});
@@ -588,10 +532,8 @@ function formatDate(d){
 
 function renderList(){
   if(!listMonth){const now=new Date();listMonth=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');}
-  // 月ラベル更新
   const lp=listMonth.split('-');
   document.getElementById('list-month-label').textContent=lp[0]+'年'+Number(lp[1])+'月';
-  // 当月のデータだけ抽出
   const groups=groupNippos(filteredNippos()).filter(g=>g.date.startsWith(listMonth));
   const dates=[...new Set(groups.map(g=>g.date))].sort((a,b)=>b.localeCompare(a));
   const df=document.getElementById('date-filter');
@@ -604,8 +546,7 @@ function changeListMonth(delta){
   const p=listMonth.split('-');
   const d=new Date(Number(p[0]),Number(p[1])-1+delta,1);
   listMonth=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
-  currentDateFilter='';
-  renderList();
+  currentDateFilter='';renderList();
 }
 
 function filterDate(d){currentDateFilter=d;renderList();}
@@ -619,12 +560,11 @@ function renderListWithDate(groups){
     const totalKo=(g.kosu*g.members.length).toFixed(1);
     const yakinBadge=g.yakin?'<span class="yakin-badge">🌙 夜勤</span>':'';
     const yasumiBadge=g.yasumi?'<span class="yasumi-badge">🏖️ 休み</span>':'';
-    const yoteiBadge=g.yotei?'<span class="yotei-badge-tag">📅 予定</span>':'';
     const soukoBadge=g.souko?'<span class="souko-badge">🏭 倉庫</span>':'';
     const companyBadge=(currentCompany==='全社'&&g.company)?`<span class="company-badge">${esc(g.company)}</span>`:'';
     return`<div class="yotei-card">
       <div class="yotei-header"><div>
-        <div class="yotei-date">${formatDate(g.date)}${soukoBadge}${yakinBadge}${yasumiBadge}${yoteiBadge}${companyBadge}</div>
+        <div class="yotei-date">${formatDate(g.date)}${soukoBadge}${yakinBadge}${yasumiBadge}${companyBadge}</div>
         <div class="yotei-genba">${esc(g.genba)}</div>
       </div><div style="font-size:13px;color:#666">${totalKo}人工</div></div>
       <div class="yotei-body">
@@ -634,20 +574,19 @@ function renderListWithDate(groups){
         ${g.memo?`<div class="yotei-memo">📝 ${esc(g.memo)}</div>`:''}
       </div>
       <div class="yotei-actions">
-        <button class="btn btn-secondary btn-sm" onclick="openEditModal(${idx})">編集</button>
+        <button class="btn btn-secondary btn-sm" onclick="copyToInput(${idx})">コピー</button>
+        <button class="btn btn-secondary btn-sm" onclick="openEditModal(${idx},null)">編集</button>
         <button class="btn btn-sm" style="background:#ff3b30" onclick="deleteGroup(${idx})">削除</button>
       </div>
     </div>`;
   }).join('');
 }
 
-// グローバルにグループを保持して安全にアクセス
 function getDisplayedGroups(){
   const groups=groupNippos(filteredNippos()).filter(g=>g.date.startsWith(listMonth));
   return currentDateFilter?groups.filter(g=>g.date===currentDateFilter):groups;
 }
 
-// ===== 削除（UUID指定）=====
 async function deleteGroup(idx){
   const groups=getDisplayedGroups();
   const g=groups[idx];if(!g)return;
@@ -658,31 +597,45 @@ async function deleteGroup(idx){
     const res=await fetch(getGasUrl(),{method:'POST',body:JSON.stringify({action:'delete',ids}),headers:{'Content-Type':'text/plain'}});
     const json=await res.json();
     if(json.status==='ok'){
-      if(json.deleted===0){alert('削除対象が見つかりませんでした。スプレッドシートのID列を確認してください。');}
+      if(json.deleted===0)alert('削除対象が見つかりませんでした。スプレッドシートのID列を確認してください。');
       await loadData();
-    } else {alert('削除エラー：'+json.message);await loadData();}
+    }else{alert('削除エラー：'+json.message);await loadData();}
   }catch(e){alert('削除エラー：'+e.message);await loadData();}
   setLoading(false);
 }
 
-// ===== 編集 =====
-function openEditModal(idx){
-  const groups=getDisplayedGroups();
+function copyToInput(idx){
+  const groups=getDisplayedGroups();const g=groups[idx];if(!g)return;
+  switchTab('input');
+  document.getElementById('s-genba').value=g.genba;
+  document.getElementById('s-location').value=g.loc||'';
+  document.getElementById('s-start').value=g.start||'08:00';
+  document.getElementById('s-end').value=g.end||'17:00';
+  document.getElementById('s-kosu').value=(g.kosu>0?g.kosu:1.0).toFixed(1);
+  document.getElementById('s-memo').value=g.memo||'';
+  document.getElementById('s-date').value='';document.getElementById('s-date-end').value='';
+  setSouko('s',!!g.souko);setYakin('s',!!g.yakin);setYasumi('s',!!g.yasumi);
+  const leader=g.members.find(m=>m.role==='代表');
+  document.getElementById('s-leader').value=leader?leader.name:'';
+  selectedMembers=[];
+  const shokunin=getShokunin();
+  g.members.filter(m=>m.role==='同行').forEach(m=>{const i=shokunin.indexOf(m.name);if(i>=0)selectedMembers.push(i);});
+  renderMemberChips('member-selector',selectedMembers,toggleMember);
+  showAlert('予定をコピーしました。日付を入力して登録してください。','ok');
+}
+
+function openEditModal(idx,groupsOverride){
+  const groups=groupsOverride!==null?groupsOverride:getDisplayedGroups();
   const g=groups[idx];if(!g)return;
-  editIds=[...new Set(g.ids)];
-  editDate=g.date;
+  editIds=[...new Set(g.ids)];editDate=g.date;
   document.getElementById('e-genba').value=g.genba;
   document.getElementById('e-location').value=g.loc||'';
   document.getElementById('e-start').value=g.start||'08:00';
   document.getElementById('e-end').value=g.end||'17:00';
-  const kosuVal=g.kosu>0?g.kosu:1.0;
-  document.getElementById('e-kosu').value=kosuVal.toFixed(1);
+  document.getElementById('e-kosu').value=(g.kosu>0?g.kosu:1.0).toFixed(1);
   document.getElementById('e-memo').value=g.memo||'';
   document.getElementById('edit-title').textContent=`編集：${formatDate(g.date)} ${g.genba}`;
-  setYakin('e',!!g.yakin);
-  setYasumi('e',!!g.yasumi);
-  setYotei('e',!!g.yotei);
-  setSouko('e',!!g.souko);
+  setYakin('e',!!g.yakin);setYasumi('e',!!g.yasumi);setSouko('e',!!g.souko);
   const leader=g.members.find(m=>m.role==='代表');
   document.getElementById('e-leader').value=leader?leader.name:'';
   editSelectedMembers=[];
@@ -704,11 +657,8 @@ async function saveEdit(){
   const kosu=parseFloat(document.getElementById('e-kosu').value);
   const memo=document.getElementById('e-memo').value;
   const leader=document.getElementById('e-leader').value;
-  const yakin=yakinState.e;
-  const yasumi=yasumiState.e;
-  const yotei=yoteiState.e;
-  const souko=soukoState.e;
-  const effectiveKosu=(yasumi||yotei)?0:kosu;
+  const yakin=yakinState.e;const yasumi=yasumiState.e;const souko=soukoState.e;
+  const effectiveKosu=yasumi?0:kosu;
   if(!genba){alert('元請名は必須です');return;}
   if(!leader){alert('代表者を選択してください');return;}
   const members=[{name:leader,role:'代表'}];
@@ -716,7 +666,7 @@ async function saveEdit(){
   editSelectedMembers.forEach(i=>{if(shokunin[i]!==leader)members.push({name:shokunin[i],role:'同行'});});
   const newId=uuid();
   const company=currentCompany==='全社'?'':currentCompany;
-  const rows=members.map(m=>({date:editDate,genba,loc,name:m.name,role:m.role,start,end,kosu:effectiveKosu,memo,yakin,yasumi,yotei,souko,company,id:newId}));
+  const rows=members.map(m=>({date:editDate,genba,loc,name:m.name,role:m.role,start,end,kosu:effectiveKosu,memo,yakin,yasumi,yotei:false,souko,company,id:newId}));
   btn.textContent='保存中...';btn.disabled=true;
   try{
     const res=await fetch(getGasUrl(),{method:'POST',body:JSON.stringify({action:'update',ids:editIds,rows}),headers:{'Content-Type':'text/plain'}});
@@ -727,49 +677,154 @@ async function saveEdit(){
   btn.textContent='保存する';btn.disabled=false;
 }
 
-function updateAvailability(){
-  const date=document.getElementById('a-date').value;
-  const cn=filteredNippos();
-  const dayEntries=cn.filter(n=>n.date===date);
-  const con=document.getElementById('avail-container');
-  if(allNippos.length===0){con.innerHTML='<div style="color:#999;font-size:13px;grid-column:1/-1">更新ボタンを押してください</div>';return;}
-  con.innerHTML=getShokunin().map(s=>{
-    const entry=dayEntries.find(n=>n.name===s);
-    if(!entry) return`<div class="avail-chip free"><div class="avail-name">${esc(s)}</div><div class="avail-status">空き</div></div>`;
-    if(entry.yasumi) return`<div class="avail-chip yasumi"><div class="avail-name">${esc(s)}</div><div class="avail-status">休み</div></div>`;
-    if(entry.souko) return`<div class="avail-chip souko"><div class="avail-name">${esc(s)}</div><div class="avail-status">倉庫</div></div>`;
-    return`<div class="avail-chip busy"><div class="avail-name">${esc(s)}</div><div class="avail-status">出勤</div></div>`;
-  }).join('');
+// ========== 現場別管理 ==========
+function updateGmSelects(){
+  const nippos=filteredNippos();
+  const genbas=[...new Set(nippos.map(n=>n.genba).filter(Boolean))].sort();
+  const gSel=document.getElementById('gm-genba');
+  const curG=gSel.value;
+  gSel.innerHTML='<option value="">元請を選択</option>'+genbas.map(g=>`<option value="${esc(g)}"${g===curG?' selected':''}>${esc(g)}</option>`).join('');
+  onGmGenbaChange();
 }
 
+function onGmGenbaChange(){
+  const genba=document.getElementById('gm-genba').value;
+  const locs=[...new Set(filteredNippos().filter(n=>n.genba===genba).map(n=>n.loc).filter(Boolean))].sort();
+  const lSel=document.getElementById('gm-location');
+  const curL=lSel.value;
+  lSel.innerHTML='<option value="">現場を選択</option>'+locs.map(l=>`<option value="${esc(l)}"${l===curL?' selected':''}>${esc(l)}</option>`).join('');
+  if(locs.length===1)lSel.value=locs[0];
+  renderGmList();
+}
+
+function getGmGroups(){
+  const genba=document.getElementById('gm-genba').value;
+  const loc=document.getElementById('gm-location').value;
+  if(!genba||!loc)return[];
+  const nippos=filteredNippos().filter(n=>n.genba===genba&&n.loc===loc);
+  return groupNippos(nippos).sort((a,b)=>a.date.localeCompare(b.date));
+}
+
+function renderGmList(){
+  const groups=getGmGroups();
+  const wrap=document.getElementById('gm-list-wrap');
+  if(groups.length===0){wrap.style.display='none';return;}
+  wrap.style.display='block';
+  document.getElementById('gm-select-all-btn').textContent='全選択';
+  document.getElementById('gm-day-list').innerHTML=groups.map((g,idx)=>{
+    const memberNames=g.members.map(m=>m.name).join('・');
+    const badges=[];
+    if(g.yakin)badges.push('<span class="yakin-badge">🌙夜勤</span>');
+    if(g.yasumi)badges.push('<span class="yasumi-badge">🏖️休み</span>');
+    if(g.souko)badges.push('<span class="souko-badge">🏭倉庫</span>');
+    return`<div class="gm-day-row">
+      <input type="checkbox" class="gm-day-check" data-idx="${idx}" onchange="updateGmDeleteBar()">
+      <div class="gm-day-info">
+        <div class="gm-day-date">${formatDate(g.date)}</div>
+        <div class="gm-day-members">${esc(memberNames)}</div>
+        ${badges.length?`<div style="margin-top:4px">${badges.join('')}</div>`:''}
+      </div>
+      <button class="gm-edit-btn" onclick="openGmEdit(${idx})">編集</button>
+    </div>`;
+  }).join('');
+  updateGmDeleteBar();
+}
+
+function updateGmDeleteBar(){
+  const checked=document.querySelectorAll('.gm-day-check:checked');
+  const bar=document.getElementById('gm-delete-bar');
+  const btn=document.getElementById('gm-delete-btn');
+  bar.classList.toggle('active',checked.length>0);
+  if(btn)btn.textContent=`チェックした${checked.length}日を削除`;
+}
+
+function toggleGmSelectAll(){
+  const checkboxes=document.querySelectorAll('.gm-day-check');
+  const allChecked=[...checkboxes].every(c=>c.checked);
+  checkboxes.forEach(c=>c.checked=!allChecked);
+  document.getElementById('gm-select-all-btn').textContent=allChecked?'全選択':'全解除';
+  updateGmDeleteBar();
+}
+
+async function deleteGmChecked(){
+  const groups=getGmGroups();
+  const checked=[...document.querySelectorAll('.gm-day-check:checked')];
+  if(checked.length===0)return;
+  const targets=checked.map(c=>groups[Number(c.dataset.idx)]).filter(Boolean);
+  const dateList=targets.map(g=>formatDate(g.date)).join('、');
+  if(!confirm(`以下の日程を削除します。\n${dateList}\n\nよろしいですか？`))return;
+  const ids=[...new Set(targets.flatMap(g=>g.ids))];
+  setLoading(true);
+  try{
+    const res=await fetch(getGasUrl(),{method:'POST',body:JSON.stringify({action:'delete',ids}),headers:{'Content-Type':'text/plain'}});
+    const json=await res.json();
+    if(json.status==='ok'){await loadData();renderGmList();}
+    else alert('削除エラー：'+json.message);
+  }catch(e){alert('削除エラー：'+e.message);}
+  setLoading(false);
+}
+
+function openGmEdit(idx){
+  const groups=getGmGroups();
+  openEditModal(idx,groups);
+}
+
+// ========== 空き確認 ==========
+let availWeekStart=null;
+function getMonday(d){const dt=new Date(d);const day=dt.getDay();const diff=dt.getDate()-day+(day===0?-6:1);return new Date(dt.getFullYear(),dt.getMonth(),diff);}
+function initAvailWeek(){availWeekStart=getMonday(new Date());renderAvailWeek();}
+function changeAvailWeek(delta){availWeekStart=new Date(availWeekStart.getFullYear(),availWeekStart.getMonth(),availWeekStart.getDate()+delta*7);renderAvailWeek();}
+
+function renderAvailWeek(){
+  const days=[];
+  for(let i=0;i<7;i++){
+    const d=new Date(availWeekStart.getFullYear(),availWeekStart.getMonth(),availWeekStart.getDate()+i);
+    days.push({date:d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'),label:(d.getMonth()+1)+'/'+d.getDate(),dow:d.getDay()});
+  }
+  const dayNames=['日','月','火','水','木','金','土'];
+  document.getElementById('avail-week-label').textContent=days[0].label+'〜'+days[6].label;
+  const cn=filteredNippos();const shokunin=getShokunin();
+  if(shokunin.length===0){document.getElementById('avail-weekly').innerHTML='<div style="color:#999;text-align:center;padding:20px">更新ボタンを押してください</div>';return;}
+  let html='<table class="week-table"><thead><tr><th></th>';
+  days.forEach(d=>{const cls=d.dow===0?' class="week-sun"':d.dow===6?' class="week-sat"':'';html+=`<th${cls}>${d.label}<br>${dayNames[d.dow]}</th>`;});
+  html+='</tr></thead><tbody>';
+  shokunin.forEach(name=>{
+    html+='<tr><td class="name-col">'+esc(name)+'</td>';
+    days.forEach(d=>{
+      const entry=cn.find(n=>n.name===name&&n.date===d.date);
+      let cls='free',label='○';
+      if(entry){if(entry.yasumi){cls='yasumi';label='休';}else if(entry.souko){cls='souko';label='倉';}else{cls='busy';label='出';}}
+      const dowCls=d.dow===0?' week-sun':d.dow===6?' week-sat':'';
+      html+=`<td class="${dowCls}"><div class="week-cell ${cls}">${label}</div></td>`;
+    });
+    html+='</tr>';
+  });
+  html+='</tbody></table>';
+  document.getElementById('avail-weekly').innerHTML=html;
+}
+
+function updateAvailability(){renderAvailWeek();}
+
 function updateGenbaFilter(){
-  const cn=filteredNippos();
-  const gs=[...new Set(cn.map(n=>n.genba).filter(Boolean))].sort();
+  const gs=[...new Set(filteredNippos().map(n=>n.genba).filter(Boolean))].sort();
   const gf=document.getElementById('j-genba-filter');const cur=gf.value;
   gf.innerHTML='<option value="">全元請</option>'+gs.map(g=>`<option${g===cur?' selected':''}>${esc(g)}</option>`).join('');
 }
 
-// 人工計算ヘルパー：同じ人・同じ日の非夜勤は最大1回分のみ。夜勤は別カウント。
 function calcEffectiveKosu(nippos){
   const byNameDate={};
   nippos.forEach(n=>{
     if(n.yasumi||n.yotei)return;
     const key=n.name+'__'+n.date;
     if(!byNameDate[key])byNameDate[key]={day:0,night:0,dayCount:false,nightCount:false};
-    if(n.yakin){
-      byNameDate[key].night=Math.max(byNameDate[key].night,n.kosu);
-      byNameDate[key].nightCount=true;
-    } else {
-      byNameDate[key].day=Math.max(byNameDate[key].day,n.kosu);
-      byNameDate[key].dayCount=true;
-    }
+    if(n.yakin){byNameDate[key].night=Math.max(byNameDate[key].night,n.kosu);byNameDate[key].nightCount=true;}
+    else{byNameDate[key].day=Math.max(byNameDate[key].day,n.kosu);byNameDate[key].dayCount=true;}
   });
   const byName={};
   Object.entries(byNameDate).forEach(([key,v])=>{
     const name=key.split('__')[0];
     if(!byName[name])byName[name]={days:0,kosu:0};
-    if(v.dayCount)byName[name].days++;
-    if(v.nightCount)byName[name].days++;
+    if(v.dayCount)byName[name].days++;if(v.nightCount)byName[name].days++;
     byName[name].kosu+=v.day+v.night;
   });
   return byName;
@@ -792,8 +847,7 @@ function updateJimu(){
 
 async function downloadSheetCSV(){
   const sheetName=document.getElementById('csv-sheet').value;
-  const btn=document.getElementById('csv-btn');
-  btn.textContent='取得中...';btn.disabled=true;
+  const btn=document.getElementById('csv-btn');btn.textContent='取得中...';btn.disabled=true;
   try{
     const res=await fetch(getGasUrl(),{method:'POST',body:JSON.stringify({action:'get_sheet',sheet:sheetName}),headers:{'Content-Type':'text/plain'}});
     const json=await res.json();
@@ -802,9 +856,8 @@ async function downloadSheetCSV(){
       const csvEsc=v=>{const s=String(v==null?'':v);return s.includes(',')||s.includes('"')||s.includes('\n')?'"'+s.replace(/"/g,'""')+'"':s;};
       const csv=json.data.map(row=>row.map(csvEsc).join(',')).join('\n');
       const blob=new Blob([BOM+csv],{type:'text/csv;charset=utf-8;'});
-      const a=document.createElement('a');a.href=URL.createObjectURL(blob);
-      a.download=`${sheetName}.csv`;a.click();
-    } else alert('エラー：'+(json.message||'データなし'));
+      const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${sheetName}.csv`;a.click();
+    }else alert('エラー：'+(json.message||'データなし'));
   }catch(e){alert('ダウンロードエラー：'+e.message);}
   btn.textContent='ダウンロード';btn.disabled=false;
 }
@@ -814,8 +867,7 @@ async function runSummary(){
   try{
     const res=await fetch(getGasUrl(),{method:'POST',body:JSON.stringify({action:'summarize'}),headers:{'Content-Type':'text/plain'}});
     const json=await res.json();
-    if(json.status==='ok')alert('集計シートを更新しました！');
-    else alert('エラー：'+json.message);
+    if(json.status==='ok')alert('集計シートを更新しました！');else alert('エラー：'+json.message);
   }catch(e){alert('集計エラー：'+e.message);}
   btn.textContent='集計を更新';btn.disabled=false;
 }
@@ -830,7 +882,6 @@ async function archiveOldData(){
   }catch(e){alert('アーカイブエラー：'+e.message);}
 }
 
-// ===== 職人管理（サーバー保存）=====
 function openSettings(){
   if(currentCompany==='全社'){alert('会社を選択してから管理してください');return;}
   renderSettings();document.getElementById('settings-modal').classList.add('active');
@@ -847,43 +898,33 @@ function renderSettings(){
 }
 
 async function addShokunin(){
-  const v=document.getElementById('new-shokunin').value.trim();
-  if(!v)return;
+  const v=document.getElementById('new-shokunin').value.trim();if(!v)return;
   try{
     const res=await fetch(getGasUrl(),{method:'POST',body:JSON.stringify({action:'add_member',name:v,company:currentCompany}),headers:{'Content-Type':'text/plain'}});
     const json=await res.json();
-    if(json.status==='ok'){
-      allMembers.push({name:v,company:currentCompany});
-      document.getElementById('new-shokunin').value='';
-      renderSettings();initMemberUI();
-    } else alert('エラー：'+json.message);
+    if(json.status==='ok'){allMembers.push({name:v,company:currentCompany});document.getElementById('new-shokunin').value='';renderSettings();initMemberUI();}
+    else alert('エラー：'+json.message);
   }catch(e){alert('追加エラー：'+e.message);}
 }
 
 async function removeShokunin(i){
-  const name=getShokunin()[i];
-  if(!confirm(name+'を削除しますか？'))return;
+  const name=getShokunin()[i];if(!confirm(name+'を削除しますか？'))return;
   try{
     const res=await fetch(getGasUrl(),{method:'POST',body:JSON.stringify({action:'remove_member',name,company:currentCompany}),headers:{'Content-Type':'text/plain'}});
     const json=await res.json();
-    if(json.status==='ok'){
-      allMembers=allMembers.filter(m=>!(m.name===name&&m.company===currentCompany));
-      renderSettings();initMemberUI();
-    } else alert('エラー：'+json.message);
+    if(json.status==='ok'){allMembers=allMembers.filter(m=>!(m.name===name&&m.company===currentCompany));renderSettings();initMemberUI();}
+    else alert('エラー：'+json.message);
   }catch(e){alert('削除エラー：'+e.message);}
 }
 
 function initSelects(){
   document.getElementById('s-date').valueAsDate=new Date();
-  document.getElementById('a-date').valueAsDate=new Date();
   const sel=document.getElementById('j-month');const now=new Date();let opts='';
   for(let i=0;i<6;i++){const d=new Date(now.getFullYear(),now.getMonth()-i,1);const val=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;opts+=`<option value="${val}"${i===0?' selected':''}>${d.getFullYear()}年${d.getMonth()+1}月</option>`;}
   sel.innerHTML=opts;
 }
 
-initCompanyBar();
-initSelects();
-loadData();
+initCompanyBar();initSelects();initAvailWeek();loadData();
 </script>
 </body>
 </html>
