@@ -526,7 +526,7 @@ function groupNippos(nippos){
     groups[key].members.push({name:n.name,role:n.role});
     if(n.id)groups[key].ids.push(n.id);
   });
-  return Object.values(groups).sort((a,b)=>b.date.localeCompare(a.date));
+  return Object.values(groups).sort((a,b)=>a.date.localeCompare(b.date));
 }
 
 function formatDate(d){
@@ -540,7 +540,7 @@ function renderList(){
   const lp=listMonth.split('-');
   document.getElementById('list-month-label').textContent=lp[0]+'年'+Number(lp[1])+'月';
   const groups=groupNippos(filteredNippos()).filter(g=>g.date.startsWith(listMonth));
-  const dates=[...new Set(groups.map(g=>g.date))].sort((a,b)=>b.localeCompare(a));
+  const dates=[...new Set(groups.map(g=>g.date))].sort((a,b)=>a.localeCompare(b));
   const df=document.getElementById('date-filter');
   df.innerHTML='<div class="date-chip'+(currentDateFilter===''?' active':'')+'" onclick="filterDate(\'\')">全て</div>'+
     dates.map(d=>`<div class="date-chip${currentDateFilter===d?' active':''}" onclick="filterDate('${d}')">${formatDate(d)}</div>`).join('');
