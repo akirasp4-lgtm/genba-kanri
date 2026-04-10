@@ -48,27 +48,22 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 .yotei-memo{font-size:13px;color:#444;margin-top:6px;padding-top:6px;border-top:1px solid #f2f2f7}
 .yotei-actions{display:flex;gap:8px;padding:10px 16px;background:#f9f9f9}
 .yakin-badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;background:#2C2C5A;color:#E8D44D;margin-left:6px;vertical-align:middle}
-.company-badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:500;background:#f0f0f0;color:#666;margin-left:4px;vertical-align:middle}
 .yasumi-badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;background:#E8384F;color:#fff;margin-left:6px;vertical-align:middle}
+.yotei-badge-tag{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;background:#3B82F6;color:#fff;margin-left:6px;vertical-align:middle}
 .souko-badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;background:#8B5E3C;color:#fff;margin-left:6px;vertical-align:middle}
-.yakin-toggle{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:10px 12px;border:1px solid #ddd;border-radius:8px;background:#f9f9f9;cursor:pointer;-webkit-tap-highlight-color:transparent}
-.yakin-toggle.active{background:#2C2C5A;border-color:#2C2C5A}
-.yakin-toggle.active .yakin-toggle-label{color:#E8D44D}
-.yakin-toggle.active .yakin-toggle-icon{opacity:1}
-.yakin-toggle-icon{font-size:20px;opacity:0.4;transition:opacity 0.15s}
-.yakin-toggle-label{font-size:15px;font-weight:500;color:#666;transition:color 0.15s}
-.yasumi-toggle{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:10px 12px;border:1px solid #ddd;border-radius:8px;background:#f9f9f9;cursor:pointer;-webkit-tap-highlight-color:transparent}
-.yasumi-toggle.active{background:#E8384F;border-color:#E8384F}
-.yasumi-toggle.active .yasumi-toggle-label{color:#fff}
-.yasumi-toggle.active .yasumi-toggle-icon{opacity:1}
-.yasumi-toggle-icon{font-size:20px;opacity:0.4;transition:opacity 0.15s}
-.yasumi-toggle-label{font-size:15px;font-weight:500;color:#666;transition:color 0.15s}
-.souko-toggle{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:10px 12px;border:1px solid #ddd;border-radius:8px;background:#f9f9f9;cursor:pointer;-webkit-tap-highlight-color:transparent}
-.souko-toggle.active{background:#8B5E3C;border-color:#8B5E3C}
-.souko-toggle.active .souko-toggle-label{color:#fff}
-.souko-toggle.active .souko-toggle-icon{opacity:1}
-.souko-toggle-icon{font-size:20px;opacity:0.4;transition:opacity 0.15s}
-.souko-toggle-label{font-size:15px;font-weight:500;color:#666;transition:color 0.15s}
+.company-badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:500;background:#f0f0f0;color:#666;margin-left:4px;vertical-align:middle}
+.toggle-row{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:10px 12px;border:1px solid #ddd;border-radius:8px;background:#f9f9f9;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.toggle-row .t-icon{font-size:20px;opacity:0.4;transition:opacity 0.15s}
+.toggle-row .t-label{font-size:15px;font-weight:500;color:#666;transition:color 0.15s}
+.toggle-row.active .t-icon{opacity:1}
+.toggle-souko.active{background:#8B5E3C;border-color:#8B5E3C}
+.toggle-souko.active .t-label{color:#fff}
+.toggle-yakin.active{background:#2C2C5A;border-color:#2C2C5A}
+.toggle-yakin.active .t-label{color:#E8D44D}
+.toggle-yasumi.active{background:#E8384F;border-color:#E8384F}
+.toggle-yasumi.active .t-label{color:#fff}
+.toggle-yotei.active{background:#3B82F6;border-color:#3B82F6}
+.toggle-yotei.active .t-label{color:#fff}
 .member-section{margin-bottom:12px}
 .member-label{font-size:13px;color:#666;margin-bottom:6px}
 .member-grid{display:flex;flex-wrap:wrap;gap:8px;padding:12px;border:1px solid #ddd;border-radius:10px;background:#f9f9f9;min-height:52px}
@@ -140,9 +135,10 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
     <div><label>出勤</label><input type="time" id="s-start" value="08:00"></div>
     <div><label>退勤</label><input type="time" id="s-end" value="17:00"></div>
   </div>
-  <div class="souko-toggle" id="s-souko-toggle" onclick="toggleSouko('s')"><span class="souko-toggle-icon">🏭</span><span class="souko-toggle-label">倉庫</span></div>
-  <div class="yakin-toggle" id="s-yakin-toggle" onclick="toggleYakin('s')"><span class="yakin-toggle-icon">🌙</span><span class="yakin-toggle-label">夜勤</span></div>
-  <div class="yasumi-toggle" id="s-yasumi-toggle" onclick="toggleYasumi('s')"><span class="yasumi-toggle-icon">🏖️</span><span class="yasumi-toggle-label">休み</span></div>
+  <div class="toggle-row toggle-souko" id="s-souko-toggle" onclick="setMode('s','souko')"><span class="t-icon">🏭</span><span class="t-label">倉庫</span></div>
+  <div class="toggle-row toggle-yakin" id="s-yakin-toggle" onclick="setMode('s','yakin')"><span class="t-icon">🌙</span><span class="t-label">夜勤</span></div>
+  <div class="toggle-row toggle-yasumi" id="s-yasumi-toggle" onclick="setMode('s','yasumi')"><span class="t-icon">🏖️</span><span class="t-label">休み</span></div>
+  <div class="toggle-row toggle-yotei" id="s-yotei-toggle" onclick="setMode('s','yotei')"><span class="t-icon">📌</span><span class="t-label">予定</span></div>
   <label>人工（ひとり当たり）</label>
   <select id="s-kosu"><option value="1.0">1人工</option><option value="1.5">1.5人工</option><option value="2.0">2人工</option></select>
   <div class="leader-select-wrap"><label>代表者</label><select id="s-leader"><option value="">代表者を選択してください</option></select></div>
@@ -234,7 +230,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
   <select id="csv-sheet" style="margin-bottom:8px">
     <option value="日報データ">日報データ</option><option value="アーカイブ">アーカイブ</option>
     <option value="月別集計">月別集計</option><option value="会社別集計">会社別集計</option>
-    <option value="職人マスタ">職人マスタ</option>
+    <option value="職人マスタ">職人マスタ</option><option value="月別確認表">月別確認表</option>
   </select>
   <button class="btn btn-secondary" id="csv-btn" onclick="downloadSheetCSV()">ダウンロード</button>
 </div>
@@ -270,9 +266,10 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
     <div><label>出勤</label><input type="time" id="e-start"></div>
     <div><label>退勤</label><input type="time" id="e-end"></div>
   </div>
-  <div class="souko-toggle" id="e-souko-toggle" onclick="toggleSouko('e')"><span class="souko-toggle-icon">🏭</span><span class="souko-toggle-label">倉庫</span></div>
-  <div class="yakin-toggle" id="e-yakin-toggle" onclick="toggleYakin('e')"><span class="yakin-toggle-icon">🌙</span><span class="yakin-toggle-label">夜勤</span></div>
-  <div class="yasumi-toggle" id="e-yasumi-toggle" onclick="toggleYasumi('e')"><span class="yasumi-toggle-icon">🏖️</span><span class="yasumi-toggle-label">休み</span></div>
+  <div class="toggle-row toggle-souko" id="e-souko-toggle" onclick="setMode('e','souko')"><span class="t-icon">🏭</span><span class="t-label">倉庫</span></div>
+  <div class="toggle-row toggle-yakin" id="e-yakin-toggle" onclick="setMode('e','yakin')"><span class="t-icon">🌙</span><span class="t-label">夜勤</span></div>
+  <div class="toggle-row toggle-yasumi" id="e-yasumi-toggle" onclick="setMode('e','yasumi')"><span class="t-icon">🏖️</span><span class="t-label">休み</span></div>
+  <div class="toggle-row toggle-yotei" id="e-yotei-toggle" onclick="setMode('e','yotei')"><span class="t-icon">📌</span><span class="t-label">予定</span></div>
   <label>人工（ひとり当たり）</label>
   <select id="e-kosu"><option value="1.0">1人工</option><option value="1.5">1.5人工</option><option value="2.0">2人工</option></select>
   <div class="leader-select-wrap"><label>代表者</label><select id="e-leader"><option value="">代表者を選択してください</option></select></div>
@@ -299,8 +296,10 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 </div>
 
 <script>
-const GAS_URL='https://script.google.com/macros/s/AKfycbxvPPJFfItxKWPE7p3-HL3L82C11qz2hvNiXPxA9v4cynAhGyzWbYsSBFep1LB_WuA3FA/exec';
+const GAS_URL='https://script.google.com/macros/s/AKfycbxKJtH_VZMcsUSV9XbxmYHUOlXyQXmWqNqWquzomC3uH5BFXzkSeO-ALkEL-gNeOd_0gw/exec';
 const COMPANIES=['グローライズ','和信カインド','ビジネスサポート','ラーテル','GRHD'];
+const MODES=['souko','yakin','yasumi','yotei'];
+
 function getGasUrl(){return GAS_URL;}
 
 let currentCompany='';
@@ -312,14 +311,30 @@ let editIds=[];
 let editDate='';
 let currentDateFilter='';
 let listMonth='';
-let yakinState={s:false,e:false};
-let yasumiState={s:false,e:false};
-let soukoState={s:false,e:false};
+let modeState={s:'',e:''};
 let isSubmitting=false;
 
 function esc(str){const d=document.createElement('div');d.textContent=String(str||'');return d.innerHTML;}
 function uuid(){return 'xxxx-xxxx-xxxx'.replace(/x/g,()=>Math.floor(Math.random()*16).toString(16))+'-'+Date.now().toString(36);}
 function setLoading(on){document.getElementById('loading-bar').classList.toggle('active',on);}
+
+// モード切り替え（4択排他）
+function setMode(p,mode){
+  const cur=modeState[p];
+  const next=cur===mode?'':mode;
+  modeState[p]=next;
+  MODES.forEach(m=>{
+    const el=document.getElementById(p+'-'+m+'-toggle');
+    if(el)el.classList.toggle('active',m===next);
+  });
+}
+function applyMode(p,mode){
+  modeState[p]=mode||'';
+  MODES.forEach(m=>{
+    const el=document.getElementById(p+'-'+m+'-toggle');
+    if(el)el.classList.toggle('active',m===modeState[p]);
+  });
+}
 
 function getShokunin(){
   if(currentCompany==='全社'){const all=[];allMembers.forEach(m=>{if(!all.includes(m.name))all.push(m.name);});return all;}
@@ -370,19 +385,6 @@ function filteredNippos(){
   if(currentCompany==='全社')return allNippos;
   return allNippos.filter(n=>n.company===currentCompany);
 }
-
-function clearToggles(p){
-  soukoState[p]=false;yakinState[p]=false;yasumiState[p]=false;
-  document.getElementById(p+'-souko-toggle').classList.remove('active');
-  document.getElementById(p+'-yakin-toggle').classList.remove('active');
-  document.getElementById(p+'-yasumi-toggle').classList.remove('active');
-}
-function toggleSouko(p){const v=!soukoState[p];clearToggles(p);soukoState[p]=v;document.getElementById(p+'-souko-toggle').classList.toggle('active',v);}
-function setSouko(p,v){soukoState[p]=v;document.getElementById(p+'-souko-toggle').classList.toggle('active',v);}
-function toggleYakin(p){const v=!yakinState[p];clearToggles(p);yakinState[p]=v;document.getElementById(p+'-yakin-toggle').classList.toggle('active',v);}
-function setYakin(p,v){yakinState[p]=v;document.getElementById(p+'-yakin-toggle').classList.toggle('active',v);}
-function toggleYasumi(p){const v=!yasumiState[p];clearToggles(p);yasumiState[p]=v;document.getElementById(p+'-yasumi-toggle').classList.toggle('active',v);}
-function setYasumi(p,v){yasumiState[p]=v;document.getElementById(p+'-yasumi-toggle').classList.toggle('active',v);}
 
 function switchTab(t){
   const tabs=['input','list','avail','genba','jimu'];
@@ -435,7 +437,11 @@ async function submitNippo(){
   const kosu=parseFloat(document.getElementById('s-kosu').value);
   const memo=document.getElementById('s-memo').value;
   const leader=document.getElementById('s-leader').value;
-  const yakin=yakinState.s;const yasumi=yasumiState.s;const souko=soukoState.s;
+  const mode=modeState.s;
+  const yasumi=mode==='yasumi';
+  const yakin=mode==='yakin';
+  const souko=mode==='souko';
+  const yotei=mode==='yotei';
   const effectiveKosu=yasumi?0:kosu;
   if(!dateStart||!genba){showAlert('開始日と元請名は必須です','err');return;}
   if(!leader){showAlert('代表者を選択してください','err');return;}
@@ -446,7 +452,7 @@ async function submitNippo(){
   const rows=[];
   dates.forEach(date=>{
     const dayId=uuid();
-    members.forEach(m=>{rows.push({date,genba,loc,name:m.name,role:m.role,start,end,kosu:effectiveKosu,memo,yakin,yasumi,yotei:false,souko,company:currentCompany,id:dayId});});
+    members.forEach(m=>{rows.push({date,genba,loc,name:m.name,role:m.role,start,end,kosu:effectiveKosu,memo,yakin,yasumi,yotei,souko,company:currentCompany,id:dayId});});
   });
   const btn=document.getElementById('submit-btn');
   isSubmitting=true;btn.textContent=`送信中（${dates.length}日分）...`;btn.disabled=true;
@@ -458,8 +464,7 @@ async function submitNippo(){
       document.getElementById('s-genba').value='';document.getElementById('s-location').value='';
       document.getElementById('s-memo').value='';document.getElementById('s-leader').value='';
       document.getElementById('s-date-end').value='';
-      setYakin('s',false);setYasumi('s',false);setSouko('s',false);
-      selectedMembers=[];renderMemberChips('member-selector',selectedMembers,toggleMember);
+      applyMode('s','');selectedMembers=[];renderMemberChips('member-selector',selectedMembers,toggleMember);
       await loadData();
     }else showAlert('エラー：'+json.message,'err');
   }catch(err){showAlert('送信エラー：'+err.message,'err');}
@@ -561,10 +566,11 @@ function renderListWithDate(groups){
     const yakinBadge=g.yakin?'<span class="yakin-badge">🌙 夜勤</span>':'';
     const yasumiBadge=g.yasumi?'<span class="yasumi-badge">🏖️ 休み</span>':'';
     const soukoBadge=g.souko?'<span class="souko-badge">🏭 倉庫</span>':'';
+    const yoteiBadge=g.yotei?'<span class="yotei-badge-tag">📌 予定</span>':'';
     const companyBadge=(currentCompany==='全社'&&g.company)?`<span class="company-badge">${esc(g.company)}</span>`:'';
     return`<div class="yotei-card">
       <div class="yotei-header"><div>
-        <div class="yotei-date">${formatDate(g.date)}${soukoBadge}${yakinBadge}${yasumiBadge}${companyBadge}</div>
+        <div class="yotei-date">${formatDate(g.date)}${soukoBadge}${yakinBadge}${yasumiBadge}${yoteiBadge}${companyBadge}</div>
         <div class="yotei-genba">${esc(g.genba)}</div>
       </div><div style="font-size:13px;color:#666">${totalKo}人工</div></div>
       <div class="yotei-body">
@@ -597,7 +603,7 @@ async function deleteGroup(idx){
     const res=await fetch(getGasUrl(),{method:'POST',body:JSON.stringify({action:'delete',ids}),headers:{'Content-Type':'text/plain'}});
     const json=await res.json();
     if(json.status==='ok'){
-      if(json.deleted===0)alert('削除対象が見つかりませんでした。スプレッドシートのID列を確認してください。');
+      if(json.deleted===0)alert('削除対象が見つかりませんでした。');
       await loadData();
     }else{alert('削除エラー：'+json.message);await loadData();}
   }catch(e){alert('削除エラー：'+e.message);await loadData();}
@@ -614,7 +620,8 @@ function copyToInput(idx){
   document.getElementById('s-kosu').value=(g.kosu>0?g.kosu:1.0).toFixed(1);
   document.getElementById('s-memo').value=g.memo||'';
   document.getElementById('s-date').value='';document.getElementById('s-date-end').value='';
-  setSouko('s',!!g.souko);setYakin('s',!!g.yakin);setYasumi('s',!!g.yasumi);
+  const mode=g.souko?'souko':g.yakin?'yakin':g.yasumi?'yasumi':g.yotei?'yotei':'';
+  applyMode('s',mode);
   const leader=g.members.find(m=>m.role==='代表');
   document.getElementById('s-leader').value=leader?leader.name:'';
   selectedMembers=[];
@@ -635,7 +642,8 @@ function openEditModal(idx,groupsOverride){
   document.getElementById('e-kosu').value=(g.kosu>0?g.kosu:1.0).toFixed(1);
   document.getElementById('e-memo').value=g.memo||'';
   document.getElementById('edit-title').textContent=`編集：${formatDate(g.date)} ${g.genba}`;
-  setYakin('e',!!g.yakin);setYasumi('e',!!g.yasumi);setSouko('e',!!g.souko);
+  const mode=g.souko?'souko':g.yakin?'yakin':g.yasumi?'yasumi':g.yotei?'yotei':'';
+  applyMode('e',mode);
   const leader=g.members.find(m=>m.role==='代表');
   document.getElementById('e-leader').value=leader?leader.name:'';
   editSelectedMembers=[];
@@ -657,7 +665,8 @@ async function saveEdit(){
   const kosu=parseFloat(document.getElementById('e-kosu').value);
   const memo=document.getElementById('e-memo').value;
   const leader=document.getElementById('e-leader').value;
-  const yakin=yakinState.e;const yasumi=yasumiState.e;const souko=soukoState.e;
+  const mode=modeState.e;
+  const yasumi=mode==='yasumi';const yakin=mode==='yakin';const souko=mode==='souko';const yotei=mode==='yotei';
   const effectiveKosu=yasumi?0:kosu;
   if(!genba){alert('元請名は必須です');return;}
   if(!leader){alert('代表者を選択してください');return;}
@@ -666,7 +675,7 @@ async function saveEdit(){
   editSelectedMembers.forEach(i=>{if(shokunin[i]!==leader)members.push({name:shokunin[i],role:'同行'});});
   const newId=uuid();
   const company=currentCompany==='全社'?'':currentCompany;
-  const rows=members.map(m=>({date:editDate,genba,loc,name:m.name,role:m.role,start,end,kosu:effectiveKosu,memo,yakin,yasumi,yotei:false,souko,company,id:newId}));
+  const rows=members.map(m=>({date:editDate,genba,loc,name:m.name,role:m.role,start,end,kosu:effectiveKosu,memo,yakin,yasumi,yotei,souko,company,id:newId}));
   btn.textContent='保存中...';btn.disabled=true;
   try{
     const res=await fetch(getGasUrl(),{method:'POST',body:JSON.stringify({action:'update',ids:editIds,rows}),headers:{'Content-Type':'text/plain'}});
@@ -717,6 +726,7 @@ function renderGmList(){
     if(g.yakin)badges.push('<span class="yakin-badge">🌙夜勤</span>');
     if(g.yasumi)badges.push('<span class="yasumi-badge">🏖️休み</span>');
     if(g.souko)badges.push('<span class="souko-badge">🏭倉庫</span>');
+    if(g.yotei)badges.push('<span class="yotei-badge-tag">📌予定</span>');
     return`<div class="gm-day-row">
       <input type="checkbox" class="gm-day-check" data-idx="${idx}" onchange="updateGmDeleteBar()">
       <div class="gm-day-info">
@@ -724,7 +734,7 @@ function renderGmList(){
         <div class="gm-day-members">${esc(memberNames)}</div>
         ${badges.length?`<div style="margin-top:4px">${badges.join('')}</div>`:''}
       </div>
-      <button class="gm-edit-btn" onclick="openGmEdit(${idx})">編集</button>
+      <button class="gm-edit-btn" onclick="openEditModal(${idx},getGmGroups())">編集</button>
     </div>`;
   }).join('');
   updateGmDeleteBar();
@@ -762,11 +772,6 @@ async function deleteGmChecked(){
     else alert('削除エラー：'+json.message);
   }catch(e){alert('削除エラー：'+e.message);}
   setLoading(false);
-}
-
-function openGmEdit(idx){
-  const groups=getGmGroups();
-  openEditModal(idx,groups);
 }
 
 // ========== 空き確認 ==========
