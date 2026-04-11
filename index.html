@@ -254,6 +254,15 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
   <div class="archive-desc">3ヶ月以上前のデータを「アーカイブ」シートに移動します。移動後は元に戻せません。</div>
   <button class="btn btn-secondary btn-sm" onclick="archiveOldData()">古いデータをアーカイブ</button>
 </div>
+<div class="card" style="margin-top:8px">
+  <div style="display:flex;justify-content:space-between;align-items:center">
+    <div>
+      <div style="font-size:13px;color:#666;font-weight:500">操作者名</div>
+      <div id="current-username-display" style="font-size:15px;font-weight:600;margin-top:2px">未設定</div>
+    </div>
+    <button class="btn btn-secondary btn-sm" onclick="openUsernameModal()">変更</button>
+  </div>
+</div>
 </div>
 
 <!-- タブバー -->
@@ -1072,8 +1081,6 @@ function setGenbaValue(p,val){
 }
 
 function openGenbaSettings(){
-  if(currentCompany==='全社'){alert('会社を選択してから管理してください');return;}
-  document.getElementById('genba-settings-company-name').textContent=currentCompany;
   renderGenbaSettings();
   document.getElementById('genba-settings-modal').classList.add('active');
 }
@@ -1083,40 +1090,38 @@ function closeGenbaSettings(){
 }
 
 function renderGenbaSettings(){
-  const filtered=allGenbaMaster.filter(g=>g.company===currentCompany);
-  document.getElementById('genba-master-list').innerHTML=filtered.map((g,i)=>
+  document.getElementById('genba-master-list').innerHTML=allGenbaMaster.map((g,i)=>
     `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #eee">
-      <span style="font-size:15px">${esc(g.name)}</span>
-      <button class="btn btn-secondary btn-sm" onclick="removeGenbaMaster('${esc(g.name)}')">削除</button>
+      <span style="font-size:15px">${esc(g)}</span>
+      <button class="btn btn-secondary btn-sm" onclick="removeGenbaMaster(${i})">削除</button>
     </div>`).join('')||'<div style="color:#999;padding:12px;text-align:center">元請が登録されていません</div>';
 }
 
 async function addGenbaMaster(){
   const v=document.getElementById('new-genba-master').value.trim();if(!v)return;
-  if(currentCompany==='全社'){alert('会社を選択してから追加してください');return;}
   try{
-    const res=await fetch(getGasUrl(),{method:'POST',body:JSON.stringify({action:'add_genba',name:v,company:currentCompany}),headers:{'Content-Type':'text/plain'}});
+    const res=await fetch(getGasUrl(),{method:'POST',body:JSON.stringify({action:'add_genba',name:v}),headers:{'Content-Type':'text/plain'}});
     const json=await res.json();
     if(json.status==='ok'){
-      if(!json.duplicate)allGenbaMaster.push({name:v,company:currentCompany});
-      allGenbaMaster.sort((a,b)=>a.name.localeCompare(b.name));
+      if(!json.duplicate&&!allGenbaMaster.includes(v))allGenbaMaster.push(v);
+      allGenbaMaster.sort();
       document.getElementById('new-genba-master').value='';
       renderGenbaSettings();initGenbaSelects();
     }else alert('エラー：'+json.message);
   }catch(e){alert('追加エラー：'+e.message);}
 }
 
-async function removeGenbaMaster(name){
-  if(!confirm(name+'を削除しますか？'))return;
+async function removeGenbaMaster(i){
+  const name=allGenbaMaster[i];if(!confirm(name+'を削除しますか？'))return;
   try{
-    const res=await fetch(getGasUrl(),{method:'POST',body:JSON.stringify({action:'remove_genba',name,company:currentCompany}),headers:{'Content-Type':'text/plain'}});
+    const res=await fetch(getGasUrl(),{method:'POST',body:JSON.stringify({action:'remove_genba',name}),headers:{'Content-Type':'text/plain'}});
     const json=await res.json();
-    if(json.status==='ok'){allGenbaMaster=allGenbaMaster.filter(g=>!(g.name===name&&g.company===currentCompany));renderGenbaSettings();initGenbaSelects();}
+    if(json.status==='ok'){allGenbaMaster.splice(i,1);renderGenbaSettings();initGenbaSelects();}
     else alert('エラー：'+json.message);
   }catch(e){alert('削除エラー：'+e.message);}
 }
 
-initCompanyBar();initSelects();initAvailWeek();loadData();
+initCompanyBar();initSelects();initAvailWeek();initUsername();loadData();
 </script>
 </body>
 </html>
