@@ -231,6 +231,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
     <option value="日報データ">日報データ</option><option value="アーカイブ">アーカイブ</option>
     <option value="月別集計">月別集計</option><option value="会社別集計">会社別集計</option>
     <option value="職人マスタ">職人マスタ</option><option value="月別確認表">月別確認表</option>
+    <option value="元請別請求集計">元請別請求集計</option>
   </select>
   <button class="btn btn-secondary" id="csv-btn" onclick="downloadSheetCSV()">ダウンロード</button>
 </div>
@@ -296,7 +297,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 </div>
 
 <script>
-const GAS_URL='https://script.google.com/macros/s/AKfycbxKJtH_VZMcsUSV9XbxmYHUOlXyQXmWqNqWquzomC3uH5BFXzkSeO-ALkEL-gNeOd_0gw/exec';
+const GAS_URL='https://script.google.com/macros/s/AKfycbwGCrr0Q9mzbwuqjU-g7OivUYFksH3nvV8Ilp4T4pQm63AcYnd5WW8tXt9Lfmf3EcMkyw/exec';
 const COMPANIES=['グローライズ','和信カインド','ビジネスサポート','ラーテル','GRHD'];
 const MODES=['souko','yakin','yasumi','yotei'];
 
