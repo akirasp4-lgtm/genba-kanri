@@ -200,7 +200,10 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
     <div id="gm-day-list"></div>
   </div>
   <div class="gm-delete-bar" id="gm-delete-bar">
-    <button class="btn btn-danger" id="gm-delete-btn" onclick="deleteGmChecked()">チェックした日を削除</button>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-sm" id="gm-edit-checked-btn" onclick="openBulkEditModal()" style="flex:1;background:#1D9E75">チェックした日を一括編集</button>
+      <button class="btn btn-danger btn-sm" id="gm-delete-btn" onclick="deleteGmChecked()" style="flex:1">削除</button>
+    </div>
   </div>
 </div>
 <button class="btn btn-secondary" style="margin-top:8px" onclick="loadData()">更新</button>
@@ -310,6 +313,8 @@ let selectedMembers=[];
 let editSelectedMembers=[];
 let editIds=[];
 let editDate='';
+let editDates=[];
+let bulkEditMode=false;
 let currentDateFilter='';
 let listMonth='';
 let modeState={s:'',e:''};
@@ -633,6 +638,7 @@ function copyToInput(idx){
 }
 
 function openEditModal(idx,groupsOverride){
+  bulkEditMode=false;
   const groups=groupsOverride!==null?groupsOverride:getDisplayedGroups();
   const g=groups[idx];if(!g)return;
   editIds=[...new Set(g.ids)];editDate=g.date;
@@ -674,14 +680,18 @@ async function saveEdit(){
   const members=[{name:leader,role:'代表'}];
   const shokunin=getShokunin();
   editSelectedMembers.forEach(i=>{if(shokunin[i]!==leader)members.push({name:shokunin[i],role:'同行'});});
-  const newId=uuid();
   const company=currentCompany==='全社'?'':currentCompany;
-  const rows=members.map(m=>({date:editDate,genba,loc,name:m.name,role:m.role,start,end,kosu:effectiveKosu,memo,yakin,yasumi,yotei,souko,company,id:newId}));
+  const dates=bulkEditMode?editDates:[editDate];
+  const rows=[];
+  dates.forEach(date=>{
+    const newId=uuid();
+    members.forEach(m=>{rows.push({date,genba,loc,name:m.name,role:m.role,start,end,kosu:effectiveKosu,memo,yakin,yasumi,yotei,souko,company,id:newId});});
+  });
   btn.textContent='保存中...';btn.disabled=true;
   try{
     const res=await fetch(getGasUrl(),{method:'POST',body:JSON.stringify({action:'update',ids:editIds,rows}),headers:{'Content-Type':'text/plain'}});
     const json=await res.json();
-    if(json.status==='ok'){closeEditModal();await loadData();}
+    if(json.status==='ok'){closeEditModal();bulkEditMode=false;await loadData();renderGmList();}
     else alert('保存エラー：'+json.message);
   }catch(e){alert('保存エラー：'+e.message);}
   btn.textContent='保存する';btn.disabled=false;
@@ -755,6 +765,35 @@ function toggleGmSelectAll(){
   checkboxes.forEach(c=>c.checked=!allChecked);
   document.getElementById('gm-select-all-btn').textContent=allChecked?'全選択':'全解除';
   updateGmDeleteBar();
+}
+
+function openBulkEditModal(){
+  const groups=getGmGroups();
+  const checked=[...document.querySelectorAll('.gm-day-check:checked')];
+  if(checked.length===0)return;
+  const targets=checked.map(c=>groups[Number(c.dataset.idx)]).filter(Boolean);
+  if(targets.length===0)return;
+  bulkEditMode=true;
+  editIds=[...new Set(targets.flatMap(g=>g.ids))];
+  editDates=targets.map(g=>g.date);
+  const g=targets[0];
+  document.getElementById('e-genba').value=g.genba;
+  document.getElementById('e-location').value=g.loc||'';
+  document.getElementById('e-start').value=g.start||'08:00';
+  document.getElementById('e-end').value=g.end||'17:00';
+  document.getElementById('e-kosu').value=(g.kosu>0?g.kosu:1.0).toFixed(1);
+  document.getElementById('e-memo').value=g.memo||'';
+  const dateLabels=targets.map(t=>formatDate(t.date)).join('、');
+  document.getElementById('edit-title').textContent=`一括編集：${targets.length}日分（${dateLabels}）`;
+  const mode=g.souko?'souko':g.yakin?'yakin':g.yasumi?'yasumi':g.yotei?'yotei':'';
+  applyMode('e',mode);
+  const leader=g.members.find(m=>m.role==='代表');
+  document.getElementById('e-leader').value=leader?leader.name:'';
+  editSelectedMembers=[];
+  const shokunin=getShokunin();
+  g.members.filter(m=>m.role==='同行').forEach(m=>{const i=shokunin.indexOf(m.name);if(i>=0)editSelectedMembers.push(i);});
+  renderMemberChips('e-member-selector',editSelectedMembers,toggleEditMember);
+  document.getElementById('edit-modal').classList.add('active');
 }
 
 async function deleteGmChecked(){
