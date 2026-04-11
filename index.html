@@ -46,6 +46,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 .tag-member{background:#EAF3DE;color:#3B6D11}
 .yotei-time{font-size:13px;color:#666}
 .yotei-memo{font-size:13px;color:#444;margin-top:6px;padding-top:6px;border-top:1px solid #f2f2f7}
+.yotei-updated-by{font-size:11px;color:#888;text-align:right;margin-top:6px}
 .yotei-actions{display:flex;gap:8px;padding:10px 16px;background:#f9f9f9}
 .yakin-badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;background:#2C2C5A;color:#E8D44D;margin-left:6px;vertical-align:middle}
 .yasumi-badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;background:#E8384F;color:#fff;margin-left:6px;vertical-align:middle}
@@ -121,7 +122,6 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 <div class="loading-bar" id="loading-bar"></div>
 <div class="notice-bar" id="notice-bar">会社を選択して入力してください</div>
 
-<!-- 入力 -->
 <div id="screen-input" class="screen active">
 <div class="page-title">日報入力</div>
 <div class="card">
@@ -153,7 +153,6 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 </div>
 </div>
 
-<!-- 予定一覧 -->
 <div id="screen-list" class="screen">
 <div class="page-title">予定一覧</div>
 <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:12px">
@@ -166,7 +165,6 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 <button class="btn btn-secondary" style="margin-top:8px" onclick="loadData()">更新</button>
 </div>
 
-<!-- 空き確認 -->
 <div id="screen-avail" class="screen">
 <div class="page-title">空き確認</div>
 <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:12px">
@@ -186,7 +184,6 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 <button class="btn btn-secondary" onclick="loadData()">更新</button>
 </div>
 
-<!-- 現場別管理 -->
 <div id="screen-genba" class="screen">
 <div class="page-title">現場別管理</div>
 <div class="card">
@@ -213,7 +210,6 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 <button class="btn btn-secondary" style="margin-top:8px" onclick="loadData()">更新</button>
 </div>
 
-<!-- 事務 -->
 <div id="screen-jimu" class="screen">
 <div class="page-title">事務</div>
 <div class="grid2">
@@ -267,7 +263,6 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 </div>
 </div>
 
-<!-- タブバー -->
 <div class="tab-bar">
   <button class="tab active" onclick="switchTab('input')"><span class="tab-icon">📋</span>入力</button>
   <button class="tab" onclick="switchTab('list')"><span class="tab-icon">📅</span>予定一覧</button>
@@ -276,7 +271,18 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
   <button class="tab" onclick="switchTab('jimu')"><span class="tab-icon">📊</span>事務</button>
 </div>
 
-<!-- 編集モーダル -->
+<div id="username-modal" class="modal-bg">
+<div class="modal">
+  <div class="modal-title">操作者名の変更</div>
+  <label>あなたの名前を選択してください</label>
+  <select id="username-select" style="margin-bottom:12px;"></select>
+  <div style="display:flex;gap:8px;margin-top:4px">
+    <button class="btn btn-secondary btn-sm" style="flex:1" onclick="document.getElementById('username-modal').classList.remove('active')">キャンセル</button>
+    <button class="btn btn-sm" style="flex:2" onclick="confirmUsername()">変更する</button>
+  </div>
+</div>
+</div>
+
 <div id="edit-modal" class="modal-bg">
 <div class="modal">
   <div class="modal-title" id="edit-title">編集</div>
@@ -304,7 +310,6 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 </div>
 </div>
 
-<!-- 設定モーダル -->
 <div id="settings-modal" class="modal-bg">
 <div class="modal">
   <div class="modal-title">職人の管理 <span id="settings-company-name" style="font-size:14px;color:#1D9E75"></span></div>
@@ -317,7 +322,6 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 </div>
 </div>
 
-<!-- 元請管理モーダル -->
 <div id="genba-settings-modal" class="modal-bg">
 <div class="modal">
   <div class="modal-title">元請の管理 <span id="genba-settings-company-name" style="font-size:14px;color:#1D9E75"></span></div>
@@ -331,7 +335,8 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 </div>
 
 <script>
-const GAS_URL='https://script.google.com/macros/s/AKfycbyzI7VGe-ypiCDGDpvtMVv5Bg0rq1h1lR9544vU0m0D5iZdw2mivk8PV7MJXBImBw58hw/exec';
+// ご指定のURLを設定しました
+const GAS_URL='https://script.google.com/macros/s/AKfycbwjIDj6ah_LbBOFzBGy9cATrIjgZNX4SjFpNbHvGq6CI13RqW7bNtdQ4URLHcv5jwPeeA/exec';
 const COMPANIES=['グローライズ','和信カインド','ビジネスサポート','ラーテル','GRHD'];
 const MODES=['souko','yakin','yasumi','yotei'];
 
@@ -383,7 +388,7 @@ function confirmUsername(){
 }
 function checkUsername(){
   if(!currentUsername&&allMembers.length>0){
-    // 初回はセレクトで選んでもらう（モーダルは出さない）
+    // 初回はセレクトで選んでもらう
   }
 }
 function onOperatorChange(){
@@ -399,7 +404,6 @@ function esc(str){const d=document.createElement('div');d.textContent=String(str
 function uuid(){return 'xxxx-xxxx-xxxx'.replace(/x/g,()=>Math.floor(Math.random()*16).toString(16))+'-'+Date.now().toString(36);}
 function setLoading(on){document.getElementById('loading-bar').classList.toggle('active',on);}
 
-// モード切り替え（4択排他）
 function setMode(p,mode){
   const cur=modeState[p];
   const next=cur===mode?'':mode;
@@ -481,7 +485,6 @@ function initMemberUI(){
     const cur=sel.value;
     sel.innerHTML='<option value="">代表者を選択してください</option>'+getShokunin().map(n=>`<option value="${esc(n)}"${n===cur?' selected':''}>${esc(n)}</option>`).join('');
   });
-  // 操作者セレクト更新（現在の会社の職人のみ）
   const opSel=document.getElementById('s-operator');
   if(opSel){
     const opNames=getShokunin();
@@ -593,7 +596,8 @@ function parseRows(rows,company){
     kosu:parseFloat(r['人工'])||0,memo:String(r['メモ']||''),
     yakin:String(r['夜勤']||'')==='夜勤',yasumi:String(r['夜勤']||'')==='休み',
     yotei:String(r['夜勤']||'')==='予定',souko:String(r['夜勤']||'')==='倉庫',
-    company:String(r['会社']||'')||company
+    company:String(r['会社']||'')||company,
+    updatedBy:String(r['更新者']||'')
   }));
 }
 
@@ -618,7 +622,7 @@ function groupNippos(nippos){
   const groups={};
   nippos.forEach(n=>{
     const key=n.id||`${n.date}__${n.genba}__${n.loc}__${n.start}__${n.end}__${n.kosu}__${n.memo}__${n.yakin}__${n.yasumi}__${n.yotei}__${n.souko}`;
-    if(!groups[key])groups[key]={date:n.date,genba:n.genba,loc:n.loc,start:n.start,end:n.end,kosu:n.kosu,memo:n.memo,yakin:n.yakin,yasumi:n.yasumi,yotei:n.yotei,souko:n.souko,company:n.company,members:[],ids:[]};
+    if(!groups[key])groups[key]={date:n.date,genba:n.genba,loc:n.loc,start:n.start,end:n.end,kosu:n.kosu,memo:n.memo,yakin:n.yakin,yasumi:n.yasumi,yotei:n.yotei,souko:n.souko,company:n.company,members:[],ids:[],updatedBy:n.updatedBy};
     groups[key].members.push({name:n.name,role:n.role});
     if(n.id)groups[key].ids.push(n.id);
   });
@@ -664,6 +668,7 @@ function renderListWithDate(groups){
     const soukoBadge=g.souko?'<span class="souko-badge">🏭 倉庫</span>':'';
     const yoteiBadge=g.yotei?'<span class="yotei-badge-tag">📌 予定</span>':'';
     const companyBadge=(currentCompany==='全社'&&g.company)?`<span class="company-badge">${esc(g.company)}</span>`:'';
+    const updaterHtml = g.updatedBy ? `<div class="yotei-updated-by">🔄 更新: ${esc(g.updatedBy)}</div>` : '';
     return`<div class="yotei-card">
       <div class="yotei-header"><div>
         <div class="yotei-date">${formatDate(g.date)}${soukoBadge}${yakinBadge}${yasumiBadge}${yoteiBadge}${companyBadge}</div>
@@ -674,6 +679,7 @@ function renderListWithDate(groups){
         <div class="yotei-members">${memberTags}</div>
         <div class="yotei-time">🕐 ${esc(g.start)}〜${esc(g.end)}</div>
         ${g.memo?`<div class="yotei-memo">📝 ${esc(g.memo)}</div>`:''}
+        ${updaterHtml}
       </div>
       <div class="yotei-actions">
         <button class="btn btn-secondary btn-sm" onclick="copyToInput(${idx})">コピー</button>
@@ -774,7 +780,7 @@ async function saveEdit(){
   const dates=bulkEditMode?editDates:[editDate];
   const rows=[];
   dates.forEach(date=>{
-    const newId=uuid();
+    const newId=uuid(); // 現在の仕様では編集のたびにIDが再生成されます
     members.forEach(m=>{rows.push({date,genba,loc,name:m.name,role:m.role,start,end,kosu:effectiveKosu,memo,yakin,yasumi,yotei,souko,company,id:newId,updatedBy:getUsername()});});
   });
   btn.textContent='保存中...';btn.disabled=true;
@@ -828,11 +834,12 @@ function renderGmList(){
     if(g.yasumi)badges.push('<span class="yasumi-badge">🏖️休み</span>');
     if(g.souko)badges.push('<span class="souko-badge">🏭倉庫</span>');
     if(g.yotei)badges.push('<span class="yotei-badge-tag">📌予定</span>');
+    const updaterHtml = g.updatedBy ? `<span style="font-size:11px;color:#999;margin-left:8px;">🔄 更新: ${esc(g.updatedBy)}</span>` : '';
     return`<div class="gm-day-row">
       <input type="checkbox" class="gm-day-check" data-idx="${idx}" onchange="updateGmDeleteBar()">
       <div class="gm-day-info">
         <div class="gm-day-date">${formatDate(g.date)}</div>
-        <div class="gm-day-members">${esc(memberNames)}</div>
+        <div class="gm-day-members">${esc(memberNames)}${updaterHtml}</div>
         ${badges.length?`<div style="margin-top:4px">${badges.join('')}</div>`:''}
       </div>
       <button class="gm-edit-btn" onclick="openEditModal(${idx},getGmGroups())">編集</button>
