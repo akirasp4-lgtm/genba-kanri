@@ -125,6 +125,8 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 <div id="screen-input" class="screen active">
 <div class="page-title">日報入力</div>
 <div class="card">
+  <label>操作者（あなたの名前）</label>
+  <select id="s-operator" onchange="onOperatorChange()"><option value="">選択してください</option></select>
   <div class="grid2">
     <div><label>開始日</label><input type="date" id="s-date"></div>
     <div><label>終了日（連続入力）</label><input type="date" id="s-date-end"></div>
@@ -318,7 +320,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 <!-- 元請管理モーダル -->
 <div id="genba-settings-modal" class="modal-bg">
 <div class="modal">
-  <div class="modal-title">元請の管理</div>
+  <div class="modal-title">元請の管理 <span id="genba-settings-company-name" style="font-size:14px;color:#1D9E75"></span></div>
   <div style="display:flex;gap:8px;margin-bottom:12px">
     <input type="text" id="new-genba-master" placeholder="元請名を入力" style="margin-bottom:0;flex:1">
     <button class="btn btn-sm" onclick="addGenbaMaster()">追加</button>
@@ -329,7 +331,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 </div>
 
 <script>
-const GAS_URL='https://script.google.com/macros/s/AKfycbzt9L9klGMC7IZlpNRbptnfz4X3k3E7ZCrVY7BPJ1dXkNF9aCFiGIO0WAD-EhrOB__Z1A/exec';
+const GAS_URL='https://script.google.com/macros/s/AKfycbyzI7VGe-ypiCDGDpvtMVv5Bg0rq1h1lR9544vU0m0D5iZdw2mivk8PV7MJXBImBw58hw/exec';
 const COMPANIES=['グローライズ','和信カインド','ビジネスサポート','ラーテル','GRHD'];
 const MODES=['souko','yakin','yasumi','yotei'];
 
@@ -353,7 +355,7 @@ let currentUsername='';
 
 function getGenbaMasterNames(){
   if(currentCompany==='全社')return [...new Set(allGenbaMaster.map(g=>g.name))].sort();
-  return allGenbaMaster.filter(g=>g.company===currentCompany).map(g=>g.name).sort();
+  return [...new Set(allGenbaMaster.filter(g=>g.company===currentCompany||!g.company).map(g=>g.name))].sort();
 }
 
 function getUsername(){return currentUsername;}
@@ -367,8 +369,8 @@ function updateUsernameDisplay(){
 }
 function openUsernameModal(){
   const sel=document.getElementById('username-select');
-  const allNames=[...new Set(allMembers.map(m=>m.name))].sort();
-  sel.innerHTML='<option value="">名前を選択</option>'+allNames.map(n=>`<option value="${n}"${n===currentUsername?' selected':''}>${n}</option>`).join('');
+  const names=getShokunin();
+  sel.innerHTML='<option value="">名前を選択</option>'+names.map(n=>`<option value="${n}"${n===currentUsername?' selected':''}>${n}</option>`).join('');
   document.getElementById('username-modal').classList.add('active');
 }
 function confirmUsername(){
@@ -380,7 +382,17 @@ function confirmUsername(){
   document.getElementById('username-modal').classList.remove('active');
 }
 function checkUsername(){
-  if(!currentUsername&&allMembers.length>0){openUsernameModal();}
+  if(!currentUsername&&allMembers.length>0){
+    // 初回はセレクトで選んでもらう（モーダルは出さない）
+  }
+}
+function onOperatorChange(){
+  const v=document.getElementById('s-operator').value;
+  if(v){
+    currentUsername=v;
+    try{localStorage.setItem('genba-username',v);}catch(e){}
+    updateUsernameDisplay();
+  }
 }
 
 function esc(str){const d=document.createElement('div');d.textContent=String(str||'');return d.innerHTML;}
@@ -469,6 +481,14 @@ function initMemberUI(){
     const cur=sel.value;
     sel.innerHTML='<option value="">代表者を選択してください</option>'+getShokunin().map(n=>`<option value="${esc(n)}"${n===cur?' selected':''}>${esc(n)}</option>`).join('');
   });
+  // 操作者セレクト更新（現在の会社の職人のみ）
+  const opSel=document.getElementById('s-operator');
+  if(opSel){
+    const opNames=getShokunin();
+    const cur=opSel.value||currentUsername;
+    opSel.innerHTML='<option value="">選択してください</option>'+opNames.map(n=>`<option value="${esc(n)}"${n===cur?' selected':''}>${esc(n)}</option>`).join('');
+    if(cur&&opNames.includes(cur))opSel.value=cur;
+  }
   renderMemberChips('member-selector',selectedMembers,toggleMember);
   renderMemberChips('e-member-selector',editSelectedMembers,toggleEditMember);
 }
@@ -497,6 +517,8 @@ function getDateRange(startStr,endStr){
 async function submitNippo(){
   if(isSubmitting)return;
   if(currentCompany==='全社'){showAlert('会社を選択してから登録してください','err');return;}
+  const operator=document.getElementById('s-operator').value;
+  if(!operator){showAlert('操作者（あなたの名前）を選択してください','err');return;}
   const dateStart=document.getElementById('s-date').value;
   const dateEnd=document.getElementById('s-date-end').value;
   const genba=getGenbaValue('s');
@@ -521,7 +543,7 @@ async function submitNippo(){
   const rows=[];
   dates.forEach(date=>{
     const dayId=uuid();
-    members.forEach(m=>{rows.push({date,genba,loc,name:m.name,role:m.role,start,end,kosu:effectiveKosu,memo,yakin,yasumi,yotei,souko,company:currentCompany,id:dayId,updatedBy:getUsername()});});
+    members.forEach(m=>{rows.push({date,genba,loc,name:m.name,role:m.role,start,end,kosu:effectiveKosu,memo,yakin,yasumi,yotei,souko,company:currentCompany,id:dayId,updatedBy:operator});});
   });
   const btn=document.getElementById('submit-btn');
   isSubmitting=true;btn.textContent=`送信中（${dates.length}日分）...`;btn.disabled=true;
@@ -584,7 +606,7 @@ async function loadData(){
     if(json.members)allMembers=json.members;
     if(json.genbaMaster){
       if(json.genbaMaster.length>0&&typeof json.genbaMaster[0]==='object')allGenbaMaster=json.genbaMaster;
-      else allGenbaMaster=json.genbaMaster.map(g=>({name:g,company:''}));
+      else allGenbaMaster=json.genbaMaster.map(g=>({name:g,company:'共通'}));
     }
     initMemberUI();initGenbaSelects();renderList();updateAvailability();updateJimu();updateGenbaFilter();updateGmSelects();
     checkUsername();
@@ -1081,6 +1103,7 @@ function setGenbaValue(p,val){
 }
 
 function openGenbaSettings(){
+  if(currentCompany==='全社'){alert('会社を選択してから管理してください');return;}
   renderGenbaSettings();
   document.getElementById('genba-settings-modal').classList.add('active');
 }
@@ -1089,10 +1112,16 @@ function closeGenbaSettings(){
   initGenbaSelects();
 }
 
+function getGenbaForCompany(){
+  return allGenbaMaster.filter(g=>g.company===currentCompany||!g.company);
+}
+
 function renderGenbaSettings(){
-  document.getElementById('genba-master-list').innerHTML=allGenbaMaster.map((g,i)=>
+  document.getElementById('genba-settings-company-name').textContent=currentCompany;
+  const list=getGenbaForCompany();
+  document.getElementById('genba-master-list').innerHTML=list.map((g,i)=>
     `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #eee">
-      <span style="font-size:15px">${esc(g)}</span>
+      <span style="font-size:15px">${esc(g.name)}${!g.company?'<span style="font-size:11px;color:#999;margin-left:6px">（共通）</span>':''}</span>
       <button class="btn btn-secondary btn-sm" onclick="removeGenbaMaster(${i})">削除</button>
     </div>`).join('')||'<div style="color:#999;padding:12px;text-align:center">元請が登録されていません</div>';
 }
@@ -1100,11 +1129,11 @@ function renderGenbaSettings(){
 async function addGenbaMaster(){
   const v=document.getElementById('new-genba-master').value.trim();if(!v)return;
   try{
-    const res=await fetch(getGasUrl(),{method:'POST',body:JSON.stringify({action:'add_genba',name:v}),headers:{'Content-Type':'text/plain'}});
+    const res=await fetch(getGasUrl(),{method:'POST',body:JSON.stringify({action:'add_genba',name:v,company:currentCompany}),headers:{'Content-Type':'text/plain'}});
     const json=await res.json();
     if(json.status==='ok'){
-      if(!json.duplicate&&!allGenbaMaster.includes(v))allGenbaMaster.push(v);
-      allGenbaMaster.sort();
+      if(!json.duplicate)allGenbaMaster.push({name:v,company:currentCompany});
+      allGenbaMaster.sort((a,b)=>a.name.localeCompare(b.name));
       document.getElementById('new-genba-master').value='';
       renderGenbaSettings();initGenbaSelects();
     }else alert('エラー：'+json.message);
@@ -1112,12 +1141,18 @@ async function addGenbaMaster(){
 }
 
 async function removeGenbaMaster(i){
-  const name=allGenbaMaster[i];if(!confirm(name+'を削除しますか？'))return;
+  const list=getGenbaForCompany();
+  const g=list[i];if(!g)return;
+  const label=g.name+(!g.company?' （共通）':'');
+  if(!confirm(label+'を削除しますか？'))return;
+  const delCompany=g.company||'';
   try{
-    const res=await fetch(getGasUrl(),{method:'POST',body:JSON.stringify({action:'remove_genba',name}),headers:{'Content-Type':'text/plain'}});
+    const res=await fetch(getGasUrl(),{method:'POST',body:JSON.stringify({action:'remove_genba',name:g.name,company:delCompany}),headers:{'Content-Type':'text/plain'}});
     const json=await res.json();
-    if(json.status==='ok'){allGenbaMaster.splice(i,1);renderGenbaSettings();initGenbaSelects();}
-    else alert('エラー：'+json.message);
+    if(json.status==='ok'){
+      allGenbaMaster=allGenbaMaster.filter(x=>!(x.name===g.name&&(x.company||'')===delCompany));
+      renderGenbaSettings();initGenbaSelects();
+    }else alert('エラー：'+json.message);
   }catch(e){alert('削除エラー：'+e.message);}
 }
 
