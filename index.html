@@ -125,13 +125,13 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 <div id="screen-input" class="screen active">
 <div class="page-title">日報入力</div>
 <div class="card">
-  <label>操作者（あなたの名前）</label>
+  <label>操作者（あなたの名前）<span style="color:#ff3b30;font-weight:600;margin-left:2px">*</span></label>
   <select id="s-operator" onchange="onOperatorChange()"><option value="">選択してください</option></select>
   <div class="grid2">
-    <div><label>開始日</label><input type="date" id="s-date"></div>
+    <div><label>開始日<span style="color:#ff3b30;font-weight:600;margin-left:2px">*</span></label><input type="date" id="s-date"></div>
     <div><label>終了日（連続入力）</label><input type="date" id="s-date-end"></div>
   </div>
-  <label>元請名</label>
+  <label>元請名<span style="color:#ff3b30;font-weight:600;margin-left:2px">*</span></label>
   <select id="s-genba-select" onchange="onGenbaSelect('s')"><option value="">選択してください</option><option value="__manual__">直接入力する</option></select>
   <input type="text" id="s-genba" placeholder="例：〇〇電気" style="display:none">
   <label>現場名</label><input type="text" id="s-location" placeholder="例：〇〇ビル新築工事">
@@ -145,7 +145,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
   <div class="toggle-row toggle-yotei" id="s-yotei-toggle" onclick="setMode('s','yotei')"><span class="t-icon">📌</span><span class="t-label">予定</span></div>
   <label>人工（ひとり当たり）</label>
   <select id="s-kosu"><option value="1.0">1人工</option><option value="1.5">1.5人工</option><option value="2.0">2人工</option></select>
-  <div class="leader-select-wrap"><label>代表者</label><select id="s-leader"><option value="">代表者を選択してください</option></select></div>
+  <div class="leader-select-wrap"><label>代表者<span style="color:#ff3b30;font-weight:600;margin-left:2px">*</span></label><select id="s-leader"><option value="">代表者を選択してください</option></select></div>
   <div class="member-section"><div class="member-label">同行メンバー（タップで選択）</div><div id="member-selector" class="member-grid"></div></div>
   <label>メモ</label><textarea id="s-memo" placeholder="作業内容など"></textarea>
   <div id="s-alert" class="alert"></div>
