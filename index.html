@@ -129,7 +129,9 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
     <div><label>開始日</label><input type="date" id="s-date"></div>
     <div><label>終了日（連続入力）</label><input type="date" id="s-date-end"></div>
   </div>
-  <label>元請名</label><input type="text" id="s-genba" placeholder="例：〇〇電気">
+  <label>元請名</label>
+  <select id="s-genba-select" onchange="onGenbaSelect('s')"><option value="">選択してください</option><option value="__manual__">直接入力する</option></select>
+  <input type="text" id="s-genba" placeholder="例：〇〇電気" style="display:none">
   <label>現場名</label><input type="text" id="s-location" placeholder="例：〇〇ビル新築工事">
   <div class="grid2">
     <div><label>出勤</label><input type="time" id="s-start" value="08:00"></div>
@@ -233,12 +235,15 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
   <select id="csv-sheet" style="margin-bottom:8px">
     <option value="日報データ">日報データ</option><option value="アーカイブ">アーカイブ</option>
     <option value="月別集計">月別集計</option><option value="会社別集計">会社別集計</option>
-    <option value="職人マスタ">職人マスタ</option><option value="月別確認表">月別確認表</option>
+    <option value="職人マスタ">職人マスタ</option><option value="元請マスタ">元請マスタ</option><option value="月別確認表">月別確認表</option>
     <option value="元請別請求集計">元請別請求集計</option>
   </select>
   <button class="btn btn-secondary" id="csv-btn" onclick="downloadSheetCSV()">ダウンロード</button>
 </div>
-<button class="btn btn-secondary" style="margin-top:8px" onclick="openSettings()">職人を管理</button>
+<div style="display:flex;gap:8px;margin-top:8px">
+  <button class="btn btn-secondary" style="flex:1" onclick="openSettings()">職人を管理</button>
+  <button class="btn btn-secondary" style="flex:1" onclick="openGenbaSettings()">元請を管理</button>
+</div>
 <div class="archive-section" style="background:#E8F4FD;border-color:#85B7EB">
   <div class="archive-title" style="color:#0C447C">📊 スプレッドシート集計</div>
   <div class="archive-desc" style="color:#0C447C">会社別・月別の出勤日数・人工をスプレッドシートに自動集計します。毎朝6時にも自動更新されます。</div>
@@ -264,7 +269,9 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 <div id="edit-modal" class="modal-bg">
 <div class="modal">
   <div class="modal-title" id="edit-title">編集</div>
-  <label>元請名</label><input type="text" id="e-genba">
+  <label>元請名</label>
+  <select id="e-genba-select" onchange="onGenbaSelect('e')"><option value="">選択してください</option><option value="__manual__">直接入力する</option></select>
+  <input type="text" id="e-genba" style="display:none">
   <label>現場名</label><input type="text" id="e-location">
   <div class="grid2">
     <div><label>出勤</label><input type="time" id="e-start"></div>
@@ -299,8 +306,21 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 </div>
 </div>
 
+<!-- 元請管理モーダル -->
+<div id="genba-settings-modal" class="modal-bg">
+<div class="modal">
+  <div class="modal-title">元請の管理</div>
+  <div style="display:flex;gap:8px;margin-bottom:12px">
+    <input type="text" id="new-genba-master" placeholder="元請名を入力" style="margin-bottom:0;flex:1">
+    <button class="btn btn-sm" onclick="addGenbaMaster()">追加</button>
+  </div>
+  <div id="genba-master-list" style="margin-bottom:16px"></div>
+  <button class="btn btn-secondary" onclick="closeGenbaSettings()">閉じる</button>
+</div>
+</div>
+
 <script>
-const GAS_URL='https://script.google.com/macros/s/AKfycbzYM5MSL5TlOga3C87sT-XgFUCvuE5f6gd647bfGQXrM0SXd_4s536Sxtzt_0zUSrKnUQ/exec';
+const GAS_URL='https://script.google.com/macros/s/AKfycbyuuTo0GMVan7hq4FZ89bhIn4Lt_0lCdRItraKkR-LncRH-mpQOdLmIV4AapPuXGL74gA/exec';
 const COMPANIES=['グローライズ','和信カインド','ビジネスサポート','ラーテル','GRHD'];
 const MODES=['souko','yakin','yasumi','yotei'];
 
@@ -309,6 +329,7 @@ function getGasUrl(){return GAS_URL;}
 let currentCompany='';
 let allNippos=[];
 let allMembers=[];
+let allGenbaMaster=[];
 let selectedMembers=[];
 let editSelectedMembers=[];
 let editIds=[];
@@ -436,7 +457,7 @@ async function submitNippo(){
   if(currentCompany==='全社'){showAlert('会社を選択してから登録してください','err');return;}
   const dateStart=document.getElementById('s-date').value;
   const dateEnd=document.getElementById('s-date-end').value;
-  const genba=document.getElementById('s-genba').value.trim();
+  const genba=getGenbaValue('s');
   const loc=document.getElementById('s-location').value.trim();
   const start=document.getElementById('s-start').value;
   const end=document.getElementById('s-end').value;
@@ -467,7 +488,7 @@ async function submitNippo(){
     const json=await res.json();
     if(json.status==='ok'){
       showAlert(`✓ ${dates.length}日×${members.length}人分を登録しました！（${currentCompany}）`,'ok');
-      document.getElementById('s-genba').value='';document.getElementById('s-location').value='';
+      document.getElementById('s-genba').value='';document.getElementById('s-genba-select').value='';document.getElementById('s-genba').style.display='none';document.getElementById('s-location').value='';
       document.getElementById('s-memo').value='';document.getElementById('s-leader').value='';
       document.getElementById('s-date-end').value='';
       applyMode('s','');selectedMembers=[];renderMemberChips('member-selector',selectedMembers,toggleMember);
@@ -519,7 +540,8 @@ async function loadData(){
     const json=await res.json();
     allNippos=parseRows(json.rows,'');
     if(json.members)allMembers=json.members;
-    initMemberUI();renderList();updateAvailability();updateJimu();updateGenbaFilter();updateGmSelects();
+    if(json.genbaMaster)allGenbaMaster=json.genbaMaster;
+    initMemberUI();initGenbaSelects();renderList();updateAvailability();updateJimu();updateGenbaFilter();updateGmSelects();
   }catch(e){console.error(e);}
   setLoading(false);
 }
@@ -619,7 +641,7 @@ async function deleteGroup(idx){
 function copyToInput(idx){
   const groups=getDisplayedGroups();const g=groups[idx];if(!g)return;
   switchTab('input');
-  document.getElementById('s-genba').value=g.genba;
+  setGenbaValue('s',g.genba);
   document.getElementById('s-location').value=g.loc||'';
   document.getElementById('s-start').value=g.start||'08:00';
   document.getElementById('s-end').value=g.end||'17:00';
@@ -642,7 +664,7 @@ function openEditModal(idx,groupsOverride){
   const groups=groupsOverride!==null?groupsOverride:getDisplayedGroups();
   const g=groups[idx];if(!g)return;
   editIds=[...new Set(g.ids)];editDate=g.date;
-  document.getElementById('e-genba').value=g.genba;
+  setGenbaValue('e',g.genba);
   document.getElementById('e-location').value=g.loc||'';
   document.getElementById('e-start').value=g.start||'08:00';
   document.getElementById('e-end').value=g.end||'17:00';
@@ -665,7 +687,7 @@ function closeEditModal(){document.getElementById('edit-modal').classList.remove
 async function saveEdit(){
   const btn=document.getElementById('save-edit-btn');
   if(btn.disabled)return;
-  const genba=document.getElementById('e-genba').value.trim();
+  const genba=getGenbaValue('e');
   const loc=document.getElementById('e-location').value.trim();
   const start=document.getElementById('e-start').value;
   const end=document.getElementById('e-end').value;
@@ -777,7 +799,7 @@ function openBulkEditModal(){
   editIds=[...new Set(targets.flatMap(g=>g.ids))];
   editDates=targets.map(g=>g.date);
   const g=targets[0];
-  document.getElementById('e-genba').value=g.genba;
+  setGenbaValue('e',g.genba);
   document.getElementById('e-location').value=g.loc||'';
   document.getElementById('e-start').value=g.start||'08:00';
   document.getElementById('e-end').value=g.end||'17:00';
@@ -967,6 +989,89 @@ function initSelects(){
   const sel=document.getElementById('j-month');const now=new Date();let opts='';
   for(let i=0;i<6;i++){const d=new Date(now.getFullYear(),now.getMonth()-i,1);const val=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;opts+=`<option value="${val}"${i===0?' selected':''}>${d.getFullYear()}年${d.getMonth()+1}月</option>`;}
   sel.innerHTML=opts;
+}
+
+// ========== 元請マスタ ==========
+function initGenbaSelects(){
+  ['s','e'].forEach(p=>{
+    const sel=document.getElementById(p+'-genba-select');
+    if(!sel)return;
+    const cur=sel.value;
+    let opts='<option value="">選択してください</option>';
+    allGenbaMaster.forEach(g=>{opts+=`<option value="${esc(g)}"${g===cur?' selected':''}>${esc(g)}</option>`;});
+    opts+='<option value="__manual__">直接入力する</option>';
+    sel.innerHTML=opts;
+  });
+}
+
+function onGenbaSelect(p){
+  const sel=document.getElementById(p+'-genba-select');
+  const inp=document.getElementById(p+'-genba');
+  if(sel.value==='__manual__'){
+    inp.style.display='';inp.value='';inp.focus();
+  }else{
+    inp.style.display='none';inp.value=sel.value;
+  }
+}
+
+function getGenbaValue(p){
+  const sel=document.getElementById(p+'-genba-select');
+  if(sel.value==='__manual__'||sel.value===''){
+    return document.getElementById(p+'-genba').value.trim();
+  }
+  return sel.value;
+}
+
+function setGenbaValue(p,val){
+  const sel=document.getElementById(p+'-genba-select');
+  const inp=document.getElementById(p+'-genba');
+  const opts=[...sel.options].map(o=>o.value);
+  if(val&&opts.includes(val)){
+    sel.value=val;inp.style.display='none';inp.value=val;
+  }else{
+    sel.value='__manual__';inp.style.display='';inp.value=val||'';
+  }
+}
+
+function openGenbaSettings(){
+  renderGenbaSettings();
+  document.getElementById('genba-settings-modal').classList.add('active');
+}
+function closeGenbaSettings(){
+  document.getElementById('genba-settings-modal').classList.remove('active');
+  initGenbaSelects();
+}
+
+function renderGenbaSettings(){
+  document.getElementById('genba-master-list').innerHTML=allGenbaMaster.map((g,i)=>
+    `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #eee">
+      <span style="font-size:15px">${esc(g)}</span>
+      <button class="btn btn-secondary btn-sm" onclick="removeGenbaMaster(${i})">削除</button>
+    </div>`).join('')||'<div style="color:#999;padding:12px;text-align:center">元請が登録されていません</div>';
+}
+
+async function addGenbaMaster(){
+  const v=document.getElementById('new-genba-master').value.trim();if(!v)return;
+  try{
+    const res=await fetch(getGasUrl(),{method:'POST',body:JSON.stringify({action:'add_genba',name:v}),headers:{'Content-Type':'text/plain'}});
+    const json=await res.json();
+    if(json.status==='ok'){
+      if(!json.duplicate&&!allGenbaMaster.includes(v))allGenbaMaster.push(v);
+      allGenbaMaster.sort();
+      document.getElementById('new-genba-master').value='';
+      renderGenbaSettings();initGenbaSelects();
+    }else alert('エラー：'+json.message);
+  }catch(e){alert('追加エラー：'+e.message);}
+}
+
+async function removeGenbaMaster(i){
+  const name=allGenbaMaster[i];if(!confirm(name+'を削除しますか？'))return;
+  try{
+    const res=await fetch(getGasUrl(),{method:'POST',body:JSON.stringify({action:'remove_genba',name}),headers:{'Content-Type':'text/plain'}});
+    const json=await res.json();
+    if(json.status==='ok'){allGenbaMaster.splice(i,1);renderGenbaSettings();initGenbaSelects();}
+    else alert('エラー：'+json.message);
+  }catch(e){alert('削除エラー：'+e.message);}
 }
 
 initCompanyBar();initSelects();initAvailWeek();loadData();
