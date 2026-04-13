@@ -115,6 +115,25 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 .gm-edit-btn{flex-shrink:0;padding:6px 12px;font-size:12px;font-weight:500;border-radius:8px;border:1px solid #ddd;background:#f2f2f7;color:#1a1a1a;cursor:pointer}
 .gm-delete-bar{background:#fff;border-top:2px solid #ff3b30;padding:10px 12px;display:none;position:sticky;bottom:64px;z-index:50}
 .gm-delete-bar.active{display:block}
+/* カレンダー */
+.cal-header{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:2px}
+.cal-header-cell{text-align:center;font-size:11px;font-weight:600;color:#999;padding:4px 0}
+.cal-header-cell:first-child{color:#E8384F}
+.cal-header-cell:last-child{color:#3B82F6}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.cal-cell{min-height:72px;border-radius:6px;padding:3px 2px;background:#f9f9f9;cursor:pointer;position:relative;-webkit-tap-highlight-color:transparent;transition:background 0.1s;overflow:hidden}
+.cal-cell:active{background:#e8e8e8}
+.cal-cell.empty{background:transparent;cursor:default}
+.cal-cell.today .cal-day-num{background:#1D9E75;color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 2px}
+.cal-cell.sun .cal-day-num{color:#E8384F}
+.cal-cell.sat .cal-day-num{color:#3B82F6}
+.cal-day-num{font-size:12px;font-weight:600;text-align:center;margin-bottom:2px}
+.cal-event{font-size:9px;font-weight:600;color:#fff;border-radius:3px;padding:1px 3px;margin-bottom:1px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;line-height:1.4}
+.cal-overflow{font-size:9px;color:#999;padding-left:3px;line-height:1.4}
+/* カラーピッカー */
+.color-picker-wrap{display:flex;flex-wrap:wrap;gap:8px;padding:10px 0;margin-bottom:12px}
+.color-swatch{width:32px;height:32px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:all 0.15s;-webkit-tap-highlight-color:transparent}
+.color-swatch.selected{border-color:#1a1a1a;transform:scale(1.15)}
 </style>
 </head>
 <body>
@@ -122,7 +141,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 <div class="loading-bar" id="loading-bar"></div>
 <div class="notice-bar" id="notice-bar">会社を選択して入力してください</div>
 
-<div id="screen-input" class="screen active">
+<div id="screen-input" class="screen">
 <div class="page-title">日報入力</div>
 <div class="card">
   <label>操作者（あなたの名前）<span style="color:#ff3b30;font-weight:600;margin-left:2px">*</span></label>
@@ -148,21 +167,37 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
   <div class="leader-select-wrap"><label>代表者<span style="color:#ff3b30;font-weight:600;margin-left:2px">*</span></label><select id="s-leader"><option value="">代表者を選択してください</option></select></div>
   <div class="member-section"><div class="member-label">同行メンバー（タップで選択）</div><div id="member-selector" class="member-grid"></div></div>
   <label>メモ</label><textarea id="s-memo" placeholder="作業内容など"></textarea>
+  <label>カレンダーの色</label>
+  <div id="s-color-picker" class="color-picker-wrap"></div>
   <div id="s-alert" class="alert"></div>
   <button class="btn" id="submit-btn" onclick="submitNippo()">登録する</button>
 </div>
 </div>
 
-<div id="screen-list" class="screen">
-<div class="page-title">予定一覧</div>
+<div id="screen-list" class="screen active">
+<div class="page-title">カレンダー</div>
 <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:12px">
   <button class="btn btn-secondary btn-sm" onclick="changeListMonth(-1)">◀</button>
   <span id="list-month-label" style="font-size:15px;font-weight:600;min-width:100px;text-align:center"></span>
   <button class="btn btn-secondary btn-sm" onclick="changeListMonth(1)">▶</button>
 </div>
-<div class="date-filter" id="date-filter"></div>
-<div id="list-container"><div class="empty">下の更新ボタンを押してください</div></div>
+<div class="card" style="padding:8px">
+  <div id="cal-grid"></div>
+</div>
+<button class="btn" style="margin-top:8px" onclick="switchTab('input')">＋ 予定を入力する</button>
 <button class="btn btn-secondary" style="margin-top:8px" onclick="loadData()">更新</button>
+</div>
+
+<!-- カレンダー日付モーダル -->
+<div id="cal-day-modal" class="modal-bg" onclick="if(event.target===this)this.classList.remove('active')">
+<div class="modal">
+  <div class="modal-title" id="cal-day-title"></div>
+  <div id="cal-day-content"></div>
+  <div style="display:flex;gap:8px;margin-top:12px">
+    <button class="btn btn-secondary btn-sm" style="flex:1" onclick="document.getElementById('cal-day-modal').classList.remove('active')">閉じる</button>
+    <button class="btn btn-sm" style="flex:2" onclick="calGoToInput()">＋ この日の予定を入力</button>
+  </div>
+</div>
 </div>
 
 <div id="screen-avail" class="screen">
@@ -264,8 +299,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 </div>
 
 <div class="tab-bar">
-  <button class="tab active" onclick="switchTab('input')"><span class="tab-icon">📋</span>入力</button>
-  <button class="tab" onclick="switchTab('list')"><span class="tab-icon">📅</span>予定一覧</button>
+  <button class="tab active" onclick="switchTab('list')"><span class="tab-icon">📅</span>カレンダー</button>
   <button class="tab" onclick="switchTab('avail')"><span class="tab-icon">👥</span>空き確認</button>
   <button class="tab" onclick="switchTab('genba')"><span class="tab-icon">🏗️</span>現場管理</button>
   <button class="tab" onclick="switchTab('jimu')"><span class="tab-icon">📊</span>事務</button>
@@ -303,6 +337,8 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
   <div class="leader-select-wrap"><label>代表者</label><select id="e-leader"><option value="">代表者を選択してください</option></select></div>
   <div class="member-section"><div class="member-label">同行メンバー（タップで選択）</div><div id="e-member-selector" class="member-grid"></div></div>
   <label>メモ</label><textarea id="e-memo"></textarea>
+  <label>カレンダーの色</label>
+  <div id="e-color-picker" class="color-picker-wrap"></div>
   <div style="display:flex;gap:8px;margin-top:4px">
     <button class="btn btn-secondary btn-sm" style="flex:1" onclick="closeEditModal()">キャンセル</button>
     <button class="btn btn-sm" style="flex:2" id="save-edit-btn" onclick="saveEdit()">保存する</button>
@@ -336,9 +372,27 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 
 <script>
 // ご指定のURLを設定しました
-const GAS_URL='https://script.google.com/macros/s/AKfycbz_wpA4ht5XlQg-oj-_YE3gvOWcS02uLoodPSddkhjWbhfKz5MItdXYUZY6uL-WHgxaNQ/exec';
+const GAS_URL='https://script.google.com/macros/s/AKfycby77NC4FJEoL2E5rYabvsK3l1-SRl9ptWcrRY6U2YF4LzMEuqPfSzfok-iV2Hmz98Kf_w/exec';
 const COMPANIES=['グローライズ','和信カインド','ビジネスサポート','ラーテル','GRHD'];
 const MODES=['souko','yakin','yasumi','yotei'];
+const CAL_COLORS=['#1D9E75','#3B82F6','#E8384F','#F59E0B','#8B5CF6','#EC4899','#2C2C5A','#8B5E3C','#64748B','#0EA5E9'];
+
+let selectedColor={s:'#1D9E75',e:'#1D9E75'};
+
+function initColorPicker(prefix,current){
+  const wrap=document.getElementById(prefix+'-color-picker');
+  if(!wrap)return;
+  const c=current||selectedColor[prefix]||CAL_COLORS[0];
+  selectedColor[prefix]=c;
+  wrap.innerHTML=CAL_COLORS.map(col=>
+    `<div class="color-swatch${col===c?' selected':''}" style="background:${col}" onclick="selectColor('${prefix}','${col}')"></div>`
+  ).join('');
+}
+
+function selectColor(prefix,color){
+  selectedColor[prefix]=color;
+  initColorPicker(prefix,color);
+}
 
 function getGasUrl(){return GAS_URL;}
 
@@ -472,11 +526,13 @@ function filteredNippos(){
 }
 
 function switchTab(t){
-  const tabs=['input','list','avail','genba','jimu'];
+  const tabs=['list','avail','genba','jimu'];
   document.querySelectorAll('.tab').forEach((el,i)=>el.classList.toggle('active',tabs[i]===t));
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('screen-'+t).classList.add('active');
   if(t==='genba')updateGmSelects();
+  if(t==='list')renderList();
+  if(t==='input')initColorPicker('s',selectedColor.s);
 }
 
 function initMemberUI(){
@@ -542,11 +598,12 @@ async function submitNippo(){
   const members=[{name:leader,role:'代表'}];
   const shokunin=getShokunin();
   selectedMembers.forEach(i=>{if(shokunin[i]!==leader)members.push({name:shokunin[i],role:'同行'});});
+  const color=selectedColor.s||CAL_COLORS[0];
   const dates=getDateRange(dateStart,dateEnd);
   const rows=[];
   dates.forEach(date=>{
     const dayId=uuid();
-    members.forEach(m=>{rows.push({date,genba,loc,name:m.name,role:m.role,start,end,kosu:effectiveKosu,memo,yakin,yasumi,yotei,souko,company:currentCompany,id:dayId,updatedBy:operator});});
+    members.forEach(m=>{rows.push({date,genba,loc,name:m.name,role:m.role,start,end,kosu:effectiveKosu,memo,yakin,yasumi,yotei,souko,company:currentCompany,id:dayId,updatedBy:operator,color});});
   });
   const btn=document.getElementById('submit-btn');
   isSubmitting=true;btn.textContent=`送信中（${dates.length}日分）...`;btn.disabled=true;
@@ -597,7 +654,8 @@ function parseRows(rows,company){
     yakin:String(r['夜勤']||'')==='夜勤',yasumi:String(r['夜勤']||'')==='休み',
     yotei:String(r['夜勤']||'')==='予定',souko:String(r['夜勤']||'')==='倉庫',
     company:String(r['会社']||'')||company,
-    updatedBy:String(r['更新者']||'')
+    updatedBy:String(r['更新者']||''),
+    color:String(r['色']||'')
   }));
 }
 
@@ -622,7 +680,7 @@ function groupNippos(nippos){
   const groups={};
   nippos.forEach(n=>{
     const key=n.id||`${n.date}__${n.genba}__${n.loc}__${n.start}__${n.end}__${n.kosu}__${n.memo}__${n.yakin}__${n.yasumi}__${n.yotei}__${n.souko}`;
-    if(!groups[key])groups[key]={date:n.date,genba:n.genba,loc:n.loc,start:n.start,end:n.end,kosu:n.kosu,memo:n.memo,yakin:n.yakin,yasumi:n.yasumi,yotei:n.yotei,souko:n.souko,company:n.company,members:[],ids:[],updatedBy:n.updatedBy};
+    if(!groups[key])groups[key]={date:n.date,genba:n.genba,loc:n.loc,start:n.start,end:n.end,kosu:n.kosu,memo:n.memo,yakin:n.yakin,yasumi:n.yasumi,yotei:n.yotei,souko:n.souko,company:n.company,members:[],ids:[],updatedBy:n.updatedBy,color:n.color};
     groups[key].members.push({name:n.name,role:n.role});
     if(n.id)groups[key].ids.push(n.id);
   });
@@ -635,16 +693,13 @@ function formatDate(d){
   return`${dt.getMonth()+1}/${dt.getDate()}(${days[dt.getDay()]})`;
 }
 
+let calSelectedDate='';
+
 function renderList(){
   if(!listMonth){const now=new Date();listMonth=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');}
   const lp=listMonth.split('-');
   document.getElementById('list-month-label').textContent=lp[0]+'年'+Number(lp[1])+'月';
-  const groups=groupNippos(filteredNippos()).filter(g=>g.date.startsWith(listMonth));
-  const dates=[...new Set(groups.map(g=>g.date))].sort((a,b)=>a.localeCompare(b));
-  const df=document.getElementById('date-filter');
-  df.innerHTML='<div class="date-chip'+(currentDateFilter===''?' active':'')+'" onclick="filterDate(\'\')">全て</div>'+
-    dates.map(d=>`<div class="date-chip${currentDateFilter===d?' active':''}" onclick="filterDate('${d}')">${formatDate(d)}</div>`).join('');
-  renderListWithDate(groups);
+  renderCalendar();
 }
 
 function changeListMonth(delta){
@@ -655,6 +710,157 @@ function changeListMonth(delta){
 }
 
 function filterDate(d){currentDateFilter=d;renderList();}
+
+function renderCalendar(){
+  const lp=listMonth.split('-');
+  const year=Number(lp[0]),month=Number(lp[1])-1;
+  const firstDay=new Date(year,month,1).getDay();
+  const daysInMonth=new Date(year,month+1,0).getDate();
+  const groups=groupNippos(filteredNippos()).filter(g=>g.date.startsWith(listMonth));
+  // 日付ごとにグループをまとめる
+  const byDate={};
+  groups.forEach(g=>{if(!byDate[g.date])byDate[g.date]=[];byDate[g.date].push(g);});
+  const today=new Date();
+  const todayStr=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+  const DOW=['日','月','火','水','木','金','土'];
+  let html='<div class="cal-header">';
+  DOW.forEach(d=>{html+=`<div class="cal-header-cell">${d}</div>`;});
+  html+='</div><div class="cal-grid">';
+  // 空白セル
+  for(let i=0;i<firstDay;i++)html+='<div class="cal-cell empty"></div>';
+  for(let d=1;d<=daysInMonth;d++){
+    const dateStr=year+'-'+String(month+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    const dow=new Date(year,month,d).getDay();
+    const dayGroups=byDate[dateStr]||[];
+    const isToday=dateStr===todayStr;
+    let cls='cal-cell';
+    if(dow===0)cls+=' sun';
+    if(dow===6)cls+=' sat';
+    if(isToday)cls+=' today';
+    // イベントラベル表示（最大5件、超過分は +N）
+    const MAX_SHOW=5;
+    const shown=dayGroups.slice(0,MAX_SHOW);
+    const overflow=dayGroups.length-MAX_SHOW;
+    let eventsHtml='';
+    shown.forEach(g=>{
+      const type=g.yakin?'yakin':g.yasumi?'yasumi':g.souko?'souko':g.yotei?'yotei':'';
+      const defaultColorMap={yakin:'#2C2C5A',yasumi:'#E8384F',souko:'#8B5E3C',yotei:'#3B82F6','':'#1D9E75'};
+      const bg=g.color||defaultColorMap[type]||'#1D9E75';
+      const label=g.loc||g.genba||'（現場名なし）';
+      eventsHtml+=`<div class="cal-event" style="background:${bg}">${esc(label)}</div>`;
+    });
+    if(overflow>0)eventsHtml+=`<div class="cal-overflow">+${overflow}</div>`;
+    html+=`<div class="${cls}" onclick="openCalDay('${dateStr}')">
+      <div class="cal-day-num">${d}</div>
+      ${eventsHtml}
+    </div>`;
+  }
+  html+='</div>';
+  document.getElementById('cal-grid').innerHTML=html;
+}
+
+function openCalDay(dateStr){
+  calSelectedDate=dateStr;
+  const lp=dateStr.split('-');
+  const dt=new Date(Number(lp[0]),Number(lp[1])-1,Number(lp[2]));
+  const DOW=['日','月','火','水','木','金','土'];
+  document.getElementById('cal-day-title').textContent=
+    `${Number(lp[1])}/${Number(lp[2])}（${DOW[dt.getDay()]}）の予定`;
+  const groups=groupNippos(filteredNippos()).filter(g=>g.date===dateStr);
+  const con=document.getElementById('cal-day-content');
+  if(groups.length===0){
+    con.innerHTML='<div class="empty" style="padding:20px">予定がありません</div>';
+  }else{
+    con.innerHTML=groups.map((g,idx)=>{
+      const memberTags=g.members.map(m=>`<span class="member-tag ${m.role==='代表'?'tag-leader':'tag-member'}">${esc(m.name)}</span>`).join('');
+      const totalKo=(g.kosu*g.members.length).toFixed(1);
+      const yakinBadge=g.yakin?'<span class="yakin-badge">🌙 夜勤</span>':'';
+      const yasumiBadge=g.yasumi?'<span class="yasumi-badge">🏖️ 休み</span>':'';
+      const soukoBadge=g.souko?'<span class="souko-badge">🏭 倉庫</span>':'';
+      const yoteiBadge=g.yotei?'<span class="yotei-badge-tag">📌 予定</span>':'';
+      const companyBadge=(currentCompany==='全社'&&g.company)?`<span class="company-badge">${esc(g.company)}</span>`:'';
+      const updaterHtml=g.updatedBy?`<div class="yotei-updated-by">🔄 更新: ${esc(g.updatedBy)}</div>`:'';
+      const kosuHtml=(g.yasumi||g.yotei)?'':`<div style="font-size:13px;color:#666">${totalKo}人工</div>`;
+      return`<div class="yotei-card" style="margin-bottom:10px">
+        <div class="yotei-header"><div>
+          <div class="yotei-date">${soukoBadge}${yakinBadge}${yasumiBadge}${yoteiBadge}${companyBadge}</div>
+          <div class="yotei-genba">${esc(g.genba)}</div>
+        </div>${kosuHtml}</div>
+        <div class="yotei-body">
+          ${g.loc?`<div class="yotei-loc">📍 ${esc(g.loc)}</div>`:''}
+          <div class="yotei-members">${memberTags}</div>
+          <div class="yotei-time">🕐 ${esc(g.start)}〜${esc(g.end)}</div>
+          ${g.memo?`<div class="yotei-memo">📝 ${esc(g.memo)}</div>`:''}
+          ${updaterHtml}
+        </div>
+        <div class="yotei-actions">
+          <button class="btn btn-secondary btn-sm" onclick="calCopyToInput(${idx})">コピー</button>
+          <button class="btn btn-secondary btn-sm" onclick="calOpenEdit(${idx})">編集</button>
+          <button class="btn btn-sm" style="background:#ff3b30" onclick="calDeleteGroup(${idx})">削除</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  document.getElementById('cal-day-modal').classList.add('active');
+}
+
+function getCalDayGroups(){
+  return groupNippos(filteredNippos()).filter(g=>g.date===calSelectedDate);
+}
+
+function calGoToInput(){
+  document.getElementById('cal-day-modal').classList.remove('active');
+  switchTab('input');
+  if(calSelectedDate)document.getElementById('s-date').value=calSelectedDate;
+}
+
+function calCopyToInput(idx){
+  const groups=getCalDayGroups();const g=groups[idx];if(!g)return;
+  document.getElementById('cal-day-modal').classList.remove('active');
+  switchTab('input');
+  setGenbaValue('s',g.genba);
+  document.getElementById('s-location').value=g.loc||'';
+  document.getElementById('s-start').value=g.start||'08:00';
+  document.getElementById('s-end').value=g.end||'17:00';
+  document.getElementById('s-kosu').value=(g.kosu>0?g.kosu:1.0).toFixed(1);
+  document.getElementById('s-memo').value=g.memo||'';
+  document.getElementById('s-date').value=calSelectedDate;
+  document.getElementById('s-date-end').value='';
+  const mode=g.souko?'souko':g.yakin?'yakin':g.yasumi?'yasumi':g.yotei?'yotei':'';
+  applyMode('s',mode);
+  const leader=g.members.find(m=>m.role==='代表');
+  document.getElementById('s-leader').value=leader?leader.name:'';
+  selectedMembers=[];
+  const shokunin=getShokunin();
+  g.members.filter(m=>m.role==='同行').forEach(m=>{const i=shokunin.indexOf(m.name);if(i>=0)selectedMembers.push(i);});
+  renderMemberChips('member-selector',selectedMembers,toggleMember);
+  initColorPicker('s', g.color||CAL_COLORS[0]);
+  showAlert('予定をコピーしました。日付を確認して登録してください。','ok');
+}
+
+function calOpenEdit(idx){
+  const groups=getCalDayGroups();
+  document.getElementById('cal-day-modal').classList.remove('active');
+  openEditModal(idx,groups);
+}
+
+async function calDeleteGroup(idx){
+  const groups=getCalDayGroups();
+  const g=groups[idx];if(!g)return;
+  if(!confirm('この日報を削除しますか？'))return;
+  const ids=[...new Set(g.ids)];
+  setLoading(true);
+  try{
+    const res=await fetch(getGasUrl(),{method:'POST',body:JSON.stringify({action:'delete',ids,updatedBy:getUsername()}),headers:{'Content-Type':'text/plain'}});
+    const json=await res.json();
+    if(json.status==='ok'){
+      if(json.deleted===0)alert('削除対象が見つかりませんでした。');
+      document.getElementById('cal-day-modal').classList.remove('active');
+      await loadData();
+    }else{alert('削除エラー：'+json.message);await loadData();}
+  }catch(e){alert('削除エラー：'+e.message);await loadData();}
+  setLoading(false);
+}
 
 function renderListWithDate(groups){
   const filtered=currentDateFilter?groups.filter(g=>g.date===currentDateFilter):groups;
@@ -753,6 +959,7 @@ function openEditModal(idx,groupsOverride){
   const shokunin=getShokunin();
   g.members.filter(m=>m.role==='同行').forEach(m=>{const i=shokunin.indexOf(m.name);if(i>=0)editSelectedMembers.push(i);});
   renderMemberChips('e-member-selector',editSelectedMembers,toggleEditMember);
+  initColorPicker('e', g.color||CAL_COLORS[0]);
   document.getElementById('edit-modal').classList.add('active');
 }
 
@@ -777,11 +984,12 @@ async function saveEdit(){
   const shokunin=getShokunin();
   editSelectedMembers.forEach(i=>{if(shokunin[i]!==leader)members.push({name:shokunin[i],role:'同行'});});
   const company=currentCompany==='全社'?'':currentCompany;
+  const color=selectedColor.e||CAL_COLORS[0];
   const dates=bulkEditMode?editDates:[editDate];
   const rows=[];
   dates.forEach(date=>{
-    const newId=uuid(); // 現在の仕様では編集のたびにIDが再生成されます
-    members.forEach(m=>{rows.push({date,genba,loc,name:m.name,role:m.role,start,end,kosu:effectiveKosu,memo,yakin,yasumi,yotei,souko,company,id:newId,updatedBy:getUsername()});});
+    const newId=uuid();
+    members.forEach(m=>{rows.push({date,genba,loc,name:m.name,role:m.role,start,end,kosu:effectiveKosu,memo,yakin,yasumi,yotei,souko,company,id:newId,updatedBy:getUsername(),color});});
   });
   btn.textContent='保存中...';btn.disabled=true;
   try{
@@ -890,6 +1098,7 @@ function openBulkEditModal(){
   const shokunin=getShokunin();
   g.members.filter(m=>m.role==='同行').forEach(m=>{const i=shokunin.indexOf(m.name);if(i>=0)editSelectedMembers.push(i);});
   renderMemberChips('e-member-selector',editSelectedMembers,toggleEditMember);
+  initColorPicker('e', g.color||CAL_COLORS[0]);
   document.getElementById('edit-modal').classList.add('active');
 }
 
@@ -1163,7 +1372,7 @@ async function removeGenbaMaster(i){
   }catch(e){alert('削除エラー：'+e.message);}
 }
 
-initCompanyBar();initSelects();initAvailWeek();initUsername();loadData();
+initCompanyBar();initSelects();initAvailWeek();initUsername();initColorPicker('s');renderList();loadData();
 </script>
 </body>
 </html>
