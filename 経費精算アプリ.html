@@ -37,8 +37,9 @@ body{font-family:-apple-system,sans-serif;background:#f0f4f8;color:var(--gray-80
 /* ===== FORM ELEMENTS ===== */
 .form-label{display:block;font-size:11px;font-weight:700;color:var(--gray-500);margin-bottom:4px;text-transform:uppercase}
 .form-label.req::after{content:"*";color:var(--danger);margin-left:2px}
-.form-control{width:100%;padding:12px;border:1.5px solid var(--gray-200);border-radius:6px;font-size:16px;outline:none;background:white;margin-bottom:10px;font-family:inherit;}
+.form-control{width:100%;padding:12px;border:1.5px solid var(--gray-200);border-radius:6px;font-size:16px;outline:none;background:white;margin-bottom:10px;font-family:inherit;transition:opacity 0.2s;}
 .form-control:focus{border-color:var(--primary)}
+.form-control:disabled {background-color: var(--gray-100); opacity: 0.7;}
 
 /* ===== UPLOAD AREA (PC & MOBILE) ===== */
 .upload-zone{
@@ -54,7 +55,7 @@ body{font-family:-apple-system,sans-serif;background:#f0f4f8;color:var(--gray-80
 .capture-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:20px 10px;border:2px dashed var(--gray-300);border-radius:var(--r);background:var(--gray-50);cursor:pointer;position:relative}
 .capture-btn input{position:absolute;inset:0;opacity:0;cursor:pointer}
 
-.ai-status-bar { display: none; padding: 10px; border-radius: 6px; margin-bottom: 10px; font-size: 13px; font-weight: bold; text-align: center; }
+.ai-status-bar { display: none; padding: 10px; border-radius: 6px; margin-bottom: 10px; font-size: 13px; font-weight: bold; text-align: center; line-height: 1.4; }
 .ai-status-bar.loading { display: block; background: var(--primary-light); color: var(--primary); }
 .ai-status-bar.error { display: block; background: #fee2e2; color: var(--danger); }
 .ai-status-bar.success { display: block; background: var(--success-light); color: var(--success); }
@@ -65,10 +66,11 @@ body{font-family:-apple-system,sans-serif;background:#f0f4f8;color:var(--gray-80
 .receipt-thumb{width:120px;border-radius:6px;border:2px solid var(--gray-200);overflow:hidden;margin-bottom:14px}
 .receipt-thumb img{width:100%;display:block}
 
-.btn{width:100%;padding:14px;border:none;border-radius:6px;font-size:15px;font-weight:700;cursor:pointer;transition:opacity .2s}
+.btn{width:100%;padding:14px;border:none;border-radius:6px;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s}
 .btn-success{background:var(--success);color:white}
 .btn-primary{background:var(--primary);color:white}
 .btn-ghost{background:transparent;color:var(--gray-600);border:1px solid var(--gray-200)}
+.btn:disabled{background:var(--gray-300);color:var(--gray-500);cursor:not-allowed;box-shadow:none}
 
 .bottom-nav{position:fixed;bottom:0;left:0;right:0;height:calc(var(--bottom-nav-h) + var(--safe-bottom));background:white;border-top:1px solid var(--gray-200);display:flex;z-index:200}
 @media(min-width:640px){.bottom-nav{display:none}}
@@ -105,7 +107,7 @@ body{font-family:-apple-system,sans-serif;background:#f0f4f8;color:var(--gray-80
         <div id="apiStatusBadge" class="api-badge api-off">AI未設定</div>
         <label class="form-label">Gemini APIキー</label>
         <input type="password" class="form-control" id="apiKey" placeholder="AIza..." oninput="saveConfig()">
-        <p style="font-size: 11px; color: var(--gray-500);">※コード内に直接キーを貼り付けている場合は、この設定は無視されます。</p>
+        <p style="font-size: 11px; color: var(--gray-500);">※キーはブラウザにのみ保存されます。モデルの自動検索機能搭載。</p>
       </div>
     </details>
   </div>
@@ -132,7 +134,7 @@ body{font-family:-apple-system,sans-serif;background:#f0f4f8;color:var(--gray-80
 
       <div class="preview-wrap" id="previewWrap">
         <div class="receipt-thumb"><img id="receiptImg" src=""></div>
-        <div class="form-grid">
+        <div class="form-grid" id="formGrid">
           <label class="form-label req">📅 日付</label>
           <input type="date" class="form-control" id="fDate">
           
@@ -173,8 +175,8 @@ body{font-family:-apple-system,sans-serif;background:#f0f4f8;color:var(--gray-80
           <label class="form-label">📝 メモ</label>
           <input type="text" class="form-control" id="fMemo" placeholder="用途など（任意）">
           
-          <button class="btn btn-success" onclick="saveExpense()">💾 保存してリストへ</button>
-          <button class="btn btn-ghost" style="margin-top:8px" onclick="resetForm()">キャンセル</button>
+          <button class="btn btn-success" id="saveBtn" onclick="saveExpense()">💾 保存してリストへ</button>
+          <button class="btn btn-ghost" id="cancelBtn" style="margin-top:8px" onclick="resetForm()">キャンセル</button>
         </div>
       </div>
     </div>
@@ -201,16 +203,17 @@ body{font-family:-apple-system,sans-serif;background:#f0f4f8;color:var(--gray-80
 /**
  * 【管理者設定】
  * この "" の中に直接APIキー（AIza...）を貼り付けてもOKです。
- * 注意：GitHubにプッシュするとキーが自動で無効化されるため、公開リポジトリには上げないでください。
  */
 const embeddedApiKey = ""; 
 
 let expenses = JSON.parse(localStorage.getItem('exp_v5') || '[]');
 let currentImg = null;
+let autoDetectedModel = null; 
 
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('userName').value = localStorage.getItem('user_name_v5') || '';
   document.getElementById('apiKey').value = localStorage.getItem('api_key_v5') || '';
+  
   document.getElementById('fDate').value = new Date().toISOString().split('T')[0];
   updateApiStatus();
   setupDrop();
@@ -222,18 +225,17 @@ function saveConfig() {
   const key = document.getElementById('apiKey').value.trim();
   localStorage.setItem('user_name_v5', name);
   localStorage.setItem('api_key_v5', key);
+  autoDetectedModel = null; 
   updateApiStatus();
 }
 
 function updateApiStatus() {
   const badge = document.getElementById('apiStatusBadge');
-  const details = document.getElementById('apiConfigDetails');
   const keyInStorage = localStorage.getItem('api_key_v5');
   
   if (embeddedApiKey) {
     badge.textContent = "✅ 社内共通AIが有効です";
     badge.className = "api-badge api-on";
-    details.style.display = "none"; // 埋め込みがある場合は設定を隠す
   } else if (keyInStorage) {
     badge.textContent = "✅ 個別AI設定が有効です";
     badge.className = "api-badge api-on";
@@ -245,8 +247,21 @@ function updateApiStatus() {
 
 function showStatus(text, type) {
   const bar = document.getElementById('aiStatusBar');
+  if(!bar) return;
   bar.textContent = text;
   bar.className = 'ai-status-bar ' + type;
+}
+
+// フォームの入力可否を切り替える（非同期競合防止）
+function toggleFormState(disabled) {
+  const inputs = document.getElementById('formGrid').querySelectorAll('input, select');
+  inputs.forEach(el => el.disabled = disabled);
+  document.getElementById('saveBtn').disabled = disabled;
+  if(disabled) {
+      document.getElementById('saveBtn').textContent = "⌛ 解析中...";
+  } else {
+      document.getElementById('saveBtn').textContent = "💾 保存してリストへ";
+  }
 }
 
 function switchTab(tab, btn) {
@@ -283,7 +298,6 @@ async function handleFile(file) {
   document.getElementById('receiptImg').src = currentImg;
   document.getElementById('previewWrap').classList.add('show');
   
-  // 埋め込みキーを優先
   const key = embeddedApiKey || localStorage.getItem('api_key_v5')?.trim();
   if(key) {
     analyzeAI(key, currentImg);
@@ -291,33 +305,56 @@ async function handleFile(file) {
 }
 
 async function analyzeAI(key, base64) {
-  showStatus("✨ AIが読み取りを行っています...", "loading");
-  const modelName = "gemini-1.5-flash"; 
+  toggleFormState(true); // フォームをロック
   try {
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${key}`, {
+    if (!autoDetectedModel) {
+      showStatus("🔍 お使いのAPIで利用可能なモデルを検索中...", "loading");
+      const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
+      if (!listRes.ok) throw new Error("APIキーが無効、または通信エラーです。");
+      
+      const listData = await listRes.json();
+      const models = listData.models || [];
+      const validModels = models.filter(m => 
+        m.name.includes('gemini') && 
+        m.supportedGenerationMethods?.includes('generateContent') &&
+        !m.name.includes('vision')
+      );
+      
+      if (validModels.length === 0) throw new Error("画像解析に対応したモデルが見つかりません。");
+
+      const pref = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-2.0-flash', 'gemini-2.5-flash'];
+      for (const p of pref) {
+        if (validModels.some(m => m.name === `models/${p}`)) {
+          autoDetectedModel = p; break;
+        }
+      }
+      if (!autoDetectedModel) autoDetectedModel = validModels[0].name.replace('models/', '');
+    }
+
+    showStatus(`✨ AI (${autoDetectedModel}) がレシートを解析中...`, "loading");
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${autoDetectedModel}:generateContent?key=${key}`;
+
+    const res = await fetch(url, {
       method: 'POST', 
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
         contents: [{ 
           parts: [
-            { text: "Extract receipt info as JSON. Fields: {date:YYYY-MM-DD, amount:number, store, tax:10|8|0, category, memo}. Category must be one of: 駐車場代, 仕入高, ガソリン, 消耗品費, 事務用品, 運賃, その他交通費, 会議費, 交際費, 水道光熱, 租税公課, 福利厚生. Only return JSON block." }, 
+            { text: "Extract receipt info as JSON. Fields: {date:YYYY-MM-DD, amount:number, store, tax:10|8|0, category, memo}. Category must be one of: 駐車場代, 仕入高, ガソリン, 消耗品費, 事務用品, 運賃, その他交通費, 会議費, 交際費, 水道光熱, 租税公課, 福利厚生. Only return raw JSON object." }, 
             { inlineData: { mimeType: "image/jpeg", data: base64.split(',')[1] } }
           ] 
         }] 
       })
     });
     
-    if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error?.message || `APIエラー: ${res.status}`);
-    }
-
     const data = await res.json();
+    if (!res.ok) throw new Error(data.error?.message || `APIエラー (${res.status})`);
+
     const textContent = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!textContent) throw new Error('AIから返答がありませんでした。');
+    if (!textContent) throw new Error('AIから有効な返答が得られませんでした。');
 
     const match = textContent.match(/\{[\s\S]*\}/);
-    if (!match) throw new Error('AIの返答からデータを読み取れませんでした。');
+    if (!match) throw new Error('AIの返答にデータが含まれていませんでした。');
     
     const r = JSON.parse(match[0]);
     if(r.date) document.getElementById('fDate').value = r.date;
@@ -328,11 +365,17 @@ async function analyzeAI(key, base64) {
     if(r.memo) document.getElementById('fMemo').value = r.memo;
     
     showStatus("✅ 自動入力を完了しました", "success");
-    setTimeout(() => { if(document.getElementById('aiStatusBar').classList.contains('success')) document.getElementById('aiStatusBar').style.display='none'; }, 3000);
+    setTimeout(() => { 
+        const bar = document.getElementById('aiStatusBar');
+        if(bar && bar.classList.contains('success')) bar.style.display='none'; 
+    }, 3000);
 
   } catch(e) { 
     console.error('AI読み取り失敗:', e);
-    showStatus("❌ AI読み取り失敗: " + e.message, "error");
+    showStatus("❌ " + e.message, "error");
+    autoDetectedModel = null; 
+  } finally {
+    toggleFormState(false); // フォームのロックを解除
   }
 }
 
@@ -343,17 +386,27 @@ function saveExpense() {
   const store = document.getElementById('fStore').value.trim();
   if(!name || !date || !amount || !store) return alert('氏名・日付・金額・店名をすべて入力してください');
 
-  expenses.unshift({ id: Date.now(), date, amount, store, tax: document.getElementById('fTax').value, category: document.getElementById('fCategory').value, memo: document.getElementById('fMemo').value, img: currentImg });
-  localStorage.setItem('exp_v5', JSON.stringify(expenses));
-  resetForm(); 
-  switchTab('list', document.getElementById('nav-li'));
+  const newExpense = { id: Date.now(), date, amount, store, tax: document.getElementById('fTax').value, category: document.getElementById('fCategory').value, memo: document.getElementById('fMemo').value, img: currentImg };
+  
+  // バグ修正：保存容量オーバー時のエラーハンドリング復元
+  expenses.unshift(newExpense);
+  try {
+    localStorage.setItem('exp_v5', JSON.stringify(expenses));
+    resetForm(); 
+    switchTab('list', document.getElementById('nav-li'));
+  } catch (e) {
+    // 容量オーバーで保存失敗した場合、配列から取り除いて元の状態に戻す
+    expenses.shift();
+    alert('【保存失敗】スマホのブラウザ保存容量（約5MB）がいっぱいです。\n「リスト」タブからデータを管理者へ出力した後、削除して空き容量を作ってください。');
+  }
 }
 
 function resetForm() {
   currentImg = null; 
   document.getElementById('uploadSection').style.display = 'block';
   document.getElementById('previewWrap').classList.remove('show');
-  document.getElementById('aiStatusBar').style.display = 'none';
+  const bar = document.getElementById('aiStatusBar');
+  if(bar) bar.style.display = 'none';
   document.getElementById('fAmount').value = ''; 
   document.getElementById('fStore').value = '';
   document.getElementById('fMemo').value = '';
