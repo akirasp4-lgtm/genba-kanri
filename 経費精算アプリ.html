@@ -79,6 +79,10 @@ body{font-family:-apple-system,sans-serif;background:#f0f4f8;color:var(--gray-80
 
 .expense-card{display:flex;align-items:center;justify-content:space-between;padding:12px;border-bottom:1px solid var(--gray-100)}
 .cat-badge{font-size:10px;padding:2px 6px;border-radius:10px;background:var(--gray-100)}
+
+.api-badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-bottom: 8px; display: inline-block; }
+.api-off { background: var(--gray-200); color: var(--gray-500); }
+.api-on { background: var(--success-light); color: var(--success); }
 </style>
 </head>
 <body>
@@ -95,7 +99,17 @@ body{font-family:-apple-system,sans-serif;background:#f0f4f8;color:var(--gray-80
   <!-- CONFIG AREA -->
   <div class="card">
     <label class="form-label req">👤 あなたの氏名</label>
-    <input type="text" class="form-control" id="userName" placeholder="山田 太郎" oninput="saveConfig()" style="margin-bottom: 0;">
+    <input type="text" class="form-control" id="userName" placeholder="山田 太郎" oninput="saveConfig()">
+    
+    <details id="apiConfigDetails">
+      <summary style="font-size: 12px; color: var(--gray-500); cursor: pointer; margin-top: 5px;">🔧 AI自動入力の設定 (必須)</summary>
+      <div style="padding-top: 10px;">
+        <div id="apiStatusBadge" class="api-badge api-off">AI未設定</div>
+        <label class="form-label req">Gemini APIキー</label>
+        <input type="password" class="form-control" id="apiKey" placeholder="AIza..." oninput="saveConfig()">
+        <p style="font-size: 11px; color: var(--gray-500);">※キーはブラウザにのみ保存されます。GitHubにアップしても安全です。</p>
+      </div>
+    </details>
   </div>
 
   <!-- INPUT PANEL -->
@@ -186,24 +200,37 @@ body{font-family:-apple-system,sans-serif;background:#f0f4f8;color:var(--gray-80
 </nav>
 
 <script>
-/**
- * 【超重要】システムが自動でAPIキーを注入するため、ここは絶対に空のままにしてください。
- */
-const apiKey = ""; 
-
 let expenses = JSON.parse(localStorage.getItem('exp_v5') || '[]');
 let currentImg = null;
 
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('userName').value = localStorage.getItem('user_name_v5') || '';
+  document.getElementById('apiKey').value = localStorage.getItem('api_key_v5') || '';
   document.getElementById('fDate').value = new Date().toISOString().split('T')[0];
+  updateApiStatus();
   setupDrop();
   renderList();
 });
 
 function saveConfig() {
   const name = document.getElementById('userName').value.trim();
+  const key = document.getElementById('apiKey').value.trim();
   localStorage.setItem('user_name_v5', name);
+  localStorage.setItem('api_key_v5', key);
+  updateApiStatus();
+}
+
+function updateApiStatus() {
+  const badge = document.getElementById('apiStatusBadge');
+  const keyInStorage = localStorage.getItem('api_key_v5');
+  
+  if (keyInStorage) {
+    badge.textContent = "✅ AI設定が有効です";
+    badge.className = "api-badge api-on";
+  } else {
+    badge.textContent = "AI未設定 (手動入力)";
+    badge.className = "api-badge api-off";
+  }
 }
 
 function showStatus(text, type) {
@@ -259,22 +286,26 @@ async function handleFile(file) {
   document.getElementById('receiptImg').src = currentImg;
   document.getElementById('previewWrap').classList.add('show');
   
-  analyzeAI(currentImg);
+  const key = localStorage.getItem('api_key_v5')?.trim();
+  if(!key) {
+    showStatus("⚠️ APIキーが設定されていません。「🔧 AI自動入力の設定」から入力してください。", "error");
+    return;
+  }
+  analyzeAI(key, currentImg);
 }
 
 /**
- * 安定化されたAI解析エンジン (Exponential Backoff実装済み)
+ * 安定化されたAI解析エンジン
  */
-async function analyzeAI(base64) {
+async function analyzeAI(key, base64) {
   toggleFormState(true); 
   showStatus("✨ AIがレシートを解析しています...", "loading");
 
-  // 環境指定の必須モデルに完全固定
-  const model = "gemini-2.5-flash-preview-09-2025";
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+  // 最も安定している1.5-flashを使用
+  const model = "gemini-1.5-flash";
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
   
-  // 失敗時のリトライ待機時間（1秒、2秒、4秒、8秒、16秒）
-  const retryDelays = [1000, 2000, 4000, 8000, 16000];
+  const retryDelays = [1000, 2000, 4000];
   let success = false;
   let lastError = "解析に失敗しました";
 
@@ -298,16 +329,22 @@ async function analyzeAI(base64) {
         })
       });
       
+      const data = await res.json().catch(() => ({}));
+
       if (!res.ok) {
+        const errMsg = data.error?.message || "";
+        if (res.status === 403 || errMsg.includes("API key not valid")) {
+            throw new Error("🚨 <b>APIキーが無効、または設定されていません。</b><br>「🔧 AI自動入力の設定」から正しいキーを再入力してください。");
+        }
+        if (res.status === 429 || errMsg.includes("Quota")) {
+            throw new Error("❌ <b>連続読み取り制限です。</b><br>しばらく待ってから再度試してください。");
+        }
         throw new Error(`HTTP Error: ${res.status}`);
       }
 
-      const data = await res.json();
       const textContent = data.candidates?.[0]?.content?.parts?.[0]?.text;
-      
       if (!textContent) throw new Error('AIがデータを返しませんでした。');
 
-      // Markdown等を無視してJSONを抽出
       const match = textContent.match(/\{[\s\S]*\}/);
       if (!match) throw new Error('AIが文字を読み取れませんでした。');
       
@@ -326,16 +363,16 @@ async function analyzeAI(base64) {
       }, 3000);
 
       success = true;
-      break; // 成功したのでループを抜ける
+      break; 
 
     } catch(e) { 
       lastError = e.message;
-      // リトライを続けるためエラーログは出さない
+      if (lastError.includes("APIキーが無効")) break; // 致命的エラーならリトライしない
     }
   }
 
   if (!success) {
-      showStatus(`❌ 解析エラー: 手動で入力してください。<br><span style="font-size:11px;font-weight:normal">(${lastError})</span>`, "error");
+      showStatus(`❌ 解析エラー: 手動で入力してください。<br><span style="font-size:11px;font-weight:normal">${lastError}</span>`, "error");
   }
   
   toggleFormState(false); 
