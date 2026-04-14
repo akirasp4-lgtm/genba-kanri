@@ -67,12 +67,11 @@ body{font-family:-apple-system,sans-serif;background:#f0f4f8;color:var(--gray-80
 <body>
 
 <header class="app-header">
-  <div class="app-title">📝 経費精算アプリ <span style="font-size:10px; color:#666; font-weight:normal;">(ローカルOCR)</span></div>
+  <div class="app-title">📝 経費精算アプリ <span style="font-size:10px; color:#666; font-weight:normal;">(高精度ローカルOCR)</span></div>
 </header>
 
 <main class="main">
 
-  <!-- 氏名入力のみ（APIキー欄は全削除） -->
   <div class="card">
     <label class="form-label"><span class="req">👤 氏名</span></label>
     <input type="text" class="form-control" id="userName" placeholder="山田 太郎" oninput="saveConfig()">
@@ -85,10 +84,9 @@ body{font-family:-apple-system,sans-serif;background:#f0f4f8;color:var(--gray-80
           <label class="capture-btn"><input type="file" accept="image/*" capture="environment" onchange="handleFile(this.files[0])">📸 レシート撮影</label>
           <label class="capture-btn"><input type="file" accept="image/*" onchange="handleFile(this.files[0])">🖼️ 写真から選ぶ</label>
         </div>
-        <p style="font-size:11px; color:#666; text-align:center;">※スマホ内部で文字を読み取ります（外部通信なし）</p>
+        <p style="font-size:11px; color:#666; text-align:center;">※スマホ内部で画像補正と文字解析を行います</p>
       </div>
 
-      <!-- ローカルOCRのステータス表示 -->
       <div id="aiStatusBar" class="ai-status-bar"></div>
 
       <div class="preview-wrap" id="previewWrap">
@@ -214,23 +212,58 @@ function switchTab(tab, btn) {
 
 async function handleFile(file) {
   if(!file || !file.type.startsWith('image/')) return;
-  currentImg = await resizeImg(file, 800); // OCR用に解像度を確保
+  
+  // 表示用の画像（フルカラー）
+  currentImg = await resizeImg(file, 800, false);
+  
   document.getElementById('uploadSection').style.display = 'none';
   document.getElementById('receiptImg').src = currentImg;
   document.getElementById('previewWrap').classList.add('show');
   
-  // 完全ローカルOCRの発動
-  analyzeLocalOCR(currentImg);
+  // OCR専用に「高解像度」かつ「白黒強調（二値化）」した裏画像を作成する
+  const optimizedOcrImg = await resizeImg(file, 1600, true);
+  analyzeLocalOCR(optimizedOcrImg);
 }
 
-// Tesseract.js を使った完全ローカルOCR
+// 画像のリサイズと前処理（白黒強調によるOCR最適化）
+async function resizeImg(file, max, isOcrOptimization = false) {
+  return new Promise(res => {
+    const r = new FileReader(); r.onload = e => {
+      const img = new Image(); img.onload = () => {
+        const c = document.createElement('canvas'); 
+        const ratio = Math.min(1, max/img.width, max/img.height);
+        c.width = img.width*ratio; c.height = img.height*ratio;
+        const ctx = c.getContext('2d'); 
+        ctx.fillStyle='#fff'; ctx.fillRect(0,0,c.width,c.height); 
+        ctx.drawImage(img,0,0,c.width,c.height);
+        
+        // OCR用のみ、影や黄ばみを消して文字を黒く強調する処理を入れる
+        if (isOcrOptimization) {
+            const imageData = ctx.getImageData(0, 0, c.width, c.height);
+            const data = imageData.data;
+            for (let i = 0; i < data.length; i += 4) {
+                // グレースケール化
+                const gray = 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
+                // しきい値で白か黒に完全に分ける（コントラストを極端に上げる）
+                const v = gray < 155 ? 0 : 255; 
+                data[i] = v; data[i+1] = v; data[i+2] = v;
+            }
+            ctx.putImageData(imageData, 0, 0);
+        }
+        res(c.toDataURL('image/png'));
+      }; img.src = e.target.result;
+    }; r.readAsDataURL(file);
+  });
+}
+
+// Tesseract.js を使ったハイブリッドローカルOCR
 async function analyzeLocalOCR(base64) {
   toggleFormState(true);
-  showStatus('⏳ スマホ内部で文字を解析しています...<br><span style="font-size:10px;font-weight:normal">※初回のみ言語データの準備に数秒かかります。</span>', 'loading');
+  showStatus('⏳ 画像を補正し、文字を解析しています...<br><span style="font-size:10px;font-weight:normal">※数字と日本語のハイブリッド辞書を準備中</span>', 'loading');
   
   try {
-    // 日本語エンジンで読み取り開始
-    const worker = await Tesseract.createWorker('jpn');
+    // 精度向上のため、日本語（jpn）と英語（eng:数字やアルファベットに強い）を同時読み込み
+    const worker = await Tesseract.createWorker(['jpn', 'eng']);
     const ret = await worker.recognize(base64);
     await worker.terminate();
     
@@ -241,9 +274,9 @@ async function analyzeLocalOCR(base64) {
         throw new Error('文字が見つかりませんでした。');
     }
 
-    // --- 抽出ロジック（正規表現でテキストから情報を拾う） ---
+    // --- 抽出ロジック（正規表現） ---
     
-    // 1. 日付の抽出 (例: 2024年4月1日, 2024/04/01)
+    // 1. 日付の抽出
     const dateMatch = text.match(/(20\d{2})[年\/\-\.]([01]?\d)[月\/\-\.]([0-3]?\d)/);
     if (dateMatch) {
       const y = dateMatch[1];
@@ -252,27 +285,29 @@ async function analyzeLocalOCR(base64) {
       document.getElementById('fDate').value = `${y}-${m}-${d}`;
     }
 
-    // 2. 金額の抽出 (カンマ区切りの数字から一番大きいものを合計金額と推定)
+    // 2. 金額の抽出 (不要な記号を排除し、一番大きな数値を拾う)
     const amounts = [];
     const amountRegex = /[¥￥]?\s*([1-9]\d{0,2}(?:,\d{3})+|[1-9]\d{2,})\s*(円|)/g;
     let match;
     while ((match = amountRegex.exec(text)) !== null) {
       const val = parseInt(match[1].replace(/,/g, ''), 10);
-      if (val > 0) amounts.push(val);
+      if (val > 0 && val < 10000000) amounts.push(val);
     }
     if (amounts.length > 0) {
       document.getElementById('fAmount').value = Math.max(...amounts);
     }
 
-    // 3. 店名の抽出 (文字として認識された最初の行を店名と仮定)
-    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-    const validLines = lines.filter(l => /[ぁ-んァ-ン一-龥a-zA-Z]/.test(l) && !l.includes('領収') && !l.includes('レシート'));
+    // 3. 店名の抽出 (数字や記号だけの行を弾き、それらしい先頭行を取る)
+    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 2);
+    const validLines = lines.filter(l => 
+        /[ぁ-んァ-ン一-龥]/.test(l) && // 日本語が含まれているか
+        !l.includes('領収') && !l.includes('レシート') && !l.includes('TEL')
+    );
     if(validLines.length > 0) {
-      // 誤認識の記号等を除去してセット
       document.getElementById('fStore').value = validLines[0].replace(/[^ぁ-んァ-ン一-龥a-zA-Z0-9株式会社]/g, '').substring(0, 20);
     }
 
-    showStatus("✅ 読み取り完了（誤りがあれば修正してください）", "success");
+    showStatus("✅ 解析完了（誤りがあれば手直ししてください）", "success");
 
   } catch(e) {
     showStatus(`❌ 解析エラー: 手動で入力してください。<br><span style="font-size:11px;font-weight:normal">${e.message}</span>`, "error");
@@ -354,18 +389,6 @@ function exportJSON() {
 
 function esc(s) { return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]); }
 
-async function resizeImg(file, max) {
-  return new Promise(res => {
-    const r = new FileReader(); r.onload = e => {
-      const img = new Image(); img.onload = () => {
-        const c = document.createElement('canvas'); const ratio = Math.min(1, max/img.width, max/img.height);
-        c.width = img.width*ratio; c.height = img.height*ratio;
-        const ctx = c.getContext('2d'); ctx.fillStyle='#fff'; ctx.fillRect(0,0,c.width,c.height); ctx.drawImage(img,0,0,c.width,c.height);
-        res(c.toDataURL('image/jpeg', 0.8)); // OCR精度向上のため画質を少し上げる
-      }; img.src = e.target.result;
-    }; r.readAsDataURL(file);
-  });
-}
 </script>
 </body>
 </html>
