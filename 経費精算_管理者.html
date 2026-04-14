@@ -14,252 +14,126 @@
   --gray-300:#d1d5db;--gray-400:#9ca3af;--gray-500:#6b7280;
   --gray-600:#4b5563;--gray-700:#374151;--gray-800:#1f2937;--gray-900:#111827;
   --shadow:0 1px 3px rgba(0,0,0,.1),0 1px 2px rgba(0,0,0,.06);
-  --shadow-lg:0 10px 15px rgba(0,0,0,.1),0 4px 6px rgba(0,0,0,.05);
   --r:10px;--rs:6px;--rl:16px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic UI',Meiryo,sans-serif;background:#f0f4f8;color:var(--gray-800);min-height:100vh}
+body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#f0f4f8;color:var(--gray-800);min-height:100vh}
 
-/* HEADER */
-.header{background:white;border-bottom:1px solid var(--gray-200);padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 1px 2px rgba(0,0,0,.05)}
-.title{display:flex;align-items:center;gap:8px;font-size:17px;font-weight:700;color:var(--danger)}
-.badge-admin{background:var(--danger);color:white;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;letter-spacing:.05em}
-
-/* TABS */
+/* HEADER & TABS */
+.header{background:white;border-bottom:1px solid var(--gray-200);padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:var(--shadow)}
+.title{font-size:17px;font-weight:700;color:var(--danger);display:flex;align-items:center;gap:8px}
+.badge-admin{background:var(--danger);color:white;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px}
 .tab-nav{display:flex;gap:4px;background:var(--gray-100);border-radius:var(--rs);padding:3px}
-.tab-btn{padding:6px 14px;border:none;background:transparent;color:var(--gray-500);font-size:13px;font-weight:500;border-radius:4px;cursor:pointer;transition:all .15s;font-family:inherit}
-.tab-btn.active{background:white;color:var(--primary);box-shadow:0 1px 2px rgba(0,0,0,.05);font-weight:600}
+.tab-btn{padding:6px 14px;border:none;background:transparent;color:var(--gray-500);font-size:13px;font-weight:500;border-radius:4px;cursor:pointer}
+.tab-btn.active{background:white;color:var(--primary);box-shadow:var(--shadow);font-weight:600}
 
 /* MAIN */
 .main{max-width:1100px;margin:0 auto;padding:24px 16px;display:flex;flex-direction:column;gap:18px}
-
-/* CARD */
 .card{background:white;border-radius:var(--rl);box-shadow:var(--shadow);overflow:hidden}
 .card-header{padding:14px 20px;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
-.card-title{font-size:14px;font-weight:600;color:var(--gray-700);display:flex;align-items:center;gap:6px}
+.card-title{font-size:14px;font-weight:600;color:var(--gray-700)}
 .card-body{padding:20px}
 
-/* UPLOAD DROP */
+/* UPLOAD */
 .drop-zone{border:2px dashed var(--gray-300);border-radius:var(--r);padding:32px;text-align:center;cursor:pointer;transition:all .2s;background:var(--gray-50);position:relative}
 .drop-zone:hover,.drop-zone.over{border-color:var(--primary);background:var(--primary-light)}
 .drop-zone input{position:absolute;inset:0;opacity:0;cursor:pointer}
-.drop-icon{font-size:36px;display:block;margin-bottom:10px}
-.drop-text{font-size:14px;color:var(--gray-600);margin-bottom:4px}
-.drop-sub{font-size:12px;color:var(--gray-400)}
-
-/* FILE PILLS */
 .file-pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
-.file-pill{display:inline-flex;align-items:center;gap:6px;background:var(--primary-light);border:1px solid #bfdbfe;border-radius:20px;padding:4px 10px;font-size:12px;font-weight:600;color:var(--primary)}
-.file-pill button{border:none;background:none;cursor:pointer;color:var(--gray-400);font-size:14px;line-height:1;padding:0}
+.file-pill{display:inline-flex;align-items:center;gap:6px;background:var(--primary-light);border:1px solid #bfdbfe;border-radius:20px;padding:4px 10px;font-size:12px;color:var(--primary);font-weight:600}
 
-/* STATS BAR */
+/* STATS */
 .stats-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
 .stat{background:var(--gray-50);border-radius:var(--r);padding:14px;text-align:center;border:1px solid var(--gray-200)}
-.stat-label{font-size:10px;color:var(--gray-500);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
-.stat-val{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums}
-.stat-val.blue{color:var(--primary)}
-.stat-val.green{color:var(--success)}
-.stat-val.orange{color:var(--warning)}
-.stat-val.red{color:var(--danger)}
-.stat-sub{font-size:11px;color:var(--gray-400);margin-top:2px}
-
-/* FILTERS */
-.filter-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.filter-chip{padding:5px 12px;border:1.5px solid var(--gray-200);border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;background:white;color:var(--gray-600)}
-.filter-chip:hover{border-color:var(--primary);color:var(--primary)}
-.filter-chip.active{background:var(--primary);border-color:var(--primary);color:white}
-.filter-sep{color:var(--gray-300);font-size:12px}
-.filter-chip.ok{background:var(--success-light);border-color:#86efac;color:var(--success)}
-.filter-chip.ok.active{background:var(--success);border-color:var(--success);color:white}
-.filter-chip.ng{background:var(--danger-light);border-color:#fca5a5;color:var(--danger)}
-.filter-chip.ng.active{background:var(--danger);border-color:var(--danger);color:white}
-.filter-chip.pending-chip{background:var(--warning-light);border-color:#fcd34d;color:var(--warning)}
-.filter-chip.pending-chip.active{background:var(--warning);border-color:var(--warning);color:white}
-
-/* SEARCH */
-.search-input{padding:7px 12px;border:1.5px solid var(--gray-200);border-radius:var(--rs);font-size:13px;outline:none;width:200px;font-family:inherit}
-.search-input:focus{border-color:var(--primary)}
+.stat-label{font-size:10px;color:var(--gray-500);font-weight:700;margin-bottom:5px}
+.stat-val{font-size:22px;font-weight:800}
 
 /* TABLE */
 .table-wrap{overflow-x:auto}
 table{width:100%;border-collapse:collapse;font-size:13px}
-thead th{padding:10px 12px;text-align:left;background:var(--gray-50);color:var(--gray-500);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--gray-200);white-space:nowrap;cursor:pointer;user-select:none}
-thead th:hover{background:var(--gray-100)}
-thead th.sorted{color:var(--primary)}
+thead th{padding:10px 12px;text-align:left;background:var(--gray-50);color:var(--gray-500);font-weight:700;font-size:11px;border-bottom:1px solid var(--gray-200);white-space:nowrap}
 tbody tr{transition:background .1s}
 tbody tr:hover{background:var(--gray-50)}
-tbody td{padding:10px 12px;border-bottom:1px solid var(--gray-100);color:var(--gray-700)}
-.amount-td{font-weight:700;text-align:right;font-variant-numeric:tabular-nums;color:var(--gray-900)}
-.no-data{text-align:center;padding:48px;color:var(--gray-400);font-size:14px}
+tbody td{padding:10px 12px;border-bottom:1px solid var(--gray-100);color:var(--gray-700);vertical-align:middle}
+.val-mod{color:var(--danger);font-weight:700;text-decoration:underline;cursor:help}
+.thumb-img{width:40px;height:40px;object-fit:cover;border-radius:4px;cursor:zoom-in;border:1px solid var(--gray-200)}
 
-/* STATUS BADGES */
-.status-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap}
-.status-pending{background:var(--warning-light);color:var(--warning)}
-.status-approved{background:var(--success-light);color:var(--success)}
-.status-rejected{background:var(--danger-light);color:var(--danger)}
+/* BADGES & BUTTONS */
+.badge{display:inline-flex;align-items:center;padding:3px 8px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap}
+.badge-ai{background:var(--success-light);color:var(--success)}
+.badge-mod{background:var(--warning-light);color:var(--warning)}
 
-/* CATEGORY */
-.cat-badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
-.cat-交通費{background:#dbeafe;color:#1d4ed8}
-.cat-食費・接待費{background:#fef3c7;color:#92400e}
-.cat-消耗品費{background:#d1fae5;color:#065f46}
-.cat-通信費{background:#ede9fe;color:#5b21b6}
-.cat-宿泊費{background:#ffe4e6;color:#9f1239}
-.cat-書籍・研修費{background:#e0f2fe;color:#0369a1}
-.cat-その他{background:#f3f4f6;color:#374151}
-
-/* ACTION BUTTONS */
-.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border:none;border-radius:var(--rs);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;font-family:inherit}
-.btn-approve{background:var(--success-light);color:var(--success);border:1.5px solid #86efac}
-.btn-approve:hover{background:var(--success);color:white;border-color:var(--success)}
-.btn-reject{background:var(--danger-light);color:var(--danger);border:1.5px solid #fca5a5}
-.btn-reject:hover{background:var(--danger);color:white;border-color:var(--danger)}
+.btn{padding:7px 14px;border:none;border-radius:var(--rs);font-size:12px;font-weight:600;cursor:pointer}
 .btn-primary{background:var(--primary);color:white}
-.btn-primary:hover{background:var(--primary-dark)}
 .btn-ghost{background:transparent;color:var(--gray-600);border:1.5px solid var(--gray-200)}
-.btn-ghost:hover{background:var(--gray-50)}
-.btn-danger{background:var(--danger);color:white}
-.btn-danger:hover{background:#b91c1c}
-.btn-lg{padding:10px 20px;font-size:14px}
-.btn-sm{padding:5px 10px;font-size:11px}
-
-/* BULK ACTIONS */
-.bulk-bar{background:var(--primary-light);border:1px solid #bfdbfe;border-radius:var(--r);padding:10px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.bulk-bar.hidden{display:none}
-.bulk-count{font-size:13px;font-weight:600;color:var(--primary)}
-
-/* PERSON SUMMARY */
-.person-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
-.person-card{border:1px solid var(--gray-200);border-radius:var(--r);padding:14px;background:white}
-.person-name{font-size:14px;font-weight:700;color:var(--gray-800);margin-bottom:8px;display:flex;align-items:center;justify-content:space-between}
-.person-total{font-size:20px;font-weight:800;color:var(--primary);font-variant-numeric:tabular-nums}
-.person-meta{font-size:11px;color:var(--gray-400)}
-.person-status-row{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
-
-/* PANEL */
-.tab-panel{display:none}
-.tab-panel.active{display:flex;flex-direction:column;gap:18px}
-
-/* TOAST */
-.toast-wrap{position:fixed;bottom:20px;right:20px;z-index:300;display:flex;flex-direction:column;align-items:flex-end;gap:6px;pointer-events:none}
-.toast{background:var(--gray-900);color:white;padding:11px 18px;border-radius:var(--r);font-size:13px;font-weight:500;box-shadow:var(--shadow-lg);animation:slideIn .2s ease;pointer-events:auto}
-.toast.success{background:var(--success)}
-.toast.error{background:var(--danger)}
-@keyframes slideIn{from{transform:translateX(20px);opacity:0}to{transform:translateX(0);opacity:1}}
-
-/* CHECKBOX */
-input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--primary)}
 
 /* MODAL */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px}
-.modal-overlay.hidden{display:none}
-.modal{background:white;border-radius:var(--rl);padding:24px;max-width:460px;width:100%;box-shadow:var(--shadow-lg)}
-.modal h3{font-size:16px;font-weight:700;margin-bottom:12px}
-.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
-textarea.form-control{width:100%;padding:10px 12px;border:1.5px solid var(--gray-200);border-radius:var(--rs);font-size:14px;font-family:inherit;resize:vertical;outline:none;min-height:80px}
-textarea.form-control:focus{border-color:var(--primary)}
+#imgModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;align-items:center;justify-content:center}
+#imgModal img{max-width:90%;max-height:90%;border-radius:8px;box-shadow:var(--shadow-lg)}
 
-/* MONTH SELECT */
-.month-scroll{display:flex;gap:6px;overflow-x:auto;padding:10px 0;scrollbar-width:none}
-.month-scroll::-webkit-scrollbar{display:none}
+.tab-panel{display:none}
+.tab-panel.active{display:flex;flex-direction:column;gap:18px}
 </style>
 </head>
 <body>
 
-<!-- HEADER -->
 <header class="header">
-  <div class="title">
-    🗂️ 経費精算 <span class="badge-admin">管理者</span>
-  </div>
+  <div class="title">🗂️ 経費承認システム <span class="badge-admin">管理者</span></div>
   <nav class="tab-nav">
     <button class="tab-btn active" onclick="switchTab('review',this)">📥 申請一覧</button>
     <button class="tab-btn" onclick="switchTab('person',this)">👥 人別集計</button>
-    <button class="tab-btn" onclick="switchTab('summary',this)">📊 月次レポート</button>
   </nav>
 </header>
 
 <main class="main">
-
-  <!-- FILE UPLOAD -->
+  <!-- DROP ZONE -->
   <div class="card">
     <div class="card-header">
       <span class="card-title">📂 社員の申請ファイルを読み込む</span>
-      <div style="display:flex;gap:6px">
-        <button class="btn btn-ghost btn-sm" onclick="clearAll()">🗑️ すべてクリア</button>
-        <button class="btn btn-primary btn-sm" onclick="exportReport()">⬇️ レポートCSV出力</button>
-      </div>
+      <button class="btn btn-ghost" onclick="clearAll()">🗑️ すべてクリア</button>
     </div>
     <div class="card-body">
       <div class="drop-zone" id="dropZone">
         <input type="file" accept=".json" multiple onchange="loadFiles(this.files)">
-        <span class="drop-icon">📤</span>
-        <div class="drop-text">社員の申請JSONファイルをドロップ（複数OK）</div>
-        <div class="drop-sub">社員アプリの「申請」ボタンで出力したファイル</div>
+        <div style="font-size:30px;margin-bottom:10px">📤</div>
+        <div style="font-weight:600">社員の申請JSONファイルをドロップ（複数OK）</div>
       </div>
       <div class="file-pills" id="filePills"></div>
     </div>
   </div>
 
   <!-- STATS -->
-  <div class="stats-bar" id="statsBar">
-    <div class="stat"><div class="stat-label">申請件数</div><div class="stat-val blue" id="statTotal">0</div><div class="stat-sub">件</div></div>
-    <div class="stat"><div class="stat-label">申請合計金額</div><div class="stat-val blue" id="statAmount">¥0</div><div class="stat-sub">全件合計</div></div>
-    <div class="stat"><div class="stat-label">承認済み</div><div class="stat-val green" id="statApproved">¥0</div><div class="stat-sub" id="statApprovedCnt">0件</div></div>
-    <div class="stat"><div class="stat-label">未処理</div><div class="stat-val orange" id="statPending">0</div><div class="stat-sub">件</div></div>
-    <div class="stat"><div class="stat-label">却下</div><div class="stat-val red" id="statRejected">0</div><div class="stat-sub">件</div></div>
+  <div class="stats-bar">
+    <div class="stat"><div class="stat-label">申請件数</div><div class="stat-val" style="color:var(--primary)" id="statTotal">0</div></div>
+    <div class="stat"><div class="stat-label">申請合計金額</div><div class="stat-val" style="color:var(--primary)" id="statAmount">¥0</div></div>
+    <div class="stat"><div class="stat-label">AI一致 (無修正)</div><div class="stat-val" style="color:var(--success)" id="statSafe">0</div></div>
+    <div class="stat"><div class="stat-label">修正あり (要確認)</div><div class="stat-val" style="color:var(--danger)" id="statWarn">0</div></div>
   </div>
 
   <!-- REVIEW TAB -->
   <div class="tab-panel active" id="panel-review">
     <div class="card">
       <div class="card-header">
-        <span class="card-title">📥 経費申請一覧</span>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <input type="text" class="search-input" id="searchInput" placeholder="🔍 氏名・店名で検索" oninput="renderReview()">
-        </div>
+        <span class="card-title">📥 審査待ち一覧</span>
+        <button class="btn btn-primary" onclick="exportCSV()">⬇️ CSV出力</button>
       </div>
-      <!-- Filters -->
-      <div style="padding:10px 20px;border-bottom:1px solid var(--gray-100);display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-        <span style="font-size:12px;font-weight:600;color:var(--gray-500)">ステータス：</span>
-        <button class="filter-chip active" onclick="setStatusFilter('all',this)">すべて</button>
-        <button class="filter-chip pending-chip" onclick="setStatusFilter('pending',this)">⏳ 未処理</button>
-        <button class="filter-chip ok" onclick="setStatusFilter('approved',this)">✅ 承認済み</button>
-        <button class="filter-chip ng" onclick="setStatusFilter('rejected',this)">❌ 却下</button>
-        <span class="filter-sep">｜</span>
-        <span style="font-size:12px;font-weight:600;color:var(--gray-500)">月：</span>
-        <div id="monthFilterWrap" style="display:flex;gap:4px;flex-wrap:wrap"></div>
-      </div>
-      <!-- Bulk actions -->
-      <div class="bulk-bar hidden" id="bulkBar">
-        <span class="bulk-count" id="bulkCount">0件選択中</span>
-        <button class="btn btn-approve" onclick="bulkAction('approved')">✅ 一括承認</button>
-        <button class="btn btn-reject" onclick="bulkAction('rejected')">❌ 一括却下</button>
-        <button class="btn btn-ghost btn-sm" onclick="clearSelection()">選択解除</button>
-      </div>
-      <!-- Table -->
       <div class="table-wrap">
         <table>
           <thead>
             <tr>
-              <th><input type="checkbox" id="checkAll" onchange="toggleAll(this)"></th>
-              <th onclick="sortBy('name')">氏名 <span class="sort-arrow" data-col="name"></span></th>
-              <th onclick="sortBy('date')">日付 <span class="sort-arrow" data-col="date"></span></th>
+              <th>証跡</th>
+              <th>氏名</th>
+              <th>日付</th>
               <th>店名</th>
               <th>カテゴリ</th>
-              <th>摘要</th>
-              <th onclick="sortBy('amount')" style="text-align:right">金額 <span class="sort-arrow" data-col="amount"></span></th>
-              <th>ステータス</th>
+              <th style="text-align:right">金額</th>
+              <th>信頼性チェック</th>
               <th>操作</th>
             </tr>
           </thead>
-          <tbody id="reviewBody"></tbody>
+          <tbody id="listBody">
+            <tr><td colspan="8" style="text-align:center;padding:40px;color:var(--gray-400)">申請ファイルを読み込んでください</td></tr>
+          </tbody>
         </table>
-        <div class="no-data" id="noData">申請ファイルをドロップして読み込んでください</div>
-      </div>
-      <!-- Total -->
-      <div style="padding:12px 20px;border-top:1px solid var(--gray-100);display:flex;justify-content:space-between;align-items:center">
-        <span style="font-size:12px;color:var(--gray-500)">表示中の合計</span>
-        <span style="font-size:18px;font-weight:800;color:var(--primary)" id="viewTotal">¥0</span>
       </div>
     </div>
   </div>
@@ -268,441 +142,149 @@ textarea.form-control:focus{border-color:var(--primary)}
   <div class="tab-panel" id="panel-person">
     <div class="card">
       <div class="card-header"><span class="card-title">👥 人別集計</span></div>
-      <div class="card-body">
-        <div class="person-grid" id="personGrid">
-          <div style="color:var(--gray-400);font-size:13px">申請データを読み込むと表示されます</div>
-        </div>
+      <div class="card-body" id="personGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px">
+        <div style="color:var(--gray-400)">データなし</div>
       </div>
     </div>
   </div>
-
-  <!-- SUMMARY TAB -->
-  <div class="tab-panel" id="panel-summary">
-    <div class="card">
-      <div class="card-header">
-        <span class="card-title">📊 月次レポート</span>
-        <select id="summaryMonthSel" onchange="renderSummary()" style="padding:5px 10px;border:1.5px solid var(--gray-200);border-radius:var(--rs);font-size:13px;outline:none"></select>
-      </div>
-      <div class="card-body" id="summaryBody">
-        <div style="color:var(--gray-400);font-size:13px">申請データを読み込むと表示されます</div>
-      </div>
-    </div>
-  </div>
-
 </main>
 
-<!-- REJECT MODAL -->
-<div class="modal-overlay hidden" id="rejectModal">
-  <div class="modal">
-    <h3>❌ 却下理由を入力</h3>
-    <textarea class="form-control" id="rejectReason" placeholder="例：領収書が不鮮明です。再提出をお願いします。"></textarea>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeModal()">キャンセル</button>
-      <button class="btn btn-danger" onclick="confirmReject()">却下する</button>
-    </div>
-  </div>
-</div>
-
-<!-- TOAST -->
-<div class="toast-wrap" id="toastWrap"></div>
+<div id="imgModal" onclick="this.style.display='none'"><img id="modalImg"></div>
 
 <script>
-// ===== STATE =====
-let allExpenses = []; // { id, name, date, amount, store, category, memo, status, reason, _src }
-let loadedFiles = []; // { name, count }
-let statusFilter = 'all';
-let monthFilter = 'all';
-let searchQ = '';
-let selected = new Set();
-let sortCol = 'date';
-let sortDir = -1; // -1 = desc
-let rejectTarget = null; // id or 'bulk'
+let allData = [];
+let loadedFiles = [];
 
 // ===== DRAG & DROP =====
-document.addEventListener('DOMContentLoaded', () => {
-  const zone = document.getElementById('dropZone');
-  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('over'); });
-  zone.addEventListener('dragleave', () => zone.classList.remove('over'));
-  zone.addEventListener('drop', e => {
-    e.preventDefault(); zone.classList.remove('over');
-    loadFiles(e.dataTransfer.files);
-  });
-  updateStats();
+const dz = document.getElementById('dropZone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('over'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('over'));
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.classList.remove('over');
+  loadFiles(e.dataTransfer.files);
 });
 
-// ===== LOAD FILES =====
+// ===== LOAD =====
 async function loadFiles(files) {
-  let added = 0;
-  for (const f of files) {
-    if (!f.name.endsWith('.json')) { toast(`${f.name} はJSONではありません`, 'error'); continue; }
+  for(const f of files) {
+    if(!f.name.endsWith('.json') || loadedFiles.includes(f.name)) continue;
     try {
       const text = await f.text();
-      const data = JSON.parse(text);
-      const name = data.name || f.name.replace('.json','');
-      const exps = (data.expenses || []).map((e, i) => ({
-        id: `${f.name}_${i}_${Date.now()}`,
-        name,
-        date: e.date || '',
-        amount: Number(e.amount) || 0,
-        store: e.store || '',
-        category: e.category || 'その他',
-        memo: e.memo || '',
-        status: 'pending',
-        reason: ''
-      }));
-      // Avoid duplicates from same file
-      const existing = loadedFiles.find(lf => lf.name === f.name);
-      if (existing) { toast(`${f.name} はすでに読み込み済みです`, 'error'); continue; }
-      loadedFiles.push({ name: f.name, count: exps.length });
-      allExpenses.push(...exps);
-      added += exps.length;
-    } catch(err) {
-      toast(`${f.name} の読み込みに失敗しました`, 'error');
-    }
+      const json = JSON.parse(text);
+      const exps = json.expenses.map(e => ({ ...e, userName: json.name || '不明', fileName: f.name }));
+      allData.push(...exps);
+      loadedFiles.push(f.name);
+    } catch(e) { console.error('Load Error:', f.name); }
   }
-  if (added > 0) {
-    toast(`✅ ${added}件の申請を読み込みました`, 'success');
+  renderAll();
+}
+
+function clearAll() {
+  allData = []; loadedFiles = [];
+  renderAll();
+}
+
+// ===== RENDER =====
+function renderAll() {
+  renderPills();
+  renderStats();
+  renderTable();
+  renderPerson();
+}
+
+function renderPills() {
+  document.getElementById('filePills').innerHTML = loadedFiles.map(f => `<span class="file-pill">📄 ${f}</span>`).join('');
+}
+
+function renderStats() {
+  document.getElementById('statTotal').textContent = allData.length;
+  document.getElementById('statAmount').textContent = '¥' + allData.reduce((s,e)=>s+e.amount,0).toLocaleString();
+  document.getElementById('statSafe').textContent = allData.filter(e=>!e.modified).length + '件';
+  document.getElementById('statWarn').textContent = allData.filter(e=>e.modified).length + '件';
+}
+
+function renderTable() {
+  const body = document.getElementById('listBody');
+  if(!allData.length) { body.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--gray-400)">申請ファイルを読み込んでください</td></tr>'; return; }
+
+  body.innerHTML = allData.map((e, idx) => {
+    const isDateMod = e.aiData && e.date !== e.aiData.date;
+    const isStoreMod = e.aiData && e.store !== e.aiData.store;
+    const isAmtMod = e.aiData && Number(e.amount) !== Number(e.aiData.amount);
+
+    return `
+      <tr style="background:${e.modified ? 'var(--warning-light)' : 'transparent'}">
+        <td>${e.img ? `<img src="${e.img}" class="thumb-img" onclick="zoomImg('${e.img}')">` : 'なし'}</td>
+        <td style="font-weight:600">${e.userName}</td>
+        <td class="${isDateMod?'val-mod':''}" title="${isDateMod ? 'AI予測: '+e.aiData.date : ''}">${e.date}</td>
+        <td class="${isStoreMod?'val-mod':''}" title="${isStoreMod ? 'AI予測: '+e.aiData.store : ''}">${e.store}</td>
+        <td>${e.category}</td>
+        <td style="text-align:right;font-weight:800" class="${isAmtMod?'val-mod':''}" title="${isAmtMod ? 'AI予測: '+e.aiData.amount : ''}">¥${e.amount.toLocaleString()}</td>
+        <td>${e.modified ? '<span class="badge badge-mod">⚠️AIから変更有</span>' : '<span class="badge badge-ai">✨AI一致</span>'}</td>
+        <td>
+          <button onclick="approve(${idx})" style="color:var(--success);border:1px solid;background:white;padding:4px 8px;border-radius:4px;cursor:pointer">承認</button>
+          <button onclick="remove(${idx})" style="color:var(--danger);border:1px solid;background:white;padding:4px 8px;border-radius:4px;cursor:pointer">却下</button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function renderPerson() {
+  const users = {};
+  allData.forEach(e => {
+    if(!users[e.userName]) users[e.userName] = { total:0, cnt:0, warn:0 };
+    users[e.userName].total += e.amount;
+    users[e.userName].cnt++;
+    if(e.modified) users[e.userName].warn++;
+  });
+  
+  const grid = document.getElementById('personGrid');
+  if(!Object.keys(users).length) { grid.innerHTML = '<div style="color:var(--gray-400)">データなし</div>'; return; }
+
+  grid.innerHTML = Object.entries(users).map(([name, d]) => `
+    <div style="border:1px solid var(--gray-200);border-radius:var(--r);padding:16px;background:white">
+      <div style="font-size:14px;font-weight:700;margin-bottom:8px">👤 ${name}</div>
+      <div style="font-size:20px;font-weight:800;color:var(--primary)">¥${d.total.toLocaleString()}</div>
+      <div style="font-size:12px;color:var(--gray-500);margin-top:4px">申請数: ${d.cnt}件 ${d.warn > 0 ? `(<span style="color:var(--danger)">⚠️要注意 ${d.warn}件</span>)` : ''}</div>
+    </div>
+  `).join('');
+}
+
+// ===== ACTIONS =====
+function zoomImg(src) {
+  document.getElementById('modalImg').src = src;
+  document.getElementById('imgModal').style.display = 'flex';
+}
+
+function approve(idx) {
+  allData.splice(idx, 1);
+  renderAll();
+}
+
+function remove(idx) {
+  if(confirm('この申請をリストから削除（却下）しますか？')) {
+    allData.splice(idx, 1);
     renderAll();
   }
 }
 
-function clearAll() {
-  if (!confirm('読み込んだ申請データをすべてクリアしますか？')) return;
-  allExpenses = []; loadedFiles = []; selected.clear();
-  renderAll(); updateFilePills();
-  toast('クリアしました');
-}
-
-function renderFilePills() {
-  const c = document.getElementById('filePills');
-  c.innerHTML = loadedFiles.map(f => `
-    <span class="file-pill">📄 ${esc(f.name)} (${f.count}件)
-      <button onclick="removeFile('${esc(f.name)}')" title="削除">×</button>
-    </span>`).join('');
-}
-function updateFilePills() { renderFilePills(); }
-
-function removeFile(fname) {
-  const lf = loadedFiles.find(f => f.name === fname);
-  if (!lf) return;
-  allExpenses = allExpenses.filter(e => !e.id.startsWith(fname + '_'));
-  loadedFiles = loadedFiles.filter(f => f.name !== fname);
-  selected.clear();
-  renderAll();
-}
-
-// ===== FILTER =====
-function setStatusFilter(v, el) {
-  statusFilter = v;
-  document.querySelectorAll('.filter-chip').forEach(c => {
-    if(['all','pending','approved','rejected'].includes(c.textContent.trim().replace(/[⏳✅❌\s]/g,''))) c.classList.remove('active');
-  });
-  el.classList.add('active');
-  renderReview();
-}
-
-function getFiltered() {
-  let list = [...allExpenses];
-  if (statusFilter !== 'all') list = list.filter(e => e.status === statusFilter);
-  if (monthFilter !== 'all') list = list.filter(e => e.date?.startsWith(monthFilter));
-  if (searchQ) {
-    const q = searchQ.toLowerCase();
-    list = list.filter(e => e.name.toLowerCase().includes(q) || e.store.toLowerCase().includes(q) || e.memo.toLowerCase().includes(q));
-  }
-  list.sort((a, b) => {
-    let va = a[sortCol], vb = b[sortCol];
-    if (sortCol === 'amount') { va = Number(va); vb = Number(vb); }
-    return va < vb ? sortDir : va > vb ? -sortDir : 0;
-  });
-  return list;
-}
-
-function availableMonths() {
-  return [...new Set(allExpenses.filter(e => e.date).map(e => e.date.substring(0,7)))].sort().reverse();
-}
-
-function renderMonthFilter() {
-  const months = availableMonths();
-  const c = document.getElementById('monthFilterWrap');
-  c.innerHTML = `<button class="filter-chip ${monthFilter==='all'?'active':''}" onclick="setMonthFilter('all',this)">すべて</button>`
-    + months.map(m => `<button class="filter-chip ${monthFilter===m?'active':''}" onclick="setMonthFilter('${m}',this)">${m.replace('-','/')}月</button>`).join('');
-}
-
-function setMonthFilter(v, el) {
-  monthFilter = v;
-  document.getElementById('monthFilterWrap').querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
-  el.classList.add('active');
-  renderReview();
-}
-
-// ===== SORT =====
-function sortBy(col) {
-  if (sortCol === col) sortDir *= -1;
-  else { sortCol = col; sortDir = col === 'amount' ? -1 : 1; }
-  document.querySelectorAll('.sort-arrow').forEach(el => {
-    el.textContent = el.dataset.col === col ? (sortDir === 1 ? ' ▲' : ' ▼') : '';
-  });
-  renderReview();
-}
-
-// ===== RENDER REVIEW =====
-function renderReview() {
-  renderMonthFilter();
-  const list = getFiltered();
-  const body = document.getElementById('reviewBody');
-  const noData = document.getElementById('noData');
-  document.getElementById('searchInput').oninput = () => { searchQ = document.getElementById('searchInput').value; renderReview(); };
-
-  if (list.length === 0) {
-    body.innerHTML = ''; noData.style.display = 'block';
-    document.getElementById('viewTotal').textContent = '¥0'; return;
-  }
-  noData.style.display = 'none';
-
-  let total = 0;
-  body.innerHTML = list.map(e => {
-    total += e.amount;
-    const checked = selected.has(e.id) ? 'checked' : '';
-    const statusBadge = e.status === 'approved'
-      ? `<span class="status-badge status-approved">✅ 承認済み</span>`
-      : e.status === 'rejected'
-        ? `<span class="status-badge status-rejected" title="${esc(e.reason)}">❌ 却下</span>`
-        : `<span class="status-badge status-pending">⏳ 未処理</span>`;
-    const actions = e.status === 'pending'
-      ? `<div style="display:flex;gap:4px">
-           <button class="btn btn-approve btn-sm" onclick="approve('${e.id}')">✅</button>
-           <button class="btn btn-reject btn-sm" onclick="openReject('${e.id}')">❌</button>
-         </div>`
-      : `<button class="btn btn-ghost btn-sm" onclick="resetStatus('${e.id}')">↩️</button>`;
-    return `<tr>
-      <td><input type="checkbox" ${checked} onchange="toggleSelect('${e.id}',this)"></td>
-      <td style="font-weight:600">${esc(e.name)}</td>
-      <td style="white-space:nowrap">${formatDate(e.date)}</td>
-      <td>${esc(e.store)}</td>
-      <td><span class="cat-badge cat-${esc(e.category)}">${esc(e.category)}</span></td>
-      <td style="color:var(--gray-500);font-size:12px">${esc(e.memo||'—')}</td>
-      <td class="amount-td">¥${e.amount.toLocaleString()}</td>
-      <td>${statusBadge}</td>
-      <td>${actions}</td>
-    </tr>`;
-  }).join('');
-
-  document.getElementById('viewTotal').textContent = '¥' + total.toLocaleString();
-  updateBulkBar();
-}
-
-// ===== APPROVE / REJECT =====
-function approve(id) {
-  const e = allExpenses.find(e => e.id === id);
-  if (e) { e.status = 'approved'; e.reason = ''; }
-  selected.delete(id);
-  renderAll();
-  toast('✅ 承認しました', 'success');
-}
-
-function openReject(id) {
-  rejectTarget = id;
-  document.getElementById('rejectReason').value = '';
-  document.getElementById('rejectModal').classList.remove('hidden');
-  setTimeout(() => document.getElementById('rejectReason').focus(), 100);
-}
-
-function closeModal() {
-  document.getElementById('rejectModal').classList.add('hidden');
-  rejectTarget = null;
-}
-
-function confirmReject() {
-  const reason = document.getElementById('rejectReason').value.trim();
-  if (rejectTarget === 'bulk') {
-    let cnt = 0;
-    selected.forEach(id => {
-      const e = allExpenses.find(e => e.id === id);
-      if (e) { e.status = 'rejected'; e.reason = reason; cnt++; }
-    });
-    selected.clear();
-    toast(`❌ ${cnt}件を却下しました`, 'error');
-  } else {
-    const e = allExpenses.find(e => e.id === rejectTarget);
-    if (e) { e.status = 'rejected'; e.reason = reason; }
-    selected.delete(rejectTarget);
-    toast('❌ 却下しました');
-  }
-  closeModal();
-  renderAll();
-}
-
-function resetStatus(id) {
-  const e = allExpenses.find(e => e.id === id);
-  if (e) { e.status = 'pending'; e.reason = ''; }
-  renderAll();
-  toast('ステータスを未処理に戻しました');
-}
-
-// ===== BULK =====
-function toggleSelect(id, cb) {
-  if (cb.checked) selected.add(id); else selected.delete(id);
-  updateBulkBar();
-  syncCheckAll();
-}
-function toggleAll(cb) {
-  getFiltered().forEach(e => { if (cb.checked) selected.add(e.id); else selected.delete(e.id); });
-  renderReview();
-}
-function clearSelection() { selected.clear(); renderReview(); }
-function updateBulkBar() {
-  const bar = document.getElementById('bulkBar');
-  if (selected.size > 0) { bar.classList.remove('hidden'); document.getElementById('bulkCount').textContent = `${selected.size}件選択中`; }
-  else bar.classList.add('hidden');
-}
-function syncCheckAll() {
-  const list = getFiltered();
-  document.getElementById('checkAll').checked = list.length > 0 && list.every(e => selected.has(e.id));
-}
-function bulkAction(action) {
-  if (action === 'approved') {
-    selected.forEach(id => { const e = allExpenses.find(e=>e.id===id); if(e){e.status='approved';e.reason='';} });
-    const cnt = selected.size; selected.clear();
-    renderAll(); toast(`✅ ${cnt}件を承認しました`, 'success');
-  } else {
-    rejectTarget = 'bulk';
-    document.getElementById('rejectReason').value = '';
-    document.getElementById('rejectModal').classList.remove('hidden');
-  }
-}
-
-// ===== PERSON TAB =====
-function renderPerson() {
-  const names = [...new Set(allExpenses.map(e => e.name))].sort();
-  if (!names.length) {
-    document.getElementById('personGrid').innerHTML = '<div style="color:var(--gray-400);font-size:13px">申請データを読み込むと表示されます</div>';
-    return;
-  }
-  document.getElementById('personGrid').innerHTML = names.map(name => {
-    const exps = allExpenses.filter(e => e.name === name);
-    const total = exps.reduce((s,e)=>s+e.amount,0);
-    const approved = exps.filter(e=>e.status==='approved').reduce((s,e)=>s+e.amount,0);
-    const pending = exps.filter(e=>e.status==='pending').length;
-    const rejected = exps.filter(e=>e.status==='rejected').length;
-    return `<div class="person-card">
-      <div class="person-name">
-        👤 ${esc(name)}
-        <span class="person-total">¥${total.toLocaleString()}</span>
-      </div>
-      <div class="person-meta">${exps.length}件申請</div>
-      <div class="person-status-row">
-        <span class="status-badge status-approved">✅ 承認 ¥${approved.toLocaleString()}</span>
-        ${pending > 0 ? `<span class="status-badge status-pending">⏳ 未処理 ${pending}件</span>` : ''}
-        ${rejected > 0 ? `<span class="status-badge status-rejected">❌ 却下 ${rejected}件</span>` : ''}
-      </div>
-    </div>`;
-  }).join('');
-}
-
-// ===== SUMMARY TAB =====
-function renderSummary() {
-  const months = availableMonths();
-  const sel = document.getElementById('summaryMonthSel');
-  if (sel.options.length !== months.length + 1) {
-    sel.innerHTML = '<option value="all">全期間</option>' + months.map(m=>`<option value="${m}">${m.replace('-','年')}月</option>`).join('');
-  }
-  const m = sel.value;
-  const list = m === 'all' ? allExpenses : allExpenses.filter(e=>e.date?.startsWith(m));
-  const approved = list.filter(e=>e.status==='approved');
-  const total = list.reduce((s,e)=>s+e.amount,0);
-  const approvedTotal = approved.reduce((s,e)=>s+e.amount,0);
-
-  // Category breakdown
-  const cats = {};
-  approved.forEach(e => cats[e.category] = (cats[e.category]||0) + e.amount);
-  const sortedCats = Object.entries(cats).sort((a,b)=>b[1]-a[1]);
-  const maxCat = sortedCats[0]?.[1]||1;
-
-  // Person breakdown
-  const persons = {};
-  approved.forEach(e => persons[e.name] = (persons[e.name]||0) + e.amount);
-  const sortedPersons = Object.entries(persons).sort((a,b)=>b[1]-a[1]);
-
-  document.getElementById('summaryBody').innerHTML = `
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:20px">
-      <div class="stat"><div class="stat-label">承認合計</div><div class="stat-val green">¥${approvedTotal.toLocaleString()}</div><div class="stat-sub">${approved.length}件</div></div>
-      <div class="stat"><div class="stat-label">申請合計</div><div class="stat-val blue">¥${total.toLocaleString()}</div><div class="stat-sub">${list.length}件</div></div>
-      <div class="stat"><div class="stat-label">申請者数</div><div class="stat-val blue">${new Set(list.map(e=>e.name)).size}</div><div class="stat-sub">人</div></div>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;flex-wrap:wrap">
-      <div>
-        <div style="font-size:12px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">カテゴリ別（承認分）</div>
-        ${sortedCats.length ? sortedCats.map(([cat,amt])=>`
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-            <span class="cat-badge cat-${esc(cat)}" style="min-width:88px;text-align:center">${esc(cat)}</span>
-            <div style="flex:1;background:var(--gray-100);border-radius:4px;height:16px;overflow:hidden">
-              <div style="height:100%;width:${Math.round(amt/maxCat*100)}%;background:var(--success);border-radius:4px"></div>
-            </div>
-            <span style="font-size:12px;font-weight:700;min-width:72px;text-align:right">¥${amt.toLocaleString()}</span>
-          </div>`).join('') : '<div style="color:var(--gray-400);font-size:13px">データなし</div>'}
-      </div>
-      <div>
-        <div style="font-size:12px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">人別（承認分）</div>
-        ${sortedPersons.length ? sortedPersons.map(([name,amt])=>`
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--gray-100)">
-            <span style="font-size:13px;font-weight:600">👤 ${esc(name)}</span>
-            <span style="font-size:14px;font-weight:800;color:var(--primary)">¥${amt.toLocaleString()}</span>
-          </div>`).join('') : '<div style="color:var(--gray-400);font-size:13px">データなし</div>'}
-      </div>
-    </div>`;
-}
-
-// ===== STATS =====
-function updateStats() {
-  const total = allExpenses.length;
-  const amount = allExpenses.reduce((s,e)=>s+e.amount,0);
-  const approved = allExpenses.filter(e=>e.status==='approved');
-  const pending = allExpenses.filter(e=>e.status==='pending').length;
-  const rejected = allExpenses.filter(e=>e.status==='rejected').length;
-  document.getElementById('statTotal').textContent = total;
-  document.getElementById('statAmount').textContent = '¥' + amount.toLocaleString();
-  document.getElementById('statApproved').textContent = '¥' + approved.reduce((s,e)=>s+e.amount,0).toLocaleString();
-  document.getElementById('statApprovedCnt').textContent = approved.length + '件';
-  document.getElementById('statPending').textContent = pending;
-  document.getElementById('statRejected').textContent = rejected;
-}
-
-// ===== EXPORT REPORT =====
-function exportReport() {
-  if (!allExpenses.length) { toast('データがありません', 'error'); return; }
-  const header = '氏名,日付,金額,店名,カテゴリ,摘要,ステータス,却下理由';
-  const rows = allExpenses.map(e =>
-    [`"${e.name}"`, e.date, e.amount, `"${e.store}"`, `"${e.category}"`, `"${e.memo||''}"`,
-     e.status==='approved'?'承認':e.status==='rejected'?'却下':'未処理', `"${e.reason||''}"`].join(','));
-  const csv = '\uFEFF' + [header, ...rows].join('\n');
-  const a = Object.assign(document.createElement('a'), {
-    href: URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})),
-    download: `経費精算レポート_${new Date().toISOString().split('T')[0]}.csv`
-  });
-  a.click(); URL.revokeObjectURL(a.href);
-  toast('📥 レポートCSVをダウンロードしました', 'success');
-}
-
-// ===== TAB =====
 function switchTab(tab, btn) {
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
   document.getElementById('panel-'+tab).classList.add('active');
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  if(tab==='review') renderReview();
-  if(tab==='person') renderPerson();
-  if(tab==='summary') renderSummary();
 }
 
-// ===== HELPERS =====
-function renderAll() { renderFilePills(); updateStats(); renderReview(); renderPerson(); renderSummary(); }
-function formatDate(d){ if(!d)return'—'; const[,m,day]=d.split('-'); return`${parseInt(m)}/${parseInt(day)}`; }
-function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function toast(msg,type=''){
-  const w=document.getElementById('toastWrap');
-  const t=Object.assign(document.createElement('div'),{className:'toast '+type,textContent:msg});
-  w.appendChild(t);
-  setTimeout(()=>{t.style.cssText='opacity:0;transition:opacity .3s';setTimeout(()=>t.remove(),300);},3000);
+function exportCSV() {
+  if(!allData.length) return;
+  const header = '氏名,日付,店名,カテゴリ,金額,修正有無\n';
+  const csv = allData.map(e => `"${e.userName}",${e.date},"${e.store}","${e.category}",${e.amount},${e.modified?'修正あり':'AI一致'}`).join('\n');
+  const blob = new Blob(['\uFEFF' + header + csv], {type: 'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `経費審査リスト_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
 }
 </script>
 </body>
