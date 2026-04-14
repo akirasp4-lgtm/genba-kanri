@@ -78,6 +78,15 @@ body{font-family:-apple-system,sans-serif;background:#f0f4f8;color:var(--gray-80
 .api-badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-bottom: 8px; display: inline-block; }
 .api-off { background: var(--gray-200); color: var(--gray-500); }
 .api-on { background: var(--success-light); color: var(--success); }
+
+/* 元請け・現場エリアの強調 */
+.genba-section {
+  background: #f0f7ff; 
+  padding: 12px; 
+  border-radius: 8px; 
+  margin-bottom: 12px; 
+  border: 1.5px solid #bfdbfe;
+}
 </style>
 </head>
 <body>
@@ -124,12 +133,12 @@ body{font-family:-apple-system,sans-serif;background:#f0f4f8;color:var(--gray-80
         </div>
       </div>
 
-      <!-- ステータスバー -->
       <div id="aiStatusBar" class="ai-status-bar"></div>
 
       <div class="preview-wrap" id="previewWrap">
         <div class="receipt-thumb"><img id="receiptImg" src=""></div>
         <div class="form-grid" id="formGrid">
+          
           <label class="form-label req">📅 日付</label>
           <input type="date" class="form-control" id="fDate">
           
@@ -165,7 +174,22 @@ body{font-family:-apple-system,sans-serif;background:#f0f4f8;color:var(--gray-80
           </div>
           
           <label class="form-label req">🏪 店名</label>
-          <input type="text" class="form-control" id="fStore" placeholder="例：コーナン">
+          <input type="text" class="form-control" id="fStore" placeholder="例：セブンイレブン">
+
+          <!-- 【ここが重要：元請け・現場名】 -->
+          <div class="genba-section">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div>
+                <label class="form-label">🏢 元請け名</label>
+                <input type="text" class="form-control" id="fMotouke" placeholder="例：〇〇建設" style="margin-bottom:0">
+              </div>
+              <div>
+                <label class="form-label">📍 現場名</label>
+                <input type="text" class="form-control" id="fGenba" placeholder="例：〇〇邸" style="margin-bottom:0">
+              </div>
+            </div>
+            <p style="font-size:9px; color:var(--primary); margin-top:5px;">※この2つは保存後も消えずに残ります</p>
+          </div>
           
           <label class="form-label">📝 メモ</label>
           <input type="text" class="form-control" id="fMemo" placeholder="用途など（任意）">
@@ -218,7 +242,6 @@ function saveConfig() {
 function updateApiStatus() {
   const badge = document.getElementById('apiStatusBadge');
   const keyInStorage = localStorage.getItem('api_key_v5');
-  
   if (keyInStorage) {
     badge.textContent = "✅ AI設定が有効です";
     badge.className = "api-badge api-on";
@@ -239,11 +262,7 @@ function toggleFormState(disabled) {
   const inputs = document.getElementById('formGrid').querySelectorAll('input, select');
   inputs.forEach(el => el.disabled = disabled);
   document.getElementById('saveBtn').disabled = disabled;
-  if(disabled) {
-      document.getElementById('saveBtn').textContent = "⌛ 解析中...";
-  } else {
-      document.getElementById('saveBtn').textContent = "💾 保存してリストへ";
-  }
+  document.getElementById('saveBtn').textContent = disabled ? "⌛ 解析中..." : "💾 保存してリストへ";
 }
 
 function switchTab(tab, btn) {
@@ -251,15 +270,13 @@ function switchTab(tab, btn) {
   document.getElementById('panel-' + tab).style.display = 'block';
   document.querySelectorAll('.tab-btn, .nav-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  
   if(tab==='input') {
     document.getElementById('nav-in').classList.add('active');
-    document.getElementById('desk-in').classList.add('active');
+    document.getElementById('nav-li').classList.remove('active');
   } else {
+    document.getElementById('nav-in').classList.remove('active');
     document.getElementById('nav-li').classList.add('active');
-    document.getElementById('desk-li').classList.add('active');
   }
-  
   if(tab === 'list') renderList();
 }
 
@@ -282,129 +299,52 @@ async function handleFile(file) {
   
   const key = localStorage.getItem('api_key_v5')?.trim();
   if(!key) {
-    showStatus("⚠️ AI自動入力を利用する場合は「🔧 AI自動入力の設定」からAPIキーを入力してください。", "error");
+    showStatus("⚠️ AI自動入力を利用する場合は設定からAPIキーを入力してください。", "error");
     document.getElementById('fAmount').focus();
     return;
   }
   analyzeAI(key, currentImg);
 }
 
-/**
- * 安定化されたAI解析エンジン（モデル自動フォールバック + リトライ版）
- */
 async function analyzeAI(key, base64) {
   toggleFormState(true); 
   showStatus("✨ AIがレシートを解析しています...", "loading");
-
-  // 環境によって使えるモデル名が異なるため、優先順位をつけて順番に試行
-  const modelsToTry = [
-    "gemini-1.5-flash",
-    "gemini-1.5-flash-latest",
-    "gemini-2.0-flash",
-    "gemini-2.5-flash"
-  ];
-
+  const models = ["gemini-1.5-flash-latest", "gemini-2.0-flash", "gemini-1.5-flash"];
   let success = false;
-  let lastErrorMsg = "モデルが見つかりませんでした。";
+  let lastErr = "モデルが見つかりませんでした。";
 
-  for (const model of modelsToTry) {
+  for (const model of models) {
     if (success) break;
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
-
-    const retries = 2; // 各モデルで最大2回リトライ（合計3回試行）
-
-    for (let attempt = 0; attempt <= retries; attempt++) {
-      if (attempt > 0) {
-        showStatus(`✨ [${model}] 制限にかかりました。待機して再試行中... (${attempt}/${retries})`, "loading");
-        await new Promise(r => setTimeout(r, 2000 * attempt)); // 2秒、4秒と待機時間を延ばす
+    try {
+      const res = await fetch(url, {
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ parts: [
+          { text: "Extract receipt info as JSON. Fields: {date:YYYY-MM-DD, amount:number, store, tax:10|8|0, category, memo}. Only return raw JSON object." }, 
+          { inlineData: { mimeType: "image/jpeg", data: base64.split(',')[1] } }
+        ] }] })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        if (res.status === 404) continue;
+        throw new Error(data.error?.message || `Error ${res.status}`);
       }
-
-      try {
-        const res = await fetch(url, {
-          method: 'POST', 
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            contents: [{ 
-              parts: [
-                { text: "Extract receipt info as JSON. Fields: {date:YYYY-MM-DD, amount:number, store, tax:10|8|0, category, memo}. Category must be one of: 駐車場代, 仕入高, ガソリン, 消耗品費, 事務用品, 運賃, その他交通費, 会議費, 交際費, 水道光熱, 租税公課, 福利厚生. Only return raw JSON object without markdown fences." }, 
-                { inlineData: { mimeType: "image/jpeg", data: base64.split(',')[1] } }
-              ] 
-            }] 
-          })
-        });
-        
-        const data = await res.json().catch(() => ({}));
-
-        if (!res.ok) {
-          const errMsg = data.error?.message || "";
-          if (res.status === 400 || res.status === 403 || errMsg.includes("API key not valid")) {
-              throw new Error("FATAL_KEY_ERROR");
-          }
-          if (res.status === 429 || errMsg.includes("Quota")) {
-              if (attempt < retries) {
-                  continue; // リトライ回数が残っていれば、同じモデルで待機ループへ
-              } else {
-                  throw new Error("QUOTA_ERROR"); // リトライ上限なら次のモデルへフォールバック
-              }
-          }
-          if (res.status === 404 || errMsg.includes("not found")) {
-              throw new Error("MODEL_NOT_FOUND");
-          }
-          throw new Error(`HTTP Error: ${res.status}`);
-        }
-
-        const textContent = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (!textContent) throw new Error('AIがデータを返しませんでした。');
-
-        const match = textContent.match(/\{[\s\S]*\}/);
-        if (!match) throw new Error('AIが文字を読み取れませんでした。');
-        
-        const r = JSON.parse(match[0]);
-        if(r.date) document.getElementById('fDate').value = r.date;
-        if(r.amount) document.getElementById('fAmount').value = r.amount;
-        if(r.store) document.getElementById('fStore').value = r.store;
-        if(r.tax !== undefined) document.getElementById('fTax').value = String(r.tax);
-        if(r.category) document.getElementById('fCategory').value = r.category;
-        if(r.memo) document.getElementById('fMemo').value = r.memo;
-        
-        showStatus("✅ 自動入力を完了しました", "success");
-        setTimeout(() => { 
-            const bar = document.getElementById('aiStatusBar');
-            if(bar && bar.classList.contains('success')) bar.style.display='none'; 
-        }, 3000);
-
-        success = true;
-        break; // このモデルでのリトライループを抜ける
-
-      } catch(e) { 
-        if (e.message === "FATAL_KEY_ERROR") {
-          lastErrorMsg = "🚨 <b>APIキーが無効です。</b><br>キーのコピーミスがないか確認してください。";
-          break; // 致命的エラーなのでリトライループを抜ける
-        } else if (e.message === "QUOTA_ERROR") {
-          lastErrorMsg = `[${model}] 制限に達しました。`;
-          break; // 次のモデルへ移行するためリトライループを抜ける
-        } else if (e.message === "MODEL_NOT_FOUND") {
-          lastErrorMsg = `[${model}] が見つかりません。`;
-          break; // 次のモデルへ移行するためリトライループを抜ける
-        } else {
-          lastErrorMsg = e.message;
-          if (attempt === retries) break; 
-        }
-      }
-    } // リトライループ終了
-
-    // キーが無効な場合は、他のモデルを試しても無駄なので全体のループを終了
-    if (lastErrorMsg.includes("APIキーが無効です")) break; 
-  } // モデル切替ループ終了
-
-  if (!success) {
-    if(lastErrorMsg.includes("制限に達しました")) {
-        lastErrorMsg = "❌ <b>すべてのモデルで連続アクセス制限に達しました。</b><br>約1分ほど待ってから再度お試しください。";
-    }
-    console.error('AI読み取り失敗:', lastErrorMsg);
-    showStatus(lastErrorMsg.includes("❌") || lastErrorMsg.includes("🚨") ? lastErrorMsg : `❌ 解析エラー: 手動で入力してください。<br><span style="font-size:11px;font-weight:normal">${lastErrorMsg}</span>`, "error");
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      const match = text.match(/\{[\s\S]*\}/);
+      if (!match) throw new Error('AIが読み取れませんでした。');
+      const r = JSON.parse(match[0]);
+      if(r.date) document.getElementById('fDate').value = r.date;
+      if(r.amount) document.getElementById('fAmount').value = r.amount;
+      if(r.store) document.getElementById('fStore').value = r.store;
+      if(r.tax !== undefined) document.getElementById('fTax').value = String(r.tax);
+      if(r.category) document.getElementById('fCategory').value = r.category;
+      if(r.memo) document.getElementById('fMemo').value = r.memo;
+      showStatus("✅ 自動入力を完了しました", "success");
+      success = true;
+    } catch(e) { lastErr = e.message; }
   }
-  
+  if (!success) showStatus(`❌ 解析エラー: ${lastErr}`, "error");
   toggleFormState(false); 
 }
 
@@ -413,18 +353,31 @@ function saveExpense() {
   const date = document.getElementById('fDate').value;
   const amount = Number(document.getElementById('fAmount').value);
   const store = document.getElementById('fStore').value.trim();
+  const motouke = document.getElementById('fMotouke').value.trim();
+  const genba = document.getElementById('fGenba').value.trim();
+  
   if(!name || !date || !amount || !store) return alert('氏名・日付・金額・店名をすべて入力してください');
 
-  const newExpense = { id: Date.now(), date, amount, store, tax: document.getElementById('fTax').value, category: document.getElementById('fCategory').value, memo: document.getElementById('fMemo').value, img: currentImg };
+  if (expenses.some(e => e.img === currentImg)) {
+    return alert('⚠️ このレシートはすでに登録されています。');
+  }
+
+  const newExpense = { 
+    id: Date.now(), date, amount, store, motouke, genba,
+    tax: document.getElementById('fTax').value, 
+    category: document.getElementById('fCategory').value, 
+    memo: document.getElementById('fMemo').value, 
+    img: currentImg 
+  };
   
   expenses.unshift(newExpense);
   try {
     localStorage.setItem('exp_v5', JSON.stringify(expenses));
     resetForm(); 
-    switchTab('list', document.getElementById('nav-li'));
+    switchTab('list', document.getElementById('desk-li'));
   } catch (e) {
     expenses.shift();
-    alert('【保存失敗】スマホのブラウザ保存容量がいっぱいです。\n「リスト」タブからデータを管理者へ出力した後、削除して空き容量を作ってください。');
+    alert('【保存失敗】スマホのブラウザ保存容量がいっぱいです。削除して空き容量を作ってください。');
   }
 }
 
@@ -434,9 +387,15 @@ function resetForm() {
   document.getElementById('previewWrap').classList.remove('show');
   const bar = document.getElementById('aiStatusBar');
   if(bar) bar.style.display = 'none';
+  
+  // クリアする項目
   document.getElementById('fAmount').value = ''; 
   document.getElementById('fStore').value = '';
   document.getElementById('fMemo').value = '';
+  
+  // クリアしない項目（連続入力のため）
+  // fMotouke, fGenba はそのまま
+  
   document.querySelectorAll('input[type=file]').forEach(i => i.value = '');
 }
 
@@ -447,7 +406,10 @@ function renderList() {
     <div class="expense-card">
       <div>
         <div style="font-weight:bold;font-size:14px">${esc(e.store)} <span style="font-size:10px;color:#999">(${e.tax}%)</span></div>
-        <div style="font-size:11px;color:#666">${e.date} · <span class="cat-badge">${e.category}</span></div>
+        <div style="font-size:11px;color:#666">
+          ${e.date} · <span class="cat-badge">${e.category}</span>
+          ${e.motouke || e.genba ? `<br><span style="color:var(--primary); font-weight:bold;">🏢 ${esc(e.motouke)} / ${esc(e.genba)}</span>` : ''}
+        </div>
       </div>
       <div style="text-align:right">
         <div style="font-weight:bold;color:var(--primary);font-size:16px">¥${e.amount.toLocaleString()}</div>
