@@ -54,8 +54,10 @@ body{font-family:-apple-system,sans-serif;background:#f0f4f8;color:var(--gray-80
 .capture-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:20px 10px;border:2px dashed var(--gray-300);border-radius:var(--r);background:var(--gray-50);cursor:pointer;position:relative}
 .capture-btn input{position:absolute;inset:0;opacity:0;cursor:pointer}
 
-.ai-loading{display:none;color:var(--primary);font-size:13px;text-align:center;padding:10px;font-weight:bold}
-.ai-loading.show{display:block}
+.ai-status-bar { display: none; padding: 10px; border-radius: 6px; margin-bottom: 10px; font-size: 13px; font-weight: bold; text-align: center; }
+.ai-status-bar.loading { display: block; background: var(--primary-light); color: var(--primary); }
+.ai-status-bar.error { display: block; background: #fee2e2; color: var(--danger); }
+.ai-status-bar.success { display: block; background: var(--success-light); color: var(--success); }
 
 /* ===== PREVIEW & LIST ===== */
 .preview-wrap{display:none}
@@ -125,7 +127,8 @@ body{font-family:-apple-system,sans-serif;background:#f0f4f8;color:var(--gray-80
         </div>
       </div>
 
-      <div class="ai-loading" id="aiLoading">✨ AIが内容を解析中...</div>
+      <!-- ステータスバー -->
+      <div id="aiStatusBar" class="ai-status-bar"></div>
 
       <div class="preview-wrap" id="previewWrap">
         <div class="receipt-thumb"><img id="receiptImg" src=""></div>
@@ -227,6 +230,12 @@ function updateApiStatus() {
   }
 }
 
+function showStatus(text, type) {
+  const bar = document.getElementById('aiStatusBar');
+  bar.textContent = text;
+  bar.className = 'ai-status-bar ' + type;
+}
+
 function switchTab(tab, btn) {
   document.querySelectorAll('.tab-panel').forEach(p => p.style.display = 'none');
   document.getElementById('panel-' + tab).style.display = 'block';
@@ -261,15 +270,14 @@ async function handleFile(file) {
   document.getElementById('receiptImg').src = currentImg;
   document.getElementById('previewWrap').classList.add('show');
   
-  const key = localStorage.getItem('api_key_v5');
+  const key = localStorage.getItem('api_key_v5')?.trim();
   if(key) {
     analyzeAI(key, currentImg);
   }
 }
 
 async function analyzeAI(key, base64) {
-  const loading = document.getElementById('aiLoading');
-  loading.classList.add('show');
+  showStatus("✨ AIが読み取りを行っています...", "loading");
   try {
     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${key}`, {
       method: 'POST', 
@@ -277,32 +285,42 @@ async function analyzeAI(key, base64) {
       body: JSON.stringify({ 
         contents: [{ 
           parts: [
-            { text: "Extract JSON from this receipt. Format: {\"date\":\"YYYY-MM-DD\", \"amount\":number, \"store\":\"string\", \"tax\":10|8|0, \"category\":\"駐車場代|仕入高|ガソリン|消耗品費|事務用品|運賃|その他交通費|会議費|交際費|水道光熱|租税公課|福利厚生\", \"memo\":\"string\"}. If gasoline, category is 'ガソリン'. If parking, '駐車場代'. Only return JSON." }, 
+            { text: "Extract receipt info as JSON. Fields: {date:YYYY-MM-DD, amount:number, store, tax:10|8|0, category, memo}. Category must be one of: 駐車場代, 仕入高, ガソリン, 消耗品費, 事務用品, 運賃, その他交通費, 会議費, 交際費, 水道光熱, 租税公課, 福利厚生. Only return JSON block." }, 
             { inlineData: { mimeType: "image/jpeg", data: base64.split(',')[1] } }
           ] 
         }] 
       })
     });
     
-    if (!res.ok) throw new Error(`API Error: ${res.status}`);
-    const data = await res.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!text) throw new Error('解析結果がありません。');
-
-    const match = text.match(/\{[\s\S]*\}/);
-    if (match) {
-      const r = JSON.parse(match[0]);
-      if(r.date) document.getElementById('fDate').value = r.date;
-      if(r.amount) document.getElementById('fAmount').value = r.amount;
-      if(r.store) document.getElementById('fStore').value = r.store;
-      if(r.tax) document.getElementById('fTax').value = r.tax;
-      if(r.category) document.getElementById('fCategory').value = r.category;
-      if(r.memo) document.getElementById('fMemo').value = r.memo;
+    if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error?.message || `APIエラー: ${res.status}`);
     }
+
+    const data = await res.json();
+    const textContent = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    
+    if (!textContent) throw new Error('AIから返答がありませんでした。');
+
+    // 正規表現でJSON部分だけを抽出（```json ... ``` も除去）
+    const match = textContent.match(/\{[\s\S]*\}/);
+    if (!match) throw new Error('AIの返答からデータを読み取れませんでした。');
+    
+    const r = JSON.parse(match[0]);
+    
+    if(r.date) document.getElementById('fDate').value = r.date;
+    if(r.amount) document.getElementById('fAmount').value = r.amount;
+    if(r.store) document.getElementById('fStore').value = r.store;
+    if(r.tax !== undefined) document.getElementById('fTax').value = String(r.tax);
+    if(r.category) document.getElementById('fCategory').value = r.category;
+    if(r.memo) document.getElementById('fMemo').value = r.memo;
+    
+    showStatus("✅ 自動入力を完了しました", "success");
+    setTimeout(() => { if(document.getElementById('aiStatusBar').classList.contains('success')) document.getElementById('aiStatusBar').style.display='none'; }, 3000);
+
   } catch(e) { 
     console.error('AI読み取り失敗:', e);
-  } finally {
-    loading.classList.remove('show');
+    showStatus("❌ AI読み取り失敗: " + e.message, "error");
   }
 }
 
@@ -323,6 +341,7 @@ function resetForm() {
   currentImg = null; 
   document.getElementById('uploadSection').style.display = 'block';
   document.getElementById('previewWrap').classList.remove('show');
+  document.getElementById('aiStatusBar').style.display = 'none';
   document.getElementById('fAmount').value = ''; 
   document.getElementById('fStore').value = '';
   document.getElementById('fMemo').value = '';
