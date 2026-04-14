@@ -3,159 +3,66 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>経費精算 管理者</title>
+<title>レシート管理者ビュー</title>
 <style>
-:root{
-  --primary:#2563eb;--primary-light:#eff6ff;--primary-dark:#1d4ed8;
-  --success:#16a34a;--success-light:#f0fdf4;
-  --warning:#d97706;--warning-light:#fffbeb;
-  --danger:#dc2626;--danger-light:#fef2f2;
-  --gray-50:#f9fafb;--gray-100:#f3f4f6;--gray-200:#e5e7eb;
-  --gray-300:#d1d5db;--gray-400:#9ca3af;--gray-500:#6b7280;
-  --gray-600:#4b5563;--gray-700:#374151;--gray-800:#1f2937;--gray-900:#111827;
-  --shadow:0 1px 3px rgba(0,0,0,.1),0 1px 2px rgba(0,0,0,.06);
-  --r:10px;--rs:6px;--rl:16px;
+:root {
+  --primary: #2563eb; --bg: #f3f4f6; --card: #ffffff;
+  --text: #1f2937; --text-light: #6b7280; --border: #e5e7eb;
 }
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#f0f4f8;color:var(--gray-800);min-height:100vh}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: sans-serif; background: var(--bg); color: var(--text); padding: 20px; }
 
-/* HEADER & TABS */
-.header{background:white;border-bottom:1px solid var(--gray-200);padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:var(--shadow)}
-.title{font-size:17px;font-weight:700;color:var(--danger);display:flex;align-items:center;gap:8px}
-.badge-admin{background:var(--danger);color:white;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px}
-.tab-nav{display:flex;gap:4px;background:var(--gray-100);border-radius:var(--rs);padding:3px}
-.tab-btn{padding:6px 14px;border:none;background:transparent;color:var(--gray-500);font-size:13px;font-weight:500;border-radius:4px;cursor:pointer}
-.tab-btn.active{background:white;color:var(--primary);box-shadow:var(--shadow);font-weight:600}
+.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.btn { background: var(--primary); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+.btn-danger { background: #dc2626; }
 
-/* MAIN */
-.main{max-width:1100px;margin:0 auto;padding:24px 16px;display:flex;flex-direction:column;gap:18px}
-.card{background:white;border-radius:var(--rl);box-shadow:var(--shadow);overflow:hidden}
-.card-header{padding:14px 20px;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
-.card-title{font-size:14px;font-weight:600;color:var(--gray-700)}
-.card-body{padding:20px}
+.drop-zone { background: white; border: 2px dashed #9ca3af; border-radius: 12px; padding: 40px; text-align: center; cursor: pointer; margin-bottom: 24px; transition: background 0.2s; }
+.drop-zone.over { background: #eff6ff; border-color: var(--primary); }
 
-/* UPLOAD */
-.drop-zone{border:2px dashed var(--gray-300);border-radius:var(--r);padding:32px;text-align:center;cursor:pointer;transition:all .2s;background:var(--gray-50);position:relative}
-.drop-zone:hover,.drop-zone.over{border-color:var(--primary);background:var(--primary-light)}
-.drop-zone input{position:absolute;inset:0;opacity:0;cursor:pointer}
-.file-pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
-.file-pill{display:inline-flex;align-items:center;gap:6px;background:var(--primary-light);border:1px solid #bfdbfe;border-radius:20px;padding:4px 10px;font-size:12px;color:var(--primary);font-weight:600}
+/* 人別セクション */
+.person-section { background: white; border-radius: 12px; padding: 20px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.person-header { font-size: 20px; font-weight: bold; border-bottom: 2px solid var(--border); padding-bottom: 10px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: flex-end;}
+.person-total { font-size: 16px; color: var(--primary); }
 
-/* STATS */
-.stats-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
-.stat{background:var(--gray-50);border-radius:var(--r);padding:14px;text-align:center;border:1px solid var(--gray-200)}
-.stat-label{font-size:10px;color:var(--gray-500);font-weight:700;margin-bottom:5px}
-.stat-val{font-size:22px;font-weight:800}
+/* 画像ギャラリー */
+.gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+.receipt-card { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: #fafafa; }
+.receipt-img { width: 100%; height: 200px; object-fit: cover; cursor: zoom-in; display: block; background: #eee; border-bottom: 1px solid var(--border); }
+.receipt-info { padding: 12px; font-size: 13px; line-height: 1.5; }
+.r-amount { font-size: 16px; font-weight: bold; color: var(--primary); }
+.r-date { color: var(--text-light); font-size: 11px; }
 
-/* TABLE */
-.table-wrap{overflow-x:auto}
-table{width:100%;border-collapse:collapse;font-size:13px}
-thead th{padding:10px 12px;text-align:left;background:var(--gray-50);color:var(--gray-500);font-weight:700;font-size:11px;border-bottom:1px solid var(--gray-200);white-space:nowrap}
-tbody tr{transition:background .1s}
-tbody tr:hover{background:var(--gray-50)}
-tbody td{padding:10px 12px;border-bottom:1px solid var(--gray-100);color:var(--gray-700);vertical-align:middle}
-.val-mod{color:var(--danger);font-weight:700;text-decoration:underline;cursor:help}
-.thumb-img{width:40px;height:40px;object-fit:cover;border-radius:4px;cursor:zoom-in;border:1px solid var(--gray-200)}
-
-/* BADGES & BUTTONS */
-.badge{display:inline-flex;align-items:center;padding:3px 8px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap}
-.badge-ai{background:var(--success-light);color:var(--success)}
-.badge-mod{background:var(--warning-light);color:var(--warning)}
-
-.btn{padding:7px 14px;border:none;border-radius:var(--rs);font-size:12px;font-weight:600;cursor:pointer}
-.btn-primary{background:var(--primary);color:white}
-.btn-ghost{background:transparent;color:var(--gray-600);border:1.5px solid var(--gray-200)}
-
-/* MODAL */
-#imgModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;align-items:center;justify-content:center}
-#imgModal img{max-width:90%;max-height:90%;border-radius:8px;box-shadow:var(--shadow-lg)}
-
-.tab-panel{display:none}
-.tab-panel.active{display:flex;flex-direction:column;gap:18px}
+/* モーダル */
+#modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
+#modal img { max-width: 100%; max-height: 100%; border-radius: 8px; object-fit: contain; }
 </style>
 </head>
 <body>
 
-<header class="header">
-  <div class="title">🗂️ 経費承認システム <span class="badge-admin">管理者</span></div>
-  <nav class="tab-nav">
-    <button class="tab-btn active" onclick="switchTab('review',this)">📥 申請一覧</button>
-    <button class="tab-btn" onclick="switchTab('person',this)">👥 人別集計</button>
-  </nav>
-</header>
+<div class="header">
+  <h2>🗂️ レシート管理者ビュー</h2>
+  <button class="btn btn-danger" onclick="clearAll()">🗑️ 全データクリア</button>
+</div>
 
-<main class="main">
-  <!-- DROP ZONE -->
-  <div class="card">
-    <div class="card-header">
-      <span class="card-title">📂 社員の申請ファイルを読み込む</span>
-      <button class="btn btn-ghost" onclick="clearAll()">🗑️ すべてクリア</button>
-    </div>
-    <div class="card-body">
-      <div class="drop-zone" id="dropZone">
-        <input type="file" accept=".json" multiple onchange="loadFiles(this.files)">
-        <div style="font-size:30px;margin-bottom:10px">📤</div>
-        <div style="font-weight:600">社員の申請JSONファイルをドロップ（複数OK）</div>
-      </div>
-      <div class="file-pills" id="filePills"></div>
-    </div>
-  </div>
+<div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInp').click()">
+  <input type="file" id="fileInp" multiple accept=".json" style="display:none" onchange="loadFiles(this.files)">
+  <div style="font-size: 32px; margin-bottom: 8px;">📂</div>
+  <h3>社員から送られたJSONファイルをドロップ</h3>
+  <p style="color:var(--text-light); font-size:13px;">複数ファイルまとめてドロップ可能です</p>
+</div>
 
-  <!-- STATS -->
-  <div class="stats-bar">
-    <div class="stat"><div class="stat-label">申請件数</div><div class="stat-val" style="color:var(--primary)" id="statTotal">0</div></div>
-    <div class="stat"><div class="stat-label">申請合計金額</div><div class="stat-val" style="color:var(--primary)" id="statAmount">¥0</div></div>
-    <div class="stat"><div class="stat-label">AI一致 (無修正)</div><div class="stat-val" style="color:var(--success)" id="statSafe">0</div></div>
-    <div class="stat"><div class="stat-label">修正あり (要確認)</div><div class="stat-val" style="color:var(--danger)" id="statWarn">0</div></div>
-  </div>
+<div id="board">
+  <!-- ここに人別のギャラリーが生成される -->
+</div>
 
-  <!-- REVIEW TAB -->
-  <div class="tab-panel active" id="panel-review">
-    <div class="card">
-      <div class="card-header">
-        <span class="card-title">📥 審査待ち一覧</span>
-        <button class="btn btn-primary" onclick="exportCSV()">⬇️ CSV出力</button>
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>証跡</th>
-              <th>氏名</th>
-              <th>日付</th>
-              <th>店名</th>
-              <th>カテゴリ</th>
-              <th style="text-align:right">金額</th>
-              <th>信頼性チェック</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody id="listBody">
-            <tr><td colspan="8" style="text-align:center;padding:40px;color:var(--gray-400)">申請ファイルを読み込んでください</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <!-- PERSON TAB -->
-  <div class="tab-panel" id="panel-person">
-    <div class="card">
-      <div class="card-header"><span class="card-title">👥 人別集計</span></div>
-      <div class="card-body" id="personGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px">
-        <div style="color:var(--gray-400)">データなし</div>
-      </div>
-    </div>
-  </div>
-</main>
-
-<div id="imgModal" onclick="this.style.display='none'"><img id="modalImg"></div>
+<div id="modal" onclick="this.style.display='none'">
+  <img id="modalImg">
+</div>
 
 <script>
-let allData = [];
-let loadedFiles = [];
+let allData = []; // { name, date, amount, memo, img }
 
-// ===== DRAG & DROP =====
+// ドラッグ＆ドロップ処理
 const dz = document.getElementById('dropZone');
 dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('over'); });
 dz.addEventListener('dragleave', () => dz.classList.remove('over'));
@@ -164,127 +71,87 @@ dz.addEventListener('drop', e => {
   loadFiles(e.dataTransfer.files);
 });
 
-// ===== LOAD =====
 async function loadFiles(files) {
   for(const f of files) {
-    if(!f.name.endsWith('.json') || loadedFiles.includes(f.name)) continue;
+    if(!f.name.endsWith('.json')) continue;
     try {
       const text = await f.text();
       const json = JSON.parse(text);
-      const exps = json.expenses.map(e => ({ ...e, userName: json.name || '不明', fileName: f.name }));
-      allData.push(...exps);
-      loadedFiles.push(f.name);
-    } catch(e) { console.error('Load Error:', f.name); }
+      const name = json.name || '名前未設定';
+      
+      json.expenses.forEach(e => {
+        allData.push({
+          name: name,
+          date: e.date,
+          amount: Number(e.amount) || 0,
+          memo: e.memo || '',
+          img: e.img
+        });
+      });
+    } catch(err) {
+      console.error('読み込みエラー:', err);
+    }
   }
-  renderAll();
+  renderBoard();
+}
+
+function renderBoard() {
+  const board = document.getElementById('board');
+  if(allData.length === 0) {
+    board.innerHTML = '';
+    return;
+  }
+
+  // 名前ごとにグループ化
+  const grouped = {};
+  allData.forEach(item => {
+    if(!grouped[item.name]) grouped[item.name] = [];
+    grouped[item.name].push(item);
+  });
+
+  let html = '';
+  for(const [name, items] of Object.entries(grouped)) {
+    const totalAmount = items.reduce((sum, i) => sum + i.amount, 0);
+    
+    // ギャラリーHTMLの生成
+    const cardsHtml = items.map(i => `
+      <div class="receipt-card">
+        ${i.img ? `<img src="${i.img}" class="receipt-img" onclick="zoomImage(this.src)" title="クリックで拡大">` : '<div class="receipt-img" style="display:flex;align-items:center;justify-content:center;color:#999">画像なし</div>'}
+        <div class="receipt-info">
+          <div class="r-date">${i.date}</div>
+          <div class="r-amount">${i.amount > 0 ? '¥'+i.amount.toLocaleString() : '<span style="color:#9ca3af">金額未入力</span>'}</div>
+          <div>${i.memo || '<span style="color:#9ca3af">メモなし</span>'}</div>
+        </div>
+      </div>
+    `).join('');
+
+    // 人別セクションHTML
+    html += `
+      <div class="person-section">
+        <div class="person-header">
+          <span>👤 ${name} <span style="font-size:14px; color:var(--text-light); font-weight:normal">(${items.length}枚)</span></span>
+          <span class="person-total">合計: ¥${totalAmount.toLocaleString()}</span>
+        </div>
+        <div class="gallery">
+          ${cardsHtml}
+        </div>
+      </div>
+    `;
+  }
+
+  board.innerHTML = html;
+}
+
+function zoomImage(src) {
+  if(!src) return;
+  document.getElementById('modalImg').src = src;
+  document.getElementById('modal').style.display = 'flex';
 }
 
 function clearAll() {
-  allData = []; loadedFiles = [];
-  renderAll();
-}
-
-// ===== RENDER =====
-function renderAll() {
-  renderPills();
-  renderStats();
-  renderTable();
-  renderPerson();
-}
-
-function renderPills() {
-  document.getElementById('filePills').innerHTML = loadedFiles.map(f => `<span class="file-pill">📄 ${f}</span>`).join('');
-}
-
-function renderStats() {
-  document.getElementById('statTotal').textContent = allData.length;
-  document.getElementById('statAmount').textContent = '¥' + allData.reduce((s,e)=>s+e.amount,0).toLocaleString();
-  document.getElementById('statSafe').textContent = allData.filter(e=>!e.modified).length + '件';
-  document.getElementById('statWarn').textContent = allData.filter(e=>e.modified).length + '件';
-}
-
-function renderTable() {
-  const body = document.getElementById('listBody');
-  if(!allData.length) { body.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--gray-400)">申請ファイルを読み込んでください</td></tr>'; return; }
-
-  body.innerHTML = allData.map((e, idx) => {
-    const isDateMod = e.aiData && e.date !== e.aiData.date;
-    const isStoreMod = e.aiData && e.store !== e.aiData.store;
-    const isAmtMod = e.aiData && Number(e.amount) !== Number(e.aiData.amount);
-
-    return `
-      <tr style="background:${e.modified ? 'var(--warning-light)' : 'transparent'}">
-        <td>${e.img ? `<img src="${e.img}" class="thumb-img" onclick="zoomImg('${e.img}')">` : 'なし'}</td>
-        <td style="font-weight:600">${e.userName}</td>
-        <td class="${isDateMod?'val-mod':''}" title="${isDateMod ? 'AI予測: '+e.aiData.date : ''}">${e.date}</td>
-        <td class="${isStoreMod?'val-mod':''}" title="${isStoreMod ? 'AI予測: '+e.aiData.store : ''}">${e.store}</td>
-        <td>${e.category}</td>
-        <td style="text-align:right;font-weight:800" class="${isAmtMod?'val-mod':''}" title="${isAmtMod ? 'AI予測: '+e.aiData.amount : ''}">¥${e.amount.toLocaleString()}</td>
-        <td>${e.modified ? '<span class="badge badge-mod">⚠️AIから変更有</span>' : '<span class="badge badge-ai">✨AI一致</span>'}</td>
-        <td>
-          <button onclick="approve(${idx})" style="color:var(--success);border:1px solid;background:white;padding:4px 8px;border-radius:4px;cursor:pointer">承認</button>
-          <button onclick="remove(${idx})" style="color:var(--danger);border:1px solid;background:white;padding:4px 8px;border-radius:4px;cursor:pointer">却下</button>
-        </td>
-      </tr>
-    `;
-  }).join('');
-}
-
-function renderPerson() {
-  const users = {};
-  allData.forEach(e => {
-    if(!users[e.userName]) users[e.userName] = { total:0, cnt:0, warn:0 };
-    users[e.userName].total += e.amount;
-    users[e.userName].cnt++;
-    if(e.modified) users[e.userName].warn++;
-  });
-  
-  const grid = document.getElementById('personGrid');
-  if(!Object.keys(users).length) { grid.innerHTML = '<div style="color:var(--gray-400)">データなし</div>'; return; }
-
-  grid.innerHTML = Object.entries(users).map(([name, d]) => `
-    <div style="border:1px solid var(--gray-200);border-radius:var(--r);padding:16px;background:white">
-      <div style="font-size:14px;font-weight:700;margin-bottom:8px">👤 ${name}</div>
-      <div style="font-size:20px;font-weight:800;color:var(--primary)">¥${d.total.toLocaleString()}</div>
-      <div style="font-size:12px;color:var(--gray-500);margin-top:4px">申請数: ${d.cnt}件 ${d.warn > 0 ? `(<span style="color:var(--danger)">⚠️要注意 ${d.warn}件</span>)` : ''}</div>
-    </div>
-  `).join('');
-}
-
-// ===== ACTIONS =====
-function zoomImg(src) {
-  document.getElementById('modalImg').src = src;
-  document.getElementById('imgModal').style.display = 'flex';
-}
-
-function approve(idx) {
-  allData.splice(idx, 1);
-  renderAll();
-}
-
-function remove(idx) {
-  if(confirm('この申請をリストから削除（却下）しますか？')) {
-    allData.splice(idx, 1);
-    renderAll();
-  }
-}
-
-function switchTab(tab, btn) {
-  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
-  document.getElementById('panel-'+tab).classList.add('active');
-  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-}
-
-function exportCSV() {
-  if(!allData.length) return;
-  const header = '氏名,日付,店名,カテゴリ,金額,修正有無\n';
-  const csv = allData.map(e => `"${e.userName}",${e.date},"${e.store}","${e.category}",${e.amount},${e.modified?'修正あり':'AI一致'}`).join('\n');
-  const blob = new Blob(['\uFEFF' + header + csv], {type: 'text/csv'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `経費審査リスト_${new Date().toISOString().slice(0,10)}.csv`;
-  a.click();
+  if(!confirm('画面上のデータを全て消去しますか？')) return;
+  allData = [];
+  renderBoard();
 }
 </script>
 </body>
