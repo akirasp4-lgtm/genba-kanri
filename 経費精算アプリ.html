@@ -2,204 +2,211 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>経費精算（PC入力版）</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>経費精算アプリ（スマート入力版）</title>
 <style>
 :root {
-  --primary: #2563eb; --primary-light: #eff6ff; --success: #16a34a; 
+  --primary: #2563eb; --primary-light: #eff6ff; --success: #16a34a; --success-light: #f0fdf4;
   --danger: #dc2626; --gray-50: #f9fafb; --gray-100: #f3f4f6; --gray-200: #e5e7eb;
   --gray-400: #9ca3af; --gray-500: #6b7280; --gray-800: #1f2937; 
-  --shadow: 0 4px 6px -1px rgba(0,0,0,.1);
+  --shadow: 0 1px 3px rgba(0,0,0,.1);
+  --r: 10px; --bottom-nav-h: 64px; --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
-*{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#f1f5f9;color:var(--gray-800);min-height:100vh;display:flex;flex-direction:column;}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,sans-serif;background:#f0f4f8;color:var(--gray-800);min-height:100vh;padding-bottom:calc(var(--bottom-nav-h) + var(--safe-bottom))}
 
-.header{background:white;padding:15px 24px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--gray-200);box-shadow:0 1px 2px rgba(0,0,0,0.05);}
-.header-title{font-size:20px;font-weight:700;color:var(--primary);}
+.app-header{background:white;border-bottom:1px solid var(--gray-200);padding:0 16px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:var(--shadow)}
+.app-title{font-size:17px;font-weight:700;color:var(--primary)}
 
-.container{display:flex;flex:1;padding:20px;gap:20px;max-width:1400px;margin:0 auto;width:100%;}
+.main{max-width:640px;margin:0 auto;padding:16px 12px;display:flex;flex-direction:column;gap:14px}
+.card{background:white;border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;padding:16px;margin-bottom:14px}
 
-/* 左側：画像プレビューエリア */
-.left-pane{flex:1;display:flex;flex-direction:column;background:white;border-radius:12px;box-shadow:var(--shadow);overflow:hidden;border:1px solid var(--gray-200);}
-.drop-zone{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;background:#f8fafc;border:3px dashed #cbd5e1;margin:20px;border-radius:12px;cursor:pointer;transition:all 0.2s;}
-.drop-zone:hover{border-color:var(--primary);background:var(--primary-light);}
-.image-viewer{display:none;flex:1;background:#000;position:relative;overflow:hidden;}
-.image-viewer img{width:100%;height:100%;object-fit:contain;}
-.reselect-btn{position:absolute;top:15px;right:15px;background:rgba(0,0,0,0.6);color:white;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:bold;}
+.form-label{display:flex;justify-content:space-between;align-items:flex-end;font-size:11px;font-weight:700;color:var(--gray-500);margin-bottom:4px;text-transform:uppercase}
+.form-label span.req::after{content:"*";color:var(--danger);margin-left:2px}
 
-/* 右側：入力フォーム＆リスト */
-.right-pane{width:450px;display:flex;flex-direction:column;gap:20px;overflow-y:auto;}
+/* スマホのOCRへ誘導するヒント */
+.ocr-hint { font-size:9px; color:var(--primary); background:var(--primary-light); padding:2px 6px; border-radius:4px; font-weight:normal; }
 
-.card{background:white;border-radius:12px;box-shadow:var(--shadow);padding:24px;border:1px solid var(--gray-200);}
-.card-title{font-size:16px;font-weight:bold;margin-bottom:16px;color:var(--gray-800);border-bottom:2px solid var(--gray-100);padding-bottom:8px;}
+.form-control{width:100%;padding:12px;border:1.5px solid var(--gray-200);border-radius:6px;font-size:16px;outline:none;background:white;margin-bottom:10px;font-family:inherit}
+.form-control:focus{border-color:var(--primary)}
 
-.form-group{margin-bottom:15px;}
-.form-label{display:block;font-size:12px;font-weight:700;color:var(--gray-500);margin-bottom:6px;}
-.form-label.req::after{content:"*";color:var(--danger);margin-left:4px;}
-.form-control{width:100%;padding:10px 12px;border:1px solid #cbd5e1;border-radius:6px;font-size:15px;font-family:inherit;transition:border-color 0.2s;}
-.form-control:focus{border-color:var(--primary);outline:none;box-shadow:0 0 0 3px var(--primary-light);}
-.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:15px;}
+.capture-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.capture-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:20px 10px;border:2px dashed var(--gray-300);border-radius:var(--r);background:var(--gray-50);cursor:pointer;position:relative}
+.capture-btn input{position:absolute;inset:0;opacity:0;cursor:pointer}
 
-.genba-box{background:#f0f7ff;padding:15px;border-radius:8px;border:1px solid #bfdbfe;margin-bottom:15px;}
+.preview-wrap{display:none}
+.preview-wrap.show{display:block}
+.receipt-thumb{width:100%;border-radius:6px;border:2px solid var(--gray-200);overflow:hidden;margin-bottom:14px;background:#000}
+.receipt-thumb img{width:100%;max-height:300px;object-fit:contain;display:block;margin:0 auto}
 
-.btn{width:100%;padding:12px;border:none;border-radius:6px;font-size:16px;font-weight:700;cursor:pointer;transition:opacity 0.2s;}
-.btn:hover{opacity:0.9;}
-.btn-success{background:var(--success);color:white;}
-.btn-primary{background:var(--primary);color:white;}
-.btn-ghost{background:transparent;color:var(--gray-600);border:1px solid var(--gray-200);margin-top:10px;}
+.btn{width:100%;padding:14px;border:none;border-radius:6px;font-size:15px;font-weight:700;cursor:pointer}
+.btn-success{background:var(--success);color:white}
+.btn-primary{background:var(--primary);color:white}
+.btn-ghost{background:transparent;color:var(--gray-600);border:1px solid var(--gray-200)}
 
-/* リスト部分 */
-.list-item{display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid var(--gray-100);font-size:13px;}
-.list-item:last-child{border-bottom:none;}
-.badge{background:var(--gray-100);padding:2px 6px;border-radius:4px;font-size:11px;color:var(--gray-600);}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;height:calc(var(--bottom-nav-h) + var(--safe-bottom));background:white;border-top:1px solid var(--gray-200);display:flex;z-index:200}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:var(--gray-400);background:none;border:none}
+.nav-btn.active{color:var(--primary)}
+
+.expense-card{display:flex;align-items:center;justify-content:space-between;padding:12px;border-bottom:1px solid var(--gray-100)}
+.cat-badge{font-size:10px;padding:2px 6px;border-radius:10px;background:var(--gray-100)}
+
+.genba-section {
+  background: #f0f7ff; 
+  padding: 12px; 
+  border-radius: 8px; 
+  margin-bottom: 12px; 
+  border: 1.5px solid #bfdbfe;
+}
+
+/* タブの切り替え用 */
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
 </style>
 </head>
 <body>
 
-<header class="header">
-  <div class="header-title">📝 経費精算（PC入力版）</div>
-  <div style="display:flex;gap:15px;align-items:center;">
-    <div style="display:flex;align-items:center;gap:8px;">
-      <span style="font-size:13px;font-weight:bold;color:var(--gray-500);">👤 氏名:</span>
-      <input type="text" id="userName" placeholder="山田 太郎" class="form-control" style="width:150px;margin:0;padding:6px 10px;" oninput="localStorage.setItem('user_name_pc', this.value)">
-    </div>
-    <button class="btn btn-primary" style="width:auto;padding:8px 16px;" onclick="exportJSON()">📤 JSON出力</button>
-  </div>
+<header class="app-header">
+  <div class="app-title">📝 経費精算アプリ</div>
 </header>
 
-<div class="container">
-  <!-- 左ペイン：画像プレビュー -->
-  <div class="left-pane">
-    <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInp').click()">
-      <input type="file" id="fileInp" accept="image/*,.pdf" style="display:none" onchange="handleFile(this.files[0])">
-      <div style="font-size:48px;margin-bottom:15px;">📥</div>
-      <h2 style="color:var(--gray-800);margin-bottom:8px;">レシート画像をドロップ</h2>
-      <p style="color:var(--gray-500);">またはクリックしてファイルを選択</p>
-    </div>
-    <div class="image-viewer" id="imageViewer">
-      <img id="receiptImg" src="">
-      <button class="reselect-btn" onclick="resetImage()">✖ 別の画像を選ぶ</button>
-    </div>
+<main class="main">
+  <!-- スマホの機能に気付かせるための全体ヒント -->
+  <div style="background:#fffbeb; border:1px solid #fde68a; padding:10px; border-radius:6px; font-size:11px; color:#92400e;">
+    💡 <b>入力のコツ</b>：スマホのキーボードにある「テキストをスキャン」や「カメラ」のアイコンを使うと、レシートの文字を自動で読み取れます。
   </div>
 
-  <!-- 右ペイン：入力フォーム -->
-  <div class="right-pane">
+  <div class="card">
+    <label class="form-label"><span class="req">👤 氏名</span></label>
+    <input type="text" class="form-control" id="userName" placeholder="山田 太郎" oninput="localStorage.setItem('user_name_v5', this.value)">
+  </div>
+
+  <div class="tab-panel active" id="panel-input">
     <div class="card">
-      <div class="card-title">入力フォーム</div>
-      
-      <div class="form-group">
-        <label class="form-label req">日付</label>
-        <input type="date" class="form-control" id="fDate" tabindex="1">
-      </div>
-      
-      <div class="form-group">
-        <label class="form-label req">金額（税込）</label>
-        <input type="number" class="form-control" id="fAmount" placeholder="0" tabindex="2">
-      </div>
-      
-      <div class="grid-2">
-        <div class="form-group">
-          <label class="form-label">税率</label>
-          <select class="form-control" id="fTax" tabindex="3">
-            <option value="10">10%</option>
-            <option value="8">軽減8%</option>
-            <option value="0">対象外</option>
-          </select>
+      <div id="uploadSection">
+        <div class="capture-btns">
+          <label class="capture-btn"><input type="file" accept="image/*" capture="environment" onchange="handleFile(this.files[0])">📸 レシート撮影</label>
+          <label class="capture-btn"><input type="file" accept="image/*" onchange="handleFile(this.files[0])">🖼️ 写真から選ぶ</label>
         </div>
-        <div class="form-group">
-          <label class="form-label">項目</label>
-          <select class="form-control" id="fCategory" tabindex="4">
-            <option value="駐車場代">🚗 駐車場代</option>
-            <option value="仕入高">🛠️ 仕入高</option>
-            <option value="ガソリン">⛽ ガソリン</option>
-            <option value="消耗品費">📦 消耗品費</option>
-            <option value="事務用品">🖊️ 事務用品</option>
-            <option value="運賃">🚚 運賃</option>
-            <option value="その他交通費">🚕 交通費</option>
-            <option value="会議費">☕ 会議費</option>
-            <option value="交際費">🤝 交際費</option>
-            <option value="水道光熱">💡 水道光熱</option>
-            <option value="租税公課">📜 租税公課</option>
-            <option value="福利厚生">🏥 福利厚生</option>
-          </select>
-        </div>
-      </div>
-      
-      <div class="form-group">
-        <label class="form-label req">店名</label>
-        <input type="text" class="form-control" id="fStore" placeholder="例：コーナン" tabindex="5">
       </div>
 
-      <div class="genba-box">
-        <div class="grid-2">
-          <div class="form-group" style="margin:0;">
-            <label class="form-label">元請け名</label>
-            <input type="text" class="form-control" id="fMotouke" placeholder="例：〇〇建設" tabindex="6">
+      <div class="preview-wrap" id="previewWrap">
+        <div class="receipt-thumb"><img id="receiptImg" src=""></div>
+        <div class="form-grid" id="formGrid">
+          
+          <label class="form-label"><span class="req">📅 日付</span></label>
+          <input type="date" class="form-control" id="fDate">
+          
+          <label class="form-label">
+              <span class="req">💴 金額（税込）</span>
+              <span class="ocr-hint">📱キーボードのカメラで読込</span>
+          </label>
+          <input type="number" class="form-control" id="fAmount" placeholder="0" inputmode="numeric">
+          
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div>
+              <label class="form-label"><span>📊 税率</span></label>
+              <select class="form-control" id="fTax">
+                <option value="10">10%</option>
+                <option value="8">軽減8%</option>
+                <option value="0">対象外</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label"><span>📁 項目</span></label>
+              <select class="form-control" id="fCategory">
+                <option value="駐車場代">🚗 駐車場代</option>
+                <option value="仕入高">🛠️ 仕入高</option>
+                <option value="ガソリン">⛽ ガソリン</option>
+                <option value="消耗品費">📦 消耗品費</option>
+                <option value="事務用品">🖊️ 事務用品</option>
+                <option value="運賃">🚚 運賃</option>
+                <option value="その他交通費">🚕 交通費</option>
+                <option value="会議費">☕ 会議費</option>
+                <option value="交際費">🤝 交際費</option>
+                <option value="水道光熱">💡 水道光熱</option>
+                <option value="租税公課">📜 租税公課</option>
+                <option value="福利厚生">🏥 福利厚生</option>
+              </select>
+            </div>
           </div>
-          <div class="form-group" style="margin:0;">
-            <label class="form-label">現場名</label>
-            <input type="text" class="form-control" id="fGenba" placeholder="例：〇〇邸" tabindex="7">
-          </div>
-        </div>
-        <p style="font-size:10px;color:var(--primary);margin-top:8px;">※連続入力用に保存後も残ります</p>
-      </div>
-      
-      <div class="form-group">
-        <label class="form-label">メモ</label>
-        <input type="text" class="form-control" id="fMemo" placeholder="用途など（任意）" tabindex="8">
-      </div>
-      
-      <button class="btn btn-success" onclick="saveExpense()" tabindex="9">💾 保存して次へ</button>
-    </div>
+          
+          <label class="form-label">
+              <span class="req">🏪 店名</span>
+              <span class="ocr-hint">📱キーボードのカメラで読込</span>
+          </label>
+          <input type="text" class="form-control" id="fStore" placeholder="例：コーナン">
 
-    <!-- リスト -->
-    <div class="card" style="flex:1;">
-      <div class="card-title" style="display:flex;justify-content:space-between;">
-        <span>保存済みリスト</span>
-        <span id="listCount" class="badge">0件</span>
+          <div class="genba-section">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div>
+                <label class="form-label"><span>🏢 元請け名</span></label>
+                <input type="text" class="form-control" id="fMotouke" placeholder="例：〇〇建設">
+              </div>
+              <div>
+                <label class="form-label"><span>📍 現場名</span></label>
+                <input type="text" class="form-control" id="fGenba" placeholder="例：〇〇邸">
+              </div>
+            </div>
+          </div>
+          
+          <label class="form-label"><span>📝 メモ</span></label>
+          <input type="text" class="form-control" id="fMemo" placeholder="用途など（任意）">
+          
+          <button class="btn btn-success" id="saveBtn" onclick="saveExpense()">💾 保存して次へ</button>
+          <button class="btn btn-ghost" style="margin-top:8px" onclick="resetForm()">キャンセル</button>
+        </div>
       </div>
-      <div id="expenseList"></div>
     </div>
   </div>
-</div>
+
+  <div class="tab-panel" id="panel-list" style="display:none">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;margin-bottom:14px;align-items:center">
+        <span style="font-weight:bold">📋 保存済みリスト</span>
+        <button class="btn btn-primary" style="width:auto;padding:8px 16px;font-size:12px" onclick="exportJSON()">📤 事務員へ出力</button>
+      </div>
+      <div id="expenseCards"></div>
+    </div>
+  </div>
+</main>
+
+<nav class="bottom-nav">
+  <button class="nav-btn active" id="nav-in" onclick="switchTab('input',this)">
+    <span style="font-size: 16px; margin-bottom: 2px;">📝</span>入力
+  </button>
+  <button class="nav-btn" id="nav-li" onclick="switchTab('list',this)">
+    <span style="font-size: 16px; margin-bottom: 2px;">📋</span>リスト
+  </button>
+</nav>
 
 <script>
-let expenses = JSON.parse(localStorage.getItem('exp_pc_v1') || '[]');
+let expenses = JSON.parse(localStorage.getItem('exp_v5') || '[]');
 let currentImg = null;
 
 document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('userName').value = localStorage.getItem('user_name_pc') || '';
+  document.getElementById('userName').value = localStorage.getItem('user_name_v5') || '';
   document.getElementById('fDate').value = new Date().toISOString().split('T')[0];
-  setupDropZone();
   renderList();
 });
 
-function setupDropZone() {
-  const dz = document.getElementById('dropZone');
-  dz.addEventListener('dragover', e => { e.preventDefault(); dz.style.borderColor = 'var(--primary)'; dz.style.background = 'var(--primary-light)'; });
-  dz.addEventListener('dragleave', () => { dz.style.borderColor = '#cbd5e1'; dz.style.background = '#f8fafc'; });
-  dz.addEventListener('drop', e => {
-    e.preventDefault();
-    dz.style.borderColor = '#cbd5e1'; dz.style.background = '#f8fafc';
-    if(e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
-  });
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.style.display = 'none');
+  document.getElementById('panel-' + tab).style.display = 'block';
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if(tab === 'list') renderList();
 }
 
 async function handleFile(file) {
-  if(!file || (!file.type.startsWith('image/') && file.type !== 'application/pdf')) return alert('画像ファイルを選択してください。');
-  currentImg = await resizeImg(file, 1200); // PC用なので少し高画質に
-  document.getElementById('dropZone').style.display = 'none';
-  const viewer = document.getElementById('imageViewer');
-  viewer.style.display = 'flex';
+  if(!file || !file.type.startsWith('image/')) return;
+  currentImg = await resizeImg(file, 800);
+  document.getElementById('uploadSection').style.display = 'none';
   document.getElementById('receiptImg').src = currentImg;
+  document.getElementById('previewWrap').classList.add('show');
+  
+  // スマホのキーボード（テキストスキャン等）を出しやすくするため、金額欄に自動フォーカス
   document.getElementById('fAmount').focus();
-}
-
-function resetImage() {
-  currentImg = null;
-  document.getElementById('imageViewer').style.display = 'none';
-  document.getElementById('dropZone').style.display = 'flex';
-  document.getElementById('fileInp').value = '';
 }
 
 function saveExpense() {
@@ -210,9 +217,7 @@ function saveExpense() {
   const motouke = document.getElementById('fMotouke').value.trim();
   const genba = document.getElementById('fGenba').value.trim();
   
-  if(!name) return alert('画面右上の「氏名」を入力してください。');
-  if(!date || !amount || !store) return alert('日付・金額・店名をすべて入力してください。');
-  if(!currentImg) return alert('レシート画像を読み込んでください。');
+  if(!name || !date || !amount || !store) return alert('氏名・日付・金額・店名をすべて入力してください');
 
   const newExpense = { 
     id: Date.now(), date, amount, store, motouke, genba,
@@ -223,29 +228,37 @@ function saveExpense() {
   };
   
   expenses.unshift(newExpense);
-  localStorage.setItem('exp_pc_v1', JSON.stringify(expenses));
-  
-  // 入力リセット（元請け・現場・日付は残す）
-  resetImage();
+  localStorage.setItem('exp_v5', JSON.stringify(expenses));
+  resetForm(); 
+  switchTab('list', document.getElementById('nav-li'));
+}
+
+function resetForm() {
+  currentImg = null; 
+  document.getElementById('uploadSection').style.display = 'block';
+  document.getElementById('previewWrap').classList.remove('show');
   document.getElementById('fAmount').value = ''; 
   document.getElementById('fStore').value = '';
   document.getElementById('fMemo').value = '';
-  renderList();
+  document.querySelectorAll('input[type=file]').forEach(i => i.value = '');
 }
 
 function renderList() {
-  const cont = document.getElementById('expenseList');
-  document.getElementById('listCount').innerText = `${expenses.length}件`;
-  if(!expenses.length) { cont.innerHTML = '<div style="text-align:center;padding:20px;color:#999;font-size:13px;">データがありません</div>'; return; }
-  
+  const cont = document.getElementById('expenseCards');
+  if(!expenses.length) { cont.innerHTML = '<div style="text-align:center;padding:40px;color:#999">データなし</div>'; return; }
   cont.innerHTML = expenses.map(e => `
-    <div class="list-item">
+    <div class="expense-card">
       <div>
-        <div style="font-weight:bold;color:var(--primary);margin-bottom:4px;">¥${e.amount.toLocaleString()}</div>
-        <div style="color:var(--gray-800);">${esc(e.store)}</div>
-        <div style="color:var(--gray-500);font-size:11px;margin-top:4px;">${e.date} <span class="badge">${e.category}</span></div>
+        <div style="font-weight:bold;font-size:14px">${esc(e.store)} <span style="font-size:10px;color:#999">(${e.tax}%)</span></div>
+        <div style="font-size:11px;color:#666">
+          ${e.date} · <span class="cat-badge">${e.category}</span>
+          ${e.motouke || e.genba ? `<br><span style="color:var(--primary); font-weight:bold; display:inline-block; margin-top:2px;">🏢 ${esc(e.motouke)} / ${esc(e.genba)}</span>` : ''}
+        </div>
       </div>
-      <button onclick="del(${e.id})" style="border:none;background:none;color:var(--danger);cursor:pointer;padding:5px;">削除</button>
+      <div style="text-align:right">
+        <div style="font-weight:bold;color:var(--primary);font-size:16px">¥${e.amount.toLocaleString()}</div>
+        <button onclick="del(${e.id})" style="font-size:10px;color:var(--danger);border:none;background:none;padding:4px">削除</button>
+      </div>
     </div>
   `).join('');
 }
@@ -253,18 +266,16 @@ function renderList() {
 function del(id) {
   if(!confirm('削除しますか？')) return;
   expenses = expenses.filter(e => e.id !== id);
-  localStorage.setItem('exp_pc_v1', JSON.stringify(expenses));
+  localStorage.setItem('exp_v5', JSON.stringify(expenses));
   renderList();
 }
 
 function exportJSON() {
   const name = document.getElementById('userName').value.trim();
-  if(!name) return alert('画面右上の「氏名」を入力してください。');
-  if(!expenses.length) return alert('出力するデータがありません。');
-  
+  if(!expenses.length) return alert('データなし');
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([JSON.stringify({ name, expenses })], {type:'application/json'}));
-  a.download = `経費申請_PC入力_${name}_${new Date().toISOString().slice(0,10)}.json`;
+  a.download = `経費申請_${name}_${new Date().toISOString().slice(0,10)}.json`;
   a.click();
 }
 
@@ -277,7 +288,7 @@ async function resizeImg(file, max) {
         const c = document.createElement('canvas'); const ratio = Math.min(1, max/img.width, max/img.height);
         c.width = img.width*ratio; c.height = img.height*ratio;
         const ctx = c.getContext('2d'); ctx.fillStyle='#fff'; ctx.fillRect(0,0,c.width,c.height); ctx.drawImage(img,0,0,c.width,c.height);
-        res(c.toDataURL('image/jpeg', 0.8));
+        res(c.toDataURL('image/jpeg', 0.6));
       }; img.src = e.target.result;
     }; r.readAsDataURL(file);
   });
