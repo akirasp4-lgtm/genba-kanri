@@ -2,80 +2,55 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>経費精算 管理者 (JDL形式)</title>
+<title>経費精算 管理者コンソール</title>
 <style>
-:root {
-  --primary: #2563eb; --primary-light: #eff6ff; --bg: #f3f4f6; --card: #ffffff;
-  --text: #1f2937; --text-light: #6b7280; --border: #e5e7eb;
-}
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: sans-serif; background: var(--bg); color: var(--text); padding: 20px; }
-
-.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-.btn { background: var(--primary); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; }
-.btn-danger { background: #dc2626; }
-.btn-success { background: #16a34a; }
-
-.drop-zone { background: white; border: 2px dashed #9ca3af; border-radius: 12px; padding: 40px; text-align: center; cursor: pointer; margin-bottom: 24px; transition: background 0.2s; }
-.drop-zone.over { background: #eff6ff; border-color: var(--primary); }
-
+:root { --primary: #2563eb; --bg: #f3f4f6; --card: #ffffff; --text: #1f2937; --border: #e5e7eb; }
+body { font-family: sans-serif; background: var(--bg); color: var(--text); padding: 20px; margin: 0; }
+.header { background: white; padding: 15px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
+.btn { padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; border: none; }
+.btn-success { background: #16a34a; color: white; }
+.btn-danger { background: #dc2626; color: white; }
+.drop-zone { background: white; border: 2px dashed #9ca3af; border-radius: 12px; padding: 40px; text-align: center; cursor: pointer; margin: 20px 0; }
 .person-section { background: white; border-radius: 12px; padding: 20px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-.person-header { font-size: 20px; font-weight: bold; border-bottom: 2px solid var(--border); padding-bottom: 10px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: flex-end;}
-.person-total { font-size: 16px; color: var(--primary); }
-
-.gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
-.receipt-card { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: #fafafa; }
-.receipt-img { width: 100%; height: 200px; object-fit: cover; cursor: zoom-in; display: block; background: #eee; border-bottom: 1px solid var(--border); }
-.receipt-info { padding: 12px; font-size: 13px; line-height: 1.5; }
-.r-date { color: var(--text-light); font-size: 11px; margin-bottom: 4px; }
-
-.amount-input { width: 100%; padding: 8px; border: 2px solid var(--border); border-radius: 4px; font-size: 16px; font-weight: bold; color: var(--primary); outline: none; text-align: right; }
-.amount-input:focus { border-color: var(--primary); background: var(--primary-light); }
-.amount-input.is-empty { background-color: #fef08a; border-color: #eab308; }
-
-#modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
-#modal img { max-width: 100%; max-height: 100%; border-radius: 8px; object-fit: contain; }
+.person-header { font-size: 18px; font-weight: bold; border-bottom: 2px solid var(--border); padding-bottom: 10px; margin-bottom: 16px; display: flex; justify-content: space-between; }
+.gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+.receipt-card { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: #fafafa; display: flex; flex-direction: column; }
+.receipt-img { width: 100%; height: 200px; object-fit: cover; cursor: zoom-in; border-bottom: 1px solid var(--border); }
+.receipt-info { padding: 10px; font-size: 13px; flex: 1; }
+.amount-input { width: 100%; padding: 6px; border: 1px solid var(--border); border-radius: 4px; font-weight: bold; text-align: right; }
+#modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 200; align-items: center; justify-content: center; }
+#modal img { max-width: 90%; max-height: 90%; border-radius: 8px; }
 </style>
 </head>
 <body>
-
-<div class="header">
-  <h2>🗂️ 経費精算 管理者 <span style="font-size:12px; color:var(--text-light);">[JDL CSV連携]</span></h2>
+<header class="header">
+  <div style="font-weight:bold;font-size:20px">🗂️ 会社経費 管理ダッシュボード</div>
   <div>
-    <button class="btn btn-success" onclick="exportJDL()" style="margin-right:8px;">⬇️ JDL形式CSV出力</button>
-    <button class="btn btn-danger" onclick="clearAll()">🗑️ クリア</button>
+    <button class="btn btn-success" onclick="exportJDL()">⬇️ JDL形式CSV出力</button>
+    <button class="btn btn-danger" style="margin-left:8px" onclick="clearAll()">🗑️ リセット</button>
   </div>
+</header>
+<div style="max-width:1200px;margin:0 auto;padding:0 20px">
+  <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInp').click()">
+    <input type="file" id="fileInp" multiple accept=".json" style="display:none" onchange="loadFiles(this.files)">
+    <div style="font-size:40px;margin-bottom:10px">📤</div>
+    <h3>社員から送られた申請JSONをここにドロップ</h3>
+    <p style="font-size:12px;color:#666">※重複データは自動でスキップします</p>
+  </div>
+  <div id="summaryDashboard" style="display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin-bottom:20px"></div>
+  <div id="board"></div>
 </div>
-
-<div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInp').click()">
-  <input type="file" id="fileInp" multiple accept=".json" style="display:none" onchange="loadFiles(this.files)">
-  <div style="font-size: 32px; margin-bottom: 8px;">📂</div>
-  <h3>社員から送られたJSONファイルをドロップ</h3>
-  <p style="color:var(--text-light); font-size:11px;">※JDLが読み込める30列形式で出力します</p>
-</div>
-
-<div id="board"></div>
-
-<div id="modal" onclick="this.style.display='none'">
-  <img id="modalImg">
-</div>
+<div id="modal" onclick="this.style.display='none'"><img id="modalImg"></div>
 
 <script>
-let allData = []; 
-let globalId = 0;
+let masterData = JSON.parse(localStorage.getItem('mgr_v5_data') || '[]');
 
-function esc(s) {
-  return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]);
-}
+document.addEventListener('DOMContentLoaded', renderBoard);
 
 const dz = document.getElementById('dropZone');
-dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('over'); });
-dz.addEventListener('dragleave', () => dz.classList.remove('over'));
-dz.addEventListener('drop', e => {
-  e.preventDefault(); dz.classList.remove('over');
-  loadFiles(e.dataTransfer.files);
-});
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.style.background = '#eff6ff'; });
+dz.addEventListener('dragleave', () => dz.style.background = 'white');
+dz.addEventListener('drop', e => { e.preventDefault(); dz.style.background = 'white'; loadFiles(e.dataTransfer.files); });
 
 async function loadFiles(files) {
   for(const f of files) {
@@ -83,190 +58,133 @@ async function loadFiles(files) {
     try {
       const text = await f.text();
       const json = JSON.parse(text);
-      const name = json.name || '名前未設定';
-      
+      const name = json.name || '不明';
       json.expenses.forEach(e => {
-        allData.push({
-          id: globalId++,
-          name: name,
-          date: e.date || '',
-          amount: Math.max(0, Number(e.amount) || 0),
-          category: e.category || 'その他',
-          memo: e.memo || '',
-          img: e.img
-        });
+        // IDによる重複チェック
+        const isDup = masterData.some(m => m.id === e.id);
+        if(!isDup) masterData.push({ ...e, name });
       });
-    } catch(err) {
-      console.error('読み込みエラー:', err);
-    }
+    } catch(err) { console.error(err); }
   }
+  saveAndRender();
+}
+
+function saveAndRender() {
+  localStorage.setItem('mgr_v5_data', JSON.stringify(masterData));
   renderBoard();
 }
 
 function renderBoard() {
   const board = document.getElementById('board');
-  if(allData.length === 0) {
-    board.innerHTML = '';
-    return;
-  }
+  const dash = document.getElementById('summaryDashboard');
+  if(!masterData.length) { board.innerHTML = ''; dash.innerHTML = ''; return; }
+
+  const total = masterData.reduce((s,i)=>s+i.amount,0);
+  const peopleCount = [...new Set(masterData.map(i=>i.name))].length;
+  
+  dash.innerHTML = `
+    <div class="person-section" style="padding:15px;margin:0;text-align:center"><div>合計金額</div><div style="font-size:24px;font-weight:bold;color:var(--primary)">¥${total.toLocaleString()}</div></div>
+    <div class="person-section" style="padding:15px;margin:0;text-align:center"><div>申請人数</div><div style="font-size:24px;font-weight:bold">${peopleCount}名</div></div>
+    <div class="person-section" style="padding:15px;margin:0;text-align:center"><div>証跡枚数</div><div style="font-size:24px;font-weight:bold">${masterData.length}枚</div></div>
+  `;
 
   const grouped = {};
-  allData.forEach(item => {
-    if(!grouped[item.name]) grouped[item.name] = [];
-    grouped[item.name].push(item);
-  });
+  masterData.forEach(i => { if(!grouped[i.name]) grouped[i.name] = []; grouped[i.name].push(i); });
 
-  let html = '';
-  for(const [name, items] of Object.entries(grouped)) {
-    const totalAmount = items.reduce((sum, i) => sum + i.amount, 0);
-    
-    const cardsHtml = items.map(i => `
-      <div class="receipt-card">
-        ${i.img ? `<img src="${i.img}" class="receipt-img" onclick="zoomImage(this.src)" title="拡大">` : '<div class="receipt-img" style="display:flex;align-items:center;justify-content:center;color:#999">画像なし</div>'}
-        <div class="receipt-info">
-          <div class="r-date">${esc(i.date)}</div>
-          <div style="display:flex; align-items:center; gap:4px; margin-bottom:4px;">
-            <span style="font-weight:bold; color:var(--text-light)">¥</span>
-            <input type="number" class="amount-input ${!i.amount ? 'is-empty' : ''}" value="${i.amount || ''}" placeholder="0" min="0" oninput="updateAmount(${i.id}, this)">
-          </div>
-          <div style="font-size:11px; color:var(--primary); margin-bottom:4px;">${esc(i.category)}</div>
-          <div style="font-size:12px; color:var(--text-light); word-break:break-all;">${esc(i.memo) || 'メモなし'}</div>
-        </div>
-      </div>
-    `).join('');
-
-    html += `
+  board.innerHTML = Object.entries(grouped).map(([name, items]) => {
+    const pTotal = items.reduce((s,i)=>s+i.amount,0);
+    return `
       <div class="person-section">
-        <div class="person-header">
-          <span>👤 ${esc(name)} <span style="font-size:14px; color:var(--text-light); font-weight:normal">(${items.length}枚)</span></span>
-          <span class="person-total" data-name="${esc(name)}">合計: ¥${totalAmount.toLocaleString()}</span>
-        </div>
-        <div class="gallery">${cardsHtml}</div>
+        <div class="person-header"><span>👤 ${name} (${items.length}件)</span><span>計 ¥${pTotal.toLocaleString()}</span></div>
+        <div class="gallery">${items.map(i => `
+          <div class="receipt-card">
+            <img src="${i.img}" class="receipt-img" onclick="zoom('${i.img}')">
+            <div class="receipt-info">
+              <div style="font-size:11px;color:#666">${i.date}</div>
+              <div style="font-weight:bold;margin:4px 0">${esc(i.store) || '店名なし'}</div>
+              <input type="number" class="amount-input" value="${i.amount}" onchange="updateAmt(${i.id}, this.value)">
+              <div style="font-size:11px;color:var(--primary);margin-top:4px">${esc(i.category)}</div>
+              <div style="font-size:11px;color:#999;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(i.memo) || ''}</div>
+            </div>
+          </div>
+        `).join('')}</div>
       </div>
     `;
-  }
-  board.innerHTML = html;
+  }).join('');
 }
 
-function updateAmount(id, inputElement) {
-  let val = Number(inputElement.value) || 0;
-  const item = allData.find(i => i.id === id);
-  if (item) {
-    item.amount = val;
-    inputElement.classList.toggle('is-empty', !item.amount);
-    updateTotals();
-  }
+function updateAmt(id, val) {
+  const item = masterData.find(i => i.id === id);
+  if(item) { item.amount = Number(val); saveAndRender(); }
 }
 
-function updateTotals() {
-  const groupedTotals = {};
-  allData.forEach(item => {
-    if(!groupedTotals[item.name]) groupedTotals[item.name] = 0;
-    groupedTotals[item.name] += item.amount;
-  });
-  document.querySelectorAll('.person-total').forEach(el => {
-    const name = el.getAttribute('data-name');
-    if(groupedTotals[name] !== undefined) el.textContent = '合計: ¥' + groupedTotals[name].toLocaleString();
-  });
-}
+function zoom(src) { document.getElementById('modalImg').src = src; document.getElementById('modal').style.display='flex'; }
+function esc(s) { return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]); }
 
-// JDL専用の30列CSV出力
+function clearAll() { if(confirm('全データを削除しますか？出力忘れにご注意ください。')) { masterData=[]; saveAndRender(); } }
+
 function exportJDL() {
-  if(allData.length === 0) { alert('出力するデータがありません。'); return; }
+  if(!masterData.length) return alert('データがありません');
 
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = today.getMonth() + 1;
-  const day = today.getDate();
-
-  // カテゴリからJDL勘定科目へのマッピング
-  const categoryMap = {
-    '交通費': '旅費交通',
-    '食費・接待費': '会議費',
-    '消耗品費': '消耗品費',
-    '通信費': '通信費',
-    '宿泊費': '旅費交通',
-    '書籍・研修費': '新聞図書費',
-    'その他': '諸経費'
+  // JDLカテゴリーマッピング (社員アプリの選択肢をJDL科目・補助に分解)
+  const catMapping = {
+    '駐車場代': { main: '旅費交通', sub: '駐車場代' },
+    '仕入高': { main: '仕入高', sub: '' },
+    'ガソリン': { main: '車両費', sub: 'ガソリン' },
+    '消耗品費': { main: '消耗品費', sub: '' },
+    '事務用品': { main: '事務用品', sub: '' },
+    '運賃': { main: '運賃', sub: '' },
+    'その他交通費': { main: '旅費交通', sub: 'その他交通費' },
+    '会議費': { main: '会議費', sub: '' },
+    '交際費': { main: '交際費', sub: '' },
+    '水道光熱': { main: '水道光熱', sub: '' },
+    '租税公課': { main: '租税公課', sub: '' },
+    '福利厚生': { main: '福利厚生', sub: '' }
   };
 
-  // 1. メタデータヘッダー (JDL特有)
-  let csv = `// 0001 株式会社グローライズ 令和 ${year-2018}年 ${month}月${day}日作成,,,,,,,,,,,,,,,,,,,,,,,,,,,,, \n`;
-  csv += `// 出力期間 ： ${year}${month.toString().padStart(2,'0')}01 ～ ${year}${month.toString().padStart(2,'0')}${day.toString().padStart(2,'0')} ,,,,,,,,,,,,,,,,,,,,,,,,,,,,, \n`;
+  let csv = `// 0001 株式会社グローライズ 令和 8年 3月31日作成,,,,,,,,,,,,,,,,,,,,,,,,,,,,, \n`;
+  csv += `// 出力期間 ： 20250401 ～ 20260331 ,,,,,,,,,,,,,,,,,,,,,,,,,,,,, \n`;
   csv += `,,,,,,,,,,,,,,,,,,,,,,,,,,,,, \n`;
+  csv += `//識別フラグ,伝番,日付,借方科目,借方科目名称,借方科目正式名称,借方補助,借方補助名称,借方課区,借方税区,借方税入力方法,借方金額,借方消費税,貸方科目,貸方科目名称,貸方科目正式名称,貸方補助,貸方補助名称,貸方課区,貸方税区,貸方税入力方法,貸方金額,貸方消費税,摘要,借方取引科目,貸方取引科目,借方部門コード,借方部門名称,貸方部門コード,貸方部門名称\n`;
   
-  // 2. カラムヘッダー (JDL 30列)
-  const headers = [
-    '//識別フラグ','伝番','日付','借方科目','借方科目名称','借方科目正式名称','借方補助','借方補助名称',
-    '借方課区','借方税区','借方税入力方法','借方金額','借方消費税','貸方科目','貸方科目名称',
-    '貸方科目正式名称','貸方補助','貸方補助名称','貸方課区','貸方税区','貸方税入力方法','貸方金額',
-    '貸方消費税','摘要','借方取引科目','貸方取引科目','借方部門コード','借方部門名称','貸方部門コード','貸方部門名称'
-  ];
-  csv += headers.join(',') + '\n';
-
-  // 3. データ行の生成
-  allData.forEach(e => {
-    const jdlDate = e.date.replace(/-/g, '');
-    const jdlCategory = categoryMap[e.category] || '諸経費';
+  masterData.forEach(e => {
+    const map = catMapping[e.category] || { main: '諸経費', sub: '' };
+    const taxRateStr = e.tax === '8' ? '軽減8%' : e.tax === '10' ? '10%' : '対象外';
+    const taxAmt = (e.tax === '0') ? 0 : Math.floor(e.amount * Number(e.tax) / (100 + Number(e.tax)));
     
-    // 消費税計算（内税10%として計算）
-    const taxAmount = Math.floor(e.amount * 10 / 110);
-    // 摘要から名前を外し、純粋なメモのみに変更
-    const summary = e.memo ? e.memo.replace(/,/g, ' ') : '';
-
     const row = [
-      '1000',            // 識別フラグ
-      '',                // 伝番
-      jdlDate,           // 日付
-      '',                // 借方科目コード
-      jdlCategory,       // 借方科目名称
-      '',                // 借方正式
-      '',                // 借方補助コード
-      '',                // 借方補助名称
-      '仕入',            // 借方課区
-      '10%',             // 借方税区
-      '内税',            // 借方税入力方法
-      e.amount,          // 借方金額
-      taxAmount,         // 借方消費税
-      '',                // 貸方科目コード
-      '現金',            // 貸方科目名称
-      '',                // 貸方正式
-      '',                // 貸方補助コード
-      '',                // 貸方補助名称
-      '',                // 貸方課区
-      '',                // 貸方税区
-      '',                // 貸方税入力方法
-      e.amount,          // 貸方金額
-      '',                // 貸方消費税
-      `"${summary}"`,    // 摘要
-      '',                // 借方取引科目
-      '',                // 貸方取引科目
-      '',                // 借方部門コード
-      `"${e.name}"`,     // 借方部門名称に名前を設定
-      '',                // 貸方部門コード
-      `"${e.name}"`      // 貸方部門名称に名前を設定（CSVの末尾）
+      '1000',             // 識別フラグ
+      '',                 // 伝番
+      e.date.replace(/-/g,''), // 日付 (YYYYMMDD)
+      '',                 // 借方科目コード
+      map.main,           // 借方科目名称
+      '',                 // 借方正式
+      '',                 // 借方補助コード
+      map.sub,            // 借方補助名称
+      '仕入',             // 借方課区
+      taxRateStr,         // 借方税区
+      '内税',             // 借方税入力方法
+      e.amount,           // 借方金額
+      taxAmt,             // 借方消費税
+      '',                 // 貸方科目
+      '現金',             // 貸方科目名称
+      '', '', '', '', '', '', 
+      e.amount,           // 貸方金額
+      '', 
+      `"${e.store} ${e.memo}"`, // 摘要 (店名とメモを結合)
+      '', '', '', 
+      `"${e.name}"`,      // 借方部門名称 (提出者名)
+      '', 
+      `"${e.name}"`       // 貸方部門名称 (提出者名)
     ];
     csv += row.join(',') + '\n';
   });
 
+  const a = document.createElement('a');
   const blob = new Blob(['\uFEFF' + csv], {type: 'text/csv;charset=utf-8'});
-  const a = Object.assign(document.createElement('a'), {
-    href: URL.createObjectURL(blob),
-    download: `JDL取込_${new Date().toISOString().slice(0,10)}.csv`
-  });
-  a.click(); URL.revokeObjectURL(a.href);
-}
-
-function zoomImage(src) {
-  if(!src) return;
-  document.getElementById('modalImg').src = src;
-  document.getElementById('modal').style.display = 'flex';
-}
-
-function clearAll() {
-  if(!confirm('画面上のデータを全て消去しますか？')) return;
-  allData = [];
-  renderBoard();
+  a.href = URL.createObjectURL(blob);
+  a.download = `JDL取込_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
 }
 </script>
 </body>
