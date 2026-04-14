@@ -79,7 +79,6 @@ body{font-family:-apple-system,sans-serif;background:#f0f4f8;color:var(--gray-80
 .api-off { background: var(--gray-200); color: var(--gray-500); }
 .api-on { background: var(--success-light); color: var(--success); }
 
-/* 元請け・現場エリアの強調 */
 .genba-section {
   background: #f0f7ff; 
   padding: 12px; 
@@ -176,7 +175,6 @@ body{font-family:-apple-system,sans-serif;background:#f0f4f8;color:var(--gray-80
           <label class="form-label req">🏪 店名</label>
           <input type="text" class="form-control" id="fStore" placeholder="例：セブンイレブン">
 
-          <!-- 【ここが重要：元請け・現場名】 -->
           <div class="genba-section">
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
               <div>
@@ -272,6 +270,7 @@ function switchTab(tab, btn) {
   btn.classList.add('active');
   if(tab==='input') {
     document.getElementById('nav-in').classList.add('active');
+    document.getElementById('desk-in').classList.add('active');
     document.getElementById('nav-li').classList.remove('active');
   } else {
     document.getElementById('nav-in').classList.remove('active');
@@ -309,7 +308,9 @@ async function handleFile(file) {
 async function analyzeAI(key, base64) {
   toggleFormState(true); 
   showStatus("✨ AIがレシートを解析しています...", "loading");
-  const models = ["gemini-1.5-flash-latest", "gemini-2.0-flash", "gemini-1.5-flash"];
+  
+  // 2.0-flashを排除し、無料枠で最も安定して動作する1.5-flash系のみに限定
+  const models = ["gemini-1.5-flash", "gemini-1.5-flash-latest"];
   let success = false;
   let lastErr = "モデルが見つかりませんでした。";
 
@@ -327,11 +328,21 @@ async function analyzeAI(key, base64) {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        if (res.status === 404) continue;
-        throw new Error(data.error?.message || `Error ${res.status}`);
+        const errMsg = data.error?.message || "";
+        // 利用枠ゼロ(limit: 0)や404が見つかった場合は次のモデルへスキップ
+        if (res.status === 404 || errMsg.includes("limit: 0")) {
+            lastErr = errMsg;
+            continue;
+        }
+        // 回数制限(429)の場合は即座にループを抜けて待機を促す
+        if (res.status === 429 || errMsg.includes("Quota")) {
+            lastErr = "1分間の無料利用枠（15回）に達しました。<br>約20秒待ってから再度画像を選び直してください。";
+            break;
+        }
+        throw new Error(errMsg || `Error ${res.status}`);
       }
       const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-      const match = text.match(/\{[\s\S]*\}/);
+      const match = text?.match(/\{[\s\S]*\}/);
       if (!match) throw new Error('AIが読み取れませんでした。');
       const r = JSON.parse(match[0]);
       if(r.date) document.getElementById('fDate').value = r.date;
@@ -344,7 +355,9 @@ async function analyzeAI(key, base64) {
       success = true;
     } catch(e) { lastErr = e.message; }
   }
-  if (!success) showStatus(`❌ 解析エラー: ${lastErr}`, "error");
+  if (!success) {
+      showStatus(`❌ 解析エラー: 手動で入力してください。<br><span style="font-size:11px;font-weight:normal">${lastErr}</span>`, "error");
+  }
   toggleFormState(false); 
 }
 
