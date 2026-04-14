@@ -211,7 +211,8 @@ function exportJDL() {
     
     // 消費税計算（内税10%として計算）
     const taxAmount = Math.floor(e.amount * 10 / 110);
-    const summary = `${e.name}:${e.memo}`.replace(/,/g, ' ');
+    // 摘要から名前を外し、純粋なメモのみに変更
+    const summary = e.memo ? e.memo.replace(/,/g, ' ') : '';
 
     const row = [
       '1000',            // 識別フラグ
@@ -237,8 +238,13 @@ function exportJDL() {
       '',                // 貸方税入力方法
       e.amount,          // 貸方金額
       '',                // 貸方消費税
-      `"${summary}"`,     // 摘要
-      '', '', '', '', '', '' // その他空列
+      `"${summary}"`,    // 摘要
+      '',                // 借方取引科目
+      '',                // 貸方取引科目
+      '',                // 借方部門コード
+      `"${e.name}"`,     // 借方部門名称に名前を設定
+      '',                // 貸方部門コード
+      `"${e.name}"`      // 貸方部門名称に名前を設定（CSVの末尾）
     ];
     csv += row.join(',') + '\n';
   });
