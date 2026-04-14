@@ -3,12 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>経費精算アプリ（Google Vision OCR）</title>
+<title>経費精算アプリ（完全ローカルOCR版）</title>
+<!-- 完全無料・外部API不要のローカルOCRエンジン -->
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>
 :root {
-  --primary: #2563eb; --primary-light: #eff6ff; --success: #16a34a;
+  --primary: #2563eb; --primary-light: #eff6ff; --success: #16a34a; --success-light: #f0fdf4;
   --danger: #dc2626; --gray-50: #f9fafb; --gray-100: #f3f4f6; --gray-200: #e5e7eb;
-  --gray-300: #d1d5db; --gray-400: #9ca3af; --gray-500: #6b7280; --gray-800: #1f2937;
+  --gray-400: #9ca3af; --gray-500: #6b7280; --gray-800: #1f2937; 
   --shadow: 0 1px 3px rgba(0,0,0,.1);
   --r: 10px; --bottom-nav-h: 64px; --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
@@ -16,165 +18,92 @@
 body{font-family:-apple-system,sans-serif;background:#f0f4f8;color:var(--gray-800);min-height:100vh;padding-bottom:calc(var(--bottom-nav-h) + var(--safe-bottom))}
 
 .app-header{background:white;border-bottom:1px solid var(--gray-200);padding:0 16px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:var(--shadow)}
-.app-title{font-size:16px;font-weight:700;color:var(--primary)}
-.header-key-btn{font-size:11px;padding:6px 10px;border:1px solid var(--gray-200);border-radius:6px;background:white;color:var(--gray-500);cursor:pointer;white-space:nowrap}
+.app-title{font-size:17px;font-weight:700;color:var(--primary)}
 
 .main{max-width:640px;margin:0 auto;padding:16px 12px;display:flex;flex-direction:column;gap:14px}
 .card{background:white;border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;padding:16px;margin-bottom:14px}
 
-.form-label{display:block;font-size:11px;font-weight:700;color:var(--gray-500);margin-bottom:4px;text-transform:uppercase}
-.form-label.req::after{content:"*";color:var(--danger);margin-left:2px}
-.form-control{width:100%;padding:12px;border:1.5px solid var(--gray-200);border-radius:6px;font-size:16px;outline:none;background:white;margin-bottom:10px;font-family:inherit}
+.form-label{display:flex;justify-content:space-between;align-items:flex-end;font-size:11px;font-weight:700;color:var(--gray-500);margin-bottom:4px;text-transform:uppercase}
+.form-label span.req::after{content:"*";color:var(--danger);margin-left:2px}
+
+.form-control{width:100%;padding:12px;border:1.5px solid var(--gray-200);border-radius:6px;font-size:16px;outline:none;background:white;margin-bottom:10px;font-family:inherit;transition:opacity 0.2s;}
 .form-control:focus{border-color:var(--primary)}
-.form-control.auto-filled{border-color:#22c55e;background:#f0fdf4}
+.form-control:disabled{background-color:var(--gray-100);opacity:0.7;}
 
-.capture-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
-.capture-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:20px 10px;border:2px dashed var(--gray-300);border-radius:var(--r);background:var(--gray-50);cursor:pointer;position:relative;font-size:14px;font-weight:600;color:var(--gray-500)}
-.capture-btn:hover{background:#eff6ff;border-color:var(--primary)}
+.capture-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.capture-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:20px 10px;border:2px dashed var(--gray-300);border-radius:var(--r);background:var(--gray-50);cursor:pointer;position:relative}
 .capture-btn input{position:absolute;inset:0;opacity:0;cursor:pointer}
-.capture-btn .icon{font-size:28px}
-
-.no-key-banner{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px;margin-bottom:12px;font-size:13px;color:#92400e;display:none;line-height:1.5}
-.no-key-banner.show{display:block}
-.no-key-banner a{color:var(--primary);font-weight:700}
 
 .preview-wrap{display:none}
 .preview-wrap.show{display:block}
-.receipt-thumb{width:100%;border-radius:6px;border:2px solid var(--gray-200);overflow:hidden;margin-bottom:14px;background:#000;position:relative}
+.receipt-thumb{width:100%;border-radius:6px;border:2px solid var(--gray-200);overflow:hidden;margin-bottom:14px;background:#000}
 .receipt-thumb img{width:100%;max-height:300px;object-fit:contain;display:block;margin:0 auto}
-
-.ocr-overlay{position:absolute;inset:0;background:rgba(0,0,0,0.75);display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;border-radius:4px;padding:20px}
-.ocr-overlay.show{display:flex}
-.ocr-spinner{width:40px;height:40px;border:4px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:spin 0.8s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-.ocr-text{color:white;font-size:13px;font-weight:600;text-align:center}
-
-.ocr-result-banner{display:none;padding:10px 12px;border-radius:8px;margin-bottom:12px;font-size:13px;font-weight:600;line-height:1.5}
-.ocr-result-banner.show{display:block}
-.ocr-result-banner.success{background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0}
-.ocr-result-banner.partial{background:#fffbeb;color:#92400e;border:1px solid #fde68a}
-.ocr-result-banner.error{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}
 
 .btn{width:100%;padding:14px;border:none;border-radius:6px;font-size:15px;font-weight:700;cursor:pointer}
 .btn-success{background:var(--success);color:white}
 .btn-primary{background:var(--primary);color:white}
-.btn-ghost{background:transparent;color:var(--gray-500);border:1px solid var(--gray-200)}
+.btn-ghost{background:transparent;color:var(--gray-600);border:1px solid var(--gray-200)}
 
 .bottom-nav{position:fixed;bottom:0;left:0;right:0;height:calc(var(--bottom-nav-h) + var(--safe-bottom));background:white;border-top:1px solid var(--gray-200);display:flex;z-index:200}
-.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:var(--gray-400);background:none;border:none;gap:2px}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:var(--gray-400);background:none;border:none}
 .nav-btn.active{color:var(--primary)}
 
 .expense-card{display:flex;align-items:center;justify-content:space-between;padding:12px;border-bottom:1px solid var(--gray-100)}
 .cat-badge{font-size:10px;padding:2px 6px;border-radius:10px;background:var(--gray-100)}
-.genba-section{background:#f0f7ff;padding:12px;border-radius:8px;margin-bottom:12px;border:1.5px solid #bfdbfe}
 
-.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;display:none;align-items:flex-end;justify-content:center}
-.modal-bg.show{display:flex}
-.modal-sheet{background:white;border-radius:20px 20px 0 0;padding:24px 20px 40px;width:100%;max-width:640px;max-height:90vh;overflow-y:auto}
-.modal-title{font-size:17px;font-weight:700;margin-bottom:4px}
-.modal-sub{font-size:13px;color:var(--gray-500);margin-bottom:20px;line-height:1.5}
-.step-row{display:flex;gap:12px;margin-bottom:14px;align-items:flex-start}
-.step-num{width:24px;height:24px;border-radius:50%;background:var(--primary);color:white;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
-.step-text{font-size:13px;line-height:1.6;color:var(--gray-800);flex:1}
-.step-text a{color:var(--primary);font-weight:700;word-break:break-all}
-.step-text code{background:var(--gray-100);padding:2px 6px;border-radius:4px;font-size:12px}
+.genba-section { background: #f0f7ff; padding: 12px; border-radius: 8px; margin-bottom: 12px; border: 1.5px solid #bfdbfe; }
+
+/* タブの切り替え用 */
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* OCRステータス表示 */
+.ai-status-bar { display: none; padding: 12px; border-radius: 6px; margin-bottom: 12px; font-size: 13px; font-weight: bold; text-align: left; line-height: 1.5; }
+.ai-status-bar.loading { display: block; background: var(--primary-light); color: var(--primary); border: 1px solid #bfdbfe; }
+.ai-status-bar.error { display: block; background: #fee2e2; color: var(--danger); border: 1px solid #fca5a5; }
+.ai-status-bar.success { display: block; background: var(--success-light); color: var(--success); border: 1px solid #bbf7d0; }
 </style>
 </head>
 <body>
 
-<!-- APIキー設定モーダル -->
-<div class="modal-bg" id="keyModal">
-  <div class="modal-sheet">
-    <div class="modal-title">🔑 Google Vision APIキー設定</div>
-    <div class="modal-sub">無料枠：月1,000回まで無料（経費精算なら十分すぎる）</div>
-
-    <div class="step-row">
-      <div class="step-num">1</div>
-      <div class="step-text">
-        <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a> にアクセスして<b>プロジェクトを作成</b>
-      </div>
-    </div>
-    <div class="step-row">
-      <div class="step-num">2</div>
-      <div class="step-text">
-        メニュー →「APIとサービス」→「<b>ライブラリ</b>」で「<code>Cloud Vision API</code>」を検索して<b>有効化</b>
-      </div>
-    </div>
-    <div class="step-row">
-      <div class="step-num">3</div>
-      <div class="step-text">
-        「APIとサービス」→「<b>認証情報</b>」→「認証情報を作成」→「<b>APIキー</b>」
-      </div>
-    </div>
-    <div class="step-row">
-      <div class="step-num">4</div>
-      <div class="step-text">
-        作成されたキー（<code>AIzaSy...</code>）をコピーして下に貼り付け<br>
-        <span style="font-size:11px;color:var(--gray-500)">※セキュリティのため「APIの制限」で<b>Cloud Vision APIのみに制限</b>することを推奨</span>
-      </div>
-    </div>
-
-    <label class="form-label" style="margin-top:8px">APIキー</label>
-    <input type="text" class="form-control" id="keyInput" placeholder="AIzaSy..." autocomplete="off" autocorrect="off" spellcheck="false">
-    <div id="keyError" style="font-size:12px;color:var(--danger);margin-top:-6px;margin-bottom:10px;display:none"></div>
-
-    <button class="btn btn-primary" onclick="saveApiKey()">💾 保存してOCRを使う</button>
-    <button class="btn btn-ghost" style="margin-top:10px" onclick="closeKeyModal()">あとで設定（手動入力）</button>
-  </div>
-</div>
-
 <header class="app-header">
-  <div class="app-title">📸 経費精算（Google OCR）</div>
-  <button class="header-key-btn" onclick="openKeyModal()">🔑 APIキー</button>
+  <div class="app-title">📝 経費精算アプリ <span style="font-size:10px; color:#666; font-weight:normal;">(ローカルOCR)</span></div>
 </header>
 
 <main class="main">
+
+  <!-- 氏名入力のみ（APIキー欄は全削除） -->
   <div class="card">
-    <label class="form-label req">👤 氏名</label>
-    <input type="text" class="form-control" id="userName" placeholder="山田 太郎" oninput="localStorage.setItem('user_name_v5', this.value)">
+    <label class="form-label"><span class="req">👤 氏名</span></label>
+    <input type="text" class="form-control" id="userName" placeholder="山田 太郎" oninput="saveConfig()">
   </div>
 
   <div class="tab-panel active" id="panel-input">
     <div class="card">
       <div id="uploadSection">
-        <div class="no-key-banner" id="noKeyBanner">
-          ⚠️ Google Vision APIキーが未設定です。<a href="#" onclick="openKeyModal();return false;">ここをタップ</a>して無料キーを設定するとレシートを高精度で自動読み取りできます。
-        </div>
         <div class="capture-btns">
-          <label class="capture-btn">
-            <input type="file" accept="image/*" capture="environment" onchange="handleFile(this.files[0])">
-            <span class="icon">📸</span>
-            <span>カメラで撮影</span>
-          </label>
-          <label class="capture-btn">
-            <input type="file" accept="image/*" onchange="handleFile(this.files[0])">
-            <span class="icon">🖼️</span>
-            <span>写真を選択</span>
-          </label>
+          <label class="capture-btn"><input type="file" accept="image/*" capture="environment" onchange="handleFile(this.files[0])">📸 レシート撮影</label>
+          <label class="capture-btn"><input type="file" accept="image/*" onchange="handleFile(this.files[0])">🖼️ 写真から選ぶ</label>
         </div>
+        <p style="font-size:11px; color:#666; text-align:center;">※スマホ内部で文字を読み取ります（外部通信なし）</p>
       </div>
 
+      <!-- ローカルOCRのステータス表示 -->
+      <div id="aiStatusBar" class="ai-status-bar"></div>
+
       <div class="preview-wrap" id="previewWrap">
-        <div class="receipt-thumb">
-          <img id="receiptImg" src="">
-          <div class="ocr-overlay" id="ocrOverlay">
-            <div class="ocr-spinner"></div>
-            <div class="ocr-text" id="ocrStatusText">🔍 Google Visionで解析中...</div>
-          </div>
-        </div>
-
-        <div class="ocr-result-banner" id="ocrResultBanner"></div>
-
-        <div id="formGrid">
-          <label class="form-label req">📅 日付</label>
+        <div class="receipt-thumb"><img id="receiptImg" src=""></div>
+        <div class="form-grid" id="formGrid">
+          
+          <label class="form-label"><span class="req">📅 日付</span></label>
           <input type="date" class="form-control" id="fDate">
-
-          <label class="form-label req">💴 金額（税込）</label>
+          
+          <label class="form-label"><span class="req">💴 金額（税込）</span></label>
           <input type="number" class="form-control" id="fAmount" placeholder="0" inputmode="numeric">
-
+          
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
             <div>
-              <label class="form-label">📊 税率</label>
+              <label class="form-label"><span>📊 税率</span></label>
               <select class="form-control" id="fTax">
                 <option value="10">10%</option>
                 <option value="8">軽減8%</option>
@@ -182,7 +111,7 @@ body{font-family:-apple-system,sans-serif;background:#f0f4f8;color:var(--gray-80
               </select>
             </div>
             <div>
-              <label class="form-label">📁 項目</label>
+              <label class="form-label"><span>📁 項目</span></label>
               <select class="form-control" id="fCategory">
                 <option value="駐車場代">🚗 駐車場代</option>
                 <option value="仕入高">🛠️ 仕入高</option>
@@ -199,27 +128,27 @@ body{font-family:-apple-system,sans-serif;background:#f0f4f8;color:var(--gray-80
               </select>
             </div>
           </div>
-
-          <label class="form-label req">🏪 店名</label>
+          
+          <label class="form-label"><span class="req">🏪 店名</span></label>
           <input type="text" class="form-control" id="fStore" placeholder="例：コーナン">
 
           <div class="genba-section">
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
               <div>
-                <label class="form-label">🏢 元請け名</label>
+                <label class="form-label"><span>🏢 元請け名</span></label>
                 <input type="text" class="form-control" id="fMotouke" placeholder="例：〇〇建設">
               </div>
               <div>
-                <label class="form-label">📍 現場名</label>
+                <label class="form-label"><span>📍 現場名</span></label>
                 <input type="text" class="form-control" id="fGenba" placeholder="例：〇〇邸">
               </div>
             </div>
           </div>
-
-          <label class="form-label">📝 メモ</label>
-          <input type="text" class="form-control" id="fMemo" placeholder="任意">
-
-          <button class="btn btn-success" onclick="saveExpense()">💾 保存して次へ</button>
+          
+          <label class="form-label"><span>📝 メモ</span></label>
+          <input type="text" class="form-control" id="fMemo" placeholder="用途など（任意）">
+          
+          <button class="btn btn-success" id="saveBtn" onclick="saveExpense()">💾 保存して次へ</button>
           <button class="btn btn-ghost" style="margin-top:8px" onclick="resetForm()">キャンセル</button>
         </div>
       </div>
@@ -229,8 +158,8 @@ body{font-family:-apple-system,sans-serif;background:#f0f4f8;color:var(--gray-80
   <div class="tab-panel" id="panel-list" style="display:none">
     <div class="card">
       <div style="display:flex;justify-content:space-between;margin-bottom:14px;align-items:center">
-        <span style="font-weight:bold">📋 保存済み</span>
-        <button class="btn btn-primary" style="width:auto;padding:8px 16px;font-size:12px" onclick="exportJSON()">📤 JSON出力</button>
+        <span style="font-weight:bold">📋 保存済みリスト</span>
+        <button class="btn btn-primary" style="width:auto;padding:8px 16px;font-size:12px" onclick="exportJSON()">📤 事務員へ出力</button>
       </div>
       <div id="expenseCards"></div>
     </div>
@@ -239,65 +168,42 @@ body{font-family:-apple-system,sans-serif;background:#f0f4f8;color:var(--gray-80
 
 <nav class="bottom-nav">
   <button class="nav-btn active" id="nav-in" onclick="switchTab('input',this)">
-    <span style="font-size:20px">📝</span>入力
+    <span style="font-size: 16px; margin-bottom: 2px;">📝</span>入力
   </button>
   <button class="nav-btn" id="nav-li" onclick="switchTab('list',this)">
-    <span style="font-size:20px">📋</span>リスト
+    <span style="font-size: 16px; margin-bottom: 2px;">📋</span>リスト
   </button>
 </nav>
 
 <script>
-let expenses = JSON.parse(localStorage.getItem('exp_v5') || '[]');
+let expenses = JSON.parse(localStorage.getItem('exp_local') || '[]');
 let currentImg = null;
 
 document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('userName').value = localStorage.getItem('user_name_v5') || '';
+  document.getElementById('userName').value = localStorage.getItem('user_name_local') || '';
   document.getElementById('fDate').value = new Date().toISOString().split('T')[0];
-  updateKeyUI();
   renderList();
 });
 
-// ==============================
-// APIキー管理
-// ==============================
-function getApiKey() { return localStorage.getItem('gcv_api_key') || ''; }
-
-function updateKeyUI() {
-  const hasKey = !!getApiKey();
-  document.getElementById('noKeyBanner').classList.toggle('show', !hasKey);
+function saveConfig() {
+  const name = document.getElementById('userName').value.trim();
+  localStorage.setItem('user_name_local', name);
 }
 
-function openKeyModal() {
-  document.getElementById('keyInput').value = getApiKey();
-  document.getElementById('keyError').style.display = 'none';
-  document.getElementById('keyModal').classList.add('show');
+function showStatus(text, type) {
+  const bar = document.getElementById('aiStatusBar');
+  if(!bar) return;
+  bar.innerHTML = text;
+  bar.className = 'ai-status-bar ' + type;
 }
 
-function closeKeyModal() {
-  document.getElementById('keyModal').classList.remove('show');
+function toggleFormState(disabled) {
+  const inputs = document.getElementById('formGrid').querySelectorAll('input, select');
+  inputs.forEach(el => el.disabled = disabled);
+  document.getElementById('saveBtn').disabled = disabled;
+  document.getElementById('saveBtn').textContent = disabled ? "⌛ 解析中..." : "💾 保存して次へ";
 }
 
-function saveApiKey() {
-  const key = document.getElementById('keyInput').value.trim();
-  const errEl = document.getElementById('keyError');
-  if (!key) {
-    errEl.textContent = 'APIキーを入力してください';
-    errEl.style.display = 'block';
-    return;
-  }
-  if (!key.startsWith('AIza')) {
-    errEl.textContent = 'Google APIキーは通常 "AIza" で始まります。確認してください。';
-    errEl.style.display = 'block';
-    return;
-  }
-  localStorage.setItem('gcv_api_key', key);
-  closeKeyModal();
-  updateKeyUI();
-}
-
-// ==============================
-// ファイル処理
-// ==============================
 function switchTab(tab, btn) {
   document.querySelectorAll('.tab-panel').forEach(p => p.style.display = 'none');
   document.getElementById('panel-' + tab).style.display = 'block';
@@ -308,249 +214,108 @@ function switchTab(tab, btn) {
 
 async function handleFile(file) {
   if(!file || !file.type.startsWith('image/')) return;
-  currentImg = await resizeImg(file, 1600);  // Google Visionは大きい画像もOK
+  currentImg = await resizeImg(file, 800); // OCR用に解像度を確保
   document.getElementById('uploadSection').style.display = 'none';
   document.getElementById('receiptImg').src = currentImg;
   document.getElementById('previewWrap').classList.add('show');
-
-  const key = getApiKey();
-  if (!key) {
-    showBanner('partial', '⚠️ APIキー未設定のため自動入力はスキップ。手動で入力してください。<br><a href="#" onclick="openKeyModal();return false;" style="color:#1d4ed8">🔑 APIキーを設定する</a>');
-    return;
-  }
-  await runGoogleOCR(currentImg, key);
+  
+  // 完全ローカルOCRの発動
+  analyzeLocalOCR(currentImg);
 }
 
-// ==============================
-// Google Cloud Vision OCR
-// ==============================
-async function runGoogleOCR(imgSrc, apiKey) {
-  const overlay = document.getElementById('ocrOverlay');
-  const statusText = document.getElementById('ocrStatusText');
-  overlay.classList.add('show');
-  statusText.textContent = '📤 Google Visionに送信中...';
-  hideBanner();
-
+// Tesseract.js を使った完全ローカルOCR
+async function analyzeLocalOCR(base64) {
+  toggleFormState(true);
+  showStatus('⏳ スマホ内部で文字を解析しています...<br><span style="font-size:10px;font-weight:normal">※初回のみ言語データの準備に数秒かかります。</span>', 'loading');
+  
   try {
-    // data:image/jpeg;base64,... からbase64部分だけ抜き出す
-    const base64 = imgSrc.split(',')[1];
-
-    statusText.textContent = '🔍 解析中...';
-
-    const url = `https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`;
-    const body = {
-      requests: [{
-        image: { content: base64 },
-        features: [{ type: 'DOCUMENT_TEXT_DETECTION', maxResults: 1 }],
-        imageContext: { languageHints: ['ja'] }
-      }]
-    };
-
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      const msg = data?.error?.message || `HTTP ${res.status}`;
-      // APIキー関連のエラーなら設定リセットを促す
-      if (res.status === 400 || res.status === 403) {
-        throw new Error(`${msg}（APIキーが無効/Vision API未有効/制限設定をご確認ください）`);
-      }
-      throw new Error(msg);
+    // 日本語エンジンで読み取り開始
+    const worker = await Tesseract.createWorker('jpn');
+    const ret = await worker.recognize(base64);
+    await worker.terminate();
+    
+    const text = ret.data.text;
+    console.log("OCR抽出テキスト:\n", text);
+    
+    if (!text || text.trim() === '') {
+        throw new Error('文字が見つかりませんでした。');
     }
 
-    const ann = data.responses?.[0];
-    if (ann?.error) throw new Error(ann.error.message);
-
-    // fullTextAnnotation（構造化されたテキスト）を優先、なければtextAnnotations[0]
-    const rawText = ann?.fullTextAnnotation?.text || ann?.textAnnotations?.[0]?.description || '';
-    overlay.classList.remove('show');
-
-    console.log('=== Google Vision OCR ===\n' + rawText);
-
-    if (!rawText.trim()) {
-      showBanner('error', '❌ テキストを検出できませんでした。別のレシートを試すか、明るい場所で撮り直してください。');
-      return;
+    // --- 抽出ロジック（正規表現でテキストから情報を拾う） ---
+    
+    // 1. 日付の抽出 (例: 2024年4月1日, 2024/04/01)
+    const dateMatch = text.match(/(20\d{2})[年\/\-\.]([01]?\d)[月\/\-\.]([0-3]?\d)/);
+    if (dateMatch) {
+      const y = dateMatch[1];
+      const m = dateMatch[2].padStart(2, '0');
+      const d = dateMatch[3].padStart(2, '0');
+      document.getElementById('fDate').value = `${y}-${m}-${d}`;
     }
 
-    const parsed = parseReceiptText(rawText);
-    const count = applyParsedData(parsed);
-
-    if (count >= 3) {
-      showBanner('success', `✅ ${count}項目を自動入力しました。内容を確認してください。`);
-    } else if (count >= 1) {
-      showBanner('partial', `⚠️ ${count}項目を入力しました。残りは手動で補完してください。`);
-    } else {
-      showBanner('error', '❌ レシート情報を特定できませんでした。手動で入力してください。');
+    // 2. 金額の抽出 (カンマ区切りの数字から一番大きいものを合計金額と推定)
+    const amounts = [];
+    const amountRegex = /[¥￥]?\s*([1-9]\d{0,2}(?:,\d{3})+|[1-9]\d{2,})\s*(円|)/g;
+    let match;
+    while ((match = amountRegex.exec(text)) !== null) {
+      const val = parseInt(match[1].replace(/,/g, ''), 10);
+      if (val > 0) amounts.push(val);
+    }
+    if (amounts.length > 0) {
+      document.getElementById('fAmount').value = Math.max(...amounts);
     }
 
-  } catch (err) {
-    overlay.classList.remove('show');
-    showBanner('error', `❌ エラー: ${err.message}<br><span style="font-size:11px;font-weight:normal">APIキー・ネット接続を確認してください</span>`);
-    console.error('Google Vision Error:', err);
+    // 3. 店名の抽出 (文字として認識された最初の行を店名と仮定)
+    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    const validLines = lines.filter(l => /[ぁ-んァ-ン一-龥a-zA-Z]/.test(l) && !l.includes('領収') && !l.includes('レシート'));
+    if(validLines.length > 0) {
+      // 誤認識の記号等を除去してセット
+      document.getElementById('fStore').value = validLines[0].replace(/[^ぁ-んァ-ン一-龥a-zA-Z0-9株式会社]/g, '').substring(0, 20);
+    }
+
+    showStatus("✅ 読み取り完了（誤りがあれば修正してください）", "success");
+
+  } catch(e) {
+    showStatus(`❌ 解析エラー: 手動で入力してください。<br><span style="font-size:11px;font-weight:normal">${e.message}</span>`, "error");
+  } finally {
+    toggleFormState(false);
   }
 }
 
-function showBanner(type, html) {
-  const b = document.getElementById('ocrResultBanner');
-  b.className = `ocr-result-banner ${type} show`;
-  b.innerHTML = html;
-}
-function hideBanner() {
-  document.getElementById('ocrResultBanner').className = 'ocr-result-banner';
-}
-
-// ==============================
-// レシートテキスト解析
-// ==============================
-function parseReceiptText(rawText) {
-  const text = rawText
-    .replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0))
-    .replace(/[，、]/g, ',')
-    .replace(/[¥￥]/g, '¥')
-    .replace(/\r\n/g, '\n');
-
-  const result = {};
-  const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-
-  // ---- 金額 ----
-  const amountPats = [
-    /(?:税込)?(?:合\s*計|領\s*収\s*金\s*額|請求金額|お支払|ご請求|総額)[^\d]{0,10}([0-9,]{3,})/i,
-    /合\s*計\s*¥?\s*([0-9,]{3,})/i,
-    /¥\s*([0-9,]{3,})/,
-    /([0-9,]{3,})\s*円/,
-  ];
-  for (const pat of amountPats) {
-    const m = text.match(pat);
-    if (m) {
-      const num = parseInt(m[1].replace(/,/g, ''), 10);
-      if (num >= 10 && num < 10000000) { result.amount = num; break; }
-    }
-  }
-  if (!result.amount) {
-    let maxNum = 0;
-    for (const line of lines) {
-      for (const n of (line.match(/[0-9,]{3,}/g) || [])) {
-        const v = parseInt(n.replace(/,/g, ''), 10);
-        if (v > maxNum && v >= 10 && v < 1000000) maxNum = v;
-      }
-    }
-    if (maxNum > 0) result.amount = maxNum;
-  }
-
-  // ---- 日付 ----
-  const datePats = [
-    { re: /(\d{4})\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日/, fn: m => `${m[1]}-${p2(m[2])}-${p2(m[3])}` },
-    { re: /令和\s*(\d+)\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日/, fn: m => `${2018+parseInt(m[1])}-${p2(m[2])}-${p2(m[3])}` },
-    { re: /[Rr][\s.]?(\d{1,2})[.\-\/](\d{1,2})[.\-\/](\d{1,2})/, fn: m => `${2018+parseInt(m[1])}-${p2(m[2])}-${p2(m[3])}` },
-    { re: /(20\d{2})[\/\-\.](\d{1,2})[\/\-\.](\d{1,2})/, fn: m => `${m[1]}-${p2(m[2])}-${p2(m[3])}` },
-    { re: /(\d{2})[\/\-\.](\d{1,2})[\/\-\.](\d{1,2})/, fn: m => {
-        const yy = parseInt(m[1]);
-        const year = yy >= 50 ? 1900+yy : 2000+yy;
-        return `${year}-${p2(m[2])}-${p2(m[3])}`;
-      }
-    },
-  ];
-  for (const { re, fn } of datePats) {
-    const m = text.match(re);
-    if (m) {
-      const d = fn(m);
-      const dt = new Date(d);
-      if (!isNaN(dt) && dt.getFullYear() >= 2000 && dt.getFullYear() <= 2035) { result.date = d; break; }
-    }
-  }
-
-  // ---- 税率 ----
-  if (/軽減税率|※\s*8\s*%|\*\s*8\s*%/.test(text)) result.tax = '8';
-  else if (/10\s*%|消費税/.test(text)) result.tax = '10';
-
-  // ---- 店名 ----
-  const skipPats = [
-    /^\d+$/, /^\d{4}[年\/\-]/, /^[Rr]\d/, /^tel/i, /^〒/, /^[0-9\-\(\)\s]+$/,
-    /^https?/i, /^No\./i, /^T\d{10,}/, /^登録番号/, /^適用税率/, /^領\s*収/
-  ];
-  for (const line of lines.slice(0, 10)) {
-    const cl = line.replace(/[\s　]+/g, ' ').trim();
-    if (cl.length < 2) continue;
-    if (skipPats.some(p => p.test(cl))) continue;
-    if (/^[\d,¥\s]+$/.test(cl)) continue;
-    if ((cl.match(/\d/g) || []).length / cl.length > 0.5) continue;
-    result.store = cl.substring(0, 30);
-    break;
-  }
-
-  // ---- カテゴリ ----
-  const cats = {
-    'ガソリン': ['ガソリン','エネオス','ENEOS','出光','コスモ','燃料','SS','軽油','レギュラー','ハイオク'],
-    '駐車場代': ['駐車','パーキング','タイムズ','コインパーク','Parking','時間貸','入庫','精算'],
-    '消耗品費': ['コーナン','コメリ','カインズ','ホームセンター','資材','材料','ビバホーム','ジョイフル'],
-    '事務用品': ['文具','コクヨ','プリンタ','インク','用紙'],
-    '会議費': ['カフェ','喫茶','スターバックス','ドトール','コーヒー','珈琲','STARBUCKS','TULLYS'],
-    '運賃': ['宅急便','ヤマト','佐川','運賃','配送','郵便'],
-    '水道光熱': ['電気','ガス料','水道','東電','関電'],
-  };
-  for (const [cat, kws] of Object.entries(cats)) {
-    if (kws.some(k => text.includes(k))) { result.category = cat; break; }
-  }
-
-  return result;
-}
-
-function p2(n) { return String(parseInt(n)).padStart(2, '0'); }
-
-function applyParsedData(parsed) {
-  let count = 0;
-  if (parsed.date)     { setField('fDate', parsed.date); count++; }
-  if (parsed.amount)   { setField('fAmount', parsed.amount); count++; }
-  if (parsed.store)    { setField('fStore', parsed.store); count++; }
-  if (parsed.tax)      { document.getElementById('fTax').value = parsed.tax; count++; }
-  if (parsed.category) { document.getElementById('fCategory').value = parsed.category; }
-  return count;
-}
-
-function setField(id, value) {
-  const el = document.getElementById(id);
-  el.value = value;
-  el.classList.add('auto-filled');
-  el.addEventListener('input', () => el.classList.remove('auto-filled'), { once: true });
-}
-
-// ==============================
-// 保存・フォームリセット
-// ==============================
 function saveExpense() {
-  const name   = document.getElementById('userName').value.trim();
-  const date   = document.getElementById('fDate').value;
+  const name = document.getElementById('userName').value.trim();
+  const date = document.getElementById('fDate').value;
   const amount = Number(document.getElementById('fAmount').value);
-  const store  = document.getElementById('fStore').value.trim();
+  const store = document.getElementById('fStore').value.trim();
+  const motouke = document.getElementById('fMotouke').value.trim();
+  const genba = document.getElementById('fGenba').value.trim();
+  
   if(!name || !date || !amount || !store) return alert('氏名・日付・金額・店名をすべて入力してください');
 
-  expenses.unshift({
-    id: Date.now(), date, amount, store,
-    motouke: document.getElementById('fMotouke').value.trim(),
-    genba:   document.getElementById('fGenba').value.trim(),
-    tax:      document.getElementById('fTax').value,
-    category: document.getElementById('fCategory').value,
-    memo:     document.getElementById('fMemo').value,
-    img: currentImg
-  });
-  localStorage.setItem('exp_v5', JSON.stringify(expenses));
-  resetForm();
+  const newExpense = { 
+    id: Date.now(), date, amount, store, motouke, genba,
+    tax: document.getElementById('fTax').value, 
+    category: document.getElementById('fCategory').value, 
+    memo: document.getElementById('fMemo').value, 
+    img: currentImg 
+  };
+  
+  expenses.unshift(newExpense);
+  localStorage.setItem('exp_local', JSON.stringify(expenses));
+  resetForm(); 
   switchTab('list', document.getElementById('nav-li'));
 }
 
 function resetForm() {
-  currentImg = null;
+  currentImg = null; 
   document.getElementById('uploadSection').style.display = 'block';
   document.getElementById('previewWrap').classList.remove('show');
-  ['fAmount','fStore','fMemo','fMotouke','fGenba'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('fDate').value = new Date().toISOString().split('T')[0];
-  hideBanner();
-  document.querySelectorAll('.auto-filled').forEach(el => el.classList.remove('auto-filled'));
+  
+  const bar = document.getElementById('aiStatusBar');
+  if(bar) bar.style.display = 'none';
+
+  document.getElementById('fAmount').value = ''; 
+  document.getElementById('fStore').value = '';
+  document.getElementById('fMemo').value = '';
   document.querySelectorAll('input[type=file]').forEach(i => i.value = '');
 }
 
@@ -561,19 +326,20 @@ function renderList() {
     <div class="expense-card">
       <div>
         <div style="font-weight:bold;font-size:14px">${esc(e.store)}</div>
-        <div style="font-size:11px;color:#666">${e.date} · <span class="cat-badge">${e.category}</span><br>🏢 ${esc(e.motouke||'')} / ${esc(e.genba||'')}</div>
+        <div style="font-size:11px;color:#666">${e.date} · <span class="cat-badge">${e.category}</span><br>🏢 ${esc(e.motouke)} / ${esc(e.genba)}</div>
       </div>
       <div style="text-align:right">
         <div style="font-weight:bold;color:var(--primary);font-size:16px">¥${e.amount.toLocaleString()}</div>
         <button onclick="del(${e.id})" style="font-size:10px;color:var(--danger);border:none;background:none;padding:4px">削除</button>
       </div>
-    </div>`).join('');
+    </div>
+  `).join('');
 }
 
 function del(id) {
   if(!confirm('削除しますか？')) return;
   expenses = expenses.filter(e => e.id !== id);
-  localStorage.setItem('exp_v5', JSON.stringify(expenses));
+  localStorage.setItem('exp_local', JSON.stringify(expenses));
   renderList();
 }
 
@@ -581,23 +347,21 @@ function exportJSON() {
   const name = document.getElementById('userName').value.trim();
   if(!expenses.length) return alert('データなし');
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([JSON.stringify({name, expenses})], {type:'application/json'}));
+  a.href = URL.createObjectURL(new Blob([JSON.stringify({ name, expenses })], {type:'application/json'}));
   a.download = `経費申請_${name}_${new Date().toISOString().slice(0,10)}.json`;
   a.click();
 }
 
-function esc(s) { return String(s||'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]); }
+function esc(s) { return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]); }
 
 async function resizeImg(file, max) {
   return new Promise(res => {
     const r = new FileReader(); r.onload = e => {
       const img = new Image(); img.onload = () => {
-        const c = document.createElement('canvas');
-        const ratio = Math.min(1, max/img.width, max/img.height);
+        const c = document.createElement('canvas'); const ratio = Math.min(1, max/img.width, max/img.height);
         c.width = img.width*ratio; c.height = img.height*ratio;
-        const ctx = c.getContext('2d');
-        ctx.fillStyle='#fff'; ctx.fillRect(0,0,c.width,c.height); ctx.drawImage(img,0,0,c.width,c.height);
-        res(c.toDataURL('image/jpeg', 0.9));
+        const ctx = c.getContext('2d'); ctx.fillStyle='#fff'; ctx.fillRect(0,0,c.width,c.height); ctx.drawImage(img,0,0,c.width,c.height);
+        res(c.toDataURL('image/jpeg', 0.8)); // OCR精度向上のため画質を少し上げる
       }; img.src = e.target.result;
     }; r.readAsDataURL(file);
   });
