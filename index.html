@@ -1030,11 +1030,16 @@ function updateGmSelects(){
 
 function onGmGenbaChange(){
   const genba=document.getElementById('gm-genba').value;
-  const locs=[...new Set(filteredNippos().filter(n=>n.genba===genba).map(n=>n.loc).filter(Boolean))].sort();
+  const nippos=filteredNippos().filter(n=>n.genba===genba);
+  const locs=[...new Set(nippos.map(n=>n.loc).filter(Boolean))].sort();
+  const hasNoLoc=nippos.some(n=>!n.loc);
   const lSel=document.getElementById('gm-location');
   const curL=lSel.value;
-  lSel.innerHTML='<option value="">現場を選択</option>'+locs.map(l=>`<option value="${esc(l)}"${l===curL?' selected':''}>${esc(l)}</option>`).join('');
-  if(locs.length===1)lSel.value=locs[0];
+  let opts='<option value="">現場を選択</option>';
+  opts+=locs.map(l=>`<option value="${esc(l)}"${l===curL?' selected':''}>${esc(l)}</option>`).join('');
+  if(hasNoLoc)opts+=`<option value="__noloc__"${curL==='__noloc__'?' selected':''}>（現場名なし）</option>`;
+  lSel.innerHTML=opts;
+  if(locs.length===1&&!hasNoLoc)lSel.value=locs[0];
   renderGmList();
 }
 
@@ -1042,7 +1047,9 @@ function getGmGroups(){
   const genba=document.getElementById('gm-genba').value;
   const loc=document.getElementById('gm-location').value;
   if(!genba||!loc)return[];
-  const nippos=filteredNippos().filter(n=>n.genba===genba&&n.loc===loc);
+  const nippos=loc==='__noloc__'
+    ?filteredNippos().filter(n=>n.genba===genba&&!n.loc)
+    :filteredNippos().filter(n=>n.genba===genba&&n.loc===loc);
   return groupNippos(nippos).sort((a,b)=>a.date.localeCompare(b.date));
 }
 
