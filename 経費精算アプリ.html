@@ -58,7 +58,7 @@ body{font-family:-apple-system,sans-serif;background:#f0f4f8;color:var(--gray-80
 .ai-status-bar { display: none; padding: 12px; border-radius: 6px; margin-bottom: 12px; font-size: 13px; font-weight: bold; text-align: left; line-height: 1.5; }
 .ai-status-bar.loading { display: block; background: var(--primary-light); color: var(--primary); }
 .ai-status-bar.error { display: block; background: #fee2e2; color: var(--danger); border: 1px solid #fca5a5; }
-.ai-status-bar.success { display: block; background: var(--success-light); color: var(--success); }
+.ai-status-bar.success { display: block; background: var(--success-light); color: var(--success); border: 1px solid #bbf7d0; }
 
 /* ===== PREVIEW & LIST ===== */
 .preview-wrap{display:none}
@@ -79,10 +79,6 @@ body{font-family:-apple-system,sans-serif;background:#f0f4f8;color:var(--gray-80
 
 .expense-card{display:flex;align-items:center;justify-content:space-between;padding:12px;border-bottom:1px solid var(--gray-100)}
 .cat-badge{font-size:10px;padding:2px 6px;border-radius:10px;background:var(--gray-100)}
-
-.api-badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-bottom: 8px; display: inline-block; }
-.api-off { background: var(--gray-200); color: var(--gray-500); }
-.api-on { background: var(--success-light); color: var(--success); }
 </style>
 </head>
 <body>
@@ -99,17 +95,7 @@ body{font-family:-apple-system,sans-serif;background:#f0f4f8;color:var(--gray-80
   <!-- CONFIG AREA -->
   <div class="card">
     <label class="form-label req">👤 あなたの氏名</label>
-    <input type="text" class="form-control" id="userName" placeholder="山田 太郎" oninput="saveConfig()">
-    
-    <details id="apiConfigDetails">
-      <summary style="font-size: 12px; color: var(--gray-500); cursor: pointer; margin-top: 5px;">🔧 AI自動入力の設定</summary>
-      <div style="padding-top: 10px;">
-        <div id="apiStatusBadge" class="api-badge api-off">AI未設定</div>
-        <label class="form-label">Gemini APIキー</label>
-        <input type="password" class="form-control" id="apiKey" placeholder="AIza..." oninput="saveConfig()">
-        <p style="font-size: 11px; color: var(--gray-500);">※キーはブラウザにのみ保存されます。</p>
-      </div>
-    </details>
+    <input type="text" class="form-control" id="userName" placeholder="山田 太郎" oninput="saveConfig()" style="margin-bottom: 0;">
   </div>
 
   <!-- INPUT PANEL -->
@@ -201,57 +187,33 @@ body{font-family:-apple-system,sans-serif;background:#f0f4f8;color:var(--gray-80
 
 <script>
 /**
- * 【管理者設定】
- * この "" の中に直接APIキー（AIza...）を貼り付けてもOKです。
+ * 【超重要】システムが自動でAPIキーを注入するため、ここは絶対に空のままにしてください。
  */
-const embeddedApiKey = ""; 
+const apiKey = ""; 
 
 let expenses = JSON.parse(localStorage.getItem('exp_v5') || '[]');
 let currentImg = null;
 
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('userName').value = localStorage.getItem('user_name_v5') || '';
-  document.getElementById('apiKey').value = localStorage.getItem('api_key_v5') || '';
-  
   document.getElementById('fDate').value = new Date().toISOString().split('T')[0];
-  updateApiStatus();
   setupDrop();
   renderList();
 });
 
 function saveConfig() {
   const name = document.getElementById('userName').value.trim();
-  const key = document.getElementById('apiKey').value.trim();
   localStorage.setItem('user_name_v5', name);
-  localStorage.setItem('api_key_v5', key);
-  updateApiStatus();
-}
-
-function updateApiStatus() {
-  const badge = document.getElementById('apiStatusBadge');
-  const keyInStorage = localStorage.getItem('api_key_v5');
-  
-  if (embeddedApiKey) {
-    badge.textContent = "✅ 社内共通AIが有効です";
-    badge.className = "api-badge api-on";
-  } else if (keyInStorage) {
-    badge.textContent = "✅ 個別AI設定が有効です";
-    badge.className = "api-badge api-on";
-  } else {
-    badge.textContent = "AI未設定 (手動入力)";
-    badge.className = "api-badge api-off";
-  }
 }
 
 function showStatus(text, type) {
   const bar = document.getElementById('aiStatusBar');
   if(!bar) return;
-  // HTMLタグを許可して表示
   bar.innerHTML = text;
   bar.className = 'ai-status-bar ' + type;
 }
 
-// フォームの入力可否を切り替える（非同期競合防止）
+// フォームの入力可否を切り替える
 function toggleFormState(disabled) {
   const inputs = document.getElementById('formGrid').querySelectorAll('input, select');
   inputs.forEach(el => el.disabled = disabled);
@@ -297,25 +259,31 @@ async function handleFile(file) {
   document.getElementById('receiptImg').src = currentImg;
   document.getElementById('previewWrap').classList.add('show');
   
-  const key = embeddedApiKey || localStorage.getItem('api_key_v5')?.trim();
-  if(key) {
-    analyzeAI(key, currentImg);
-  }
+  analyzeAI(currentImg);
 }
 
-async function analyzeAI(key, base64) {
-  toggleFormState(true); // フォームをロック
-  showStatus("✨ AIが読み取りを行っています...", "loading");
+/**
+ * 安定化されたAI解析エンジン (Exponential Backoff実装済み)
+ */
+async function analyzeAI(base64) {
+  toggleFormState(true); 
+  showStatus("✨ AIがレシートを解析しています...", "loading");
 
-  // フォールバック用のモデルリスト（事前検索によるエラーを排除）
-  const modelsToTry = ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-1.5-pro"];
+  // 環境指定の必須モデルに完全固定
+  const model = "gemini-2.5-flash-preview-09-2025";
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+  
+  // 失敗時のリトライ待機時間（1秒、2秒、4秒、8秒、16秒）
+  const retryDelays = [1000, 2000, 4000, 8000, 16000];
   let success = false;
-  let lastErrorMessage = "不明なエラーが発生しました";
+  let lastError = "解析に失敗しました";
 
-  for (const model of modelsToTry) {
+  for (let attempt = 0; attempt <= retryDelays.length; attempt++) {
     try {
-      showStatus(`✨ AI (${model}) で解析中...`, "loading");
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+      if (attempt > 0) {
+        showStatus(`✨ 通信が混み合っています。再試行中... (${attempt}/${retryDelays.length})`, "loading");
+        await new Promise(r => setTimeout(r, retryDelays[attempt - 1]));
+      }
 
       const res = await fetch(url, {
         method: 'POST', 
@@ -323,39 +291,25 @@ async function analyzeAI(key, base64) {
         body: JSON.stringify({ 
           contents: [{ 
             parts: [
-              { text: "Extract receipt info as JSON. Fields: {date:YYYY-MM-DD, amount:number, store, tax:10|8|0, category, memo}. Category must be one of: 駐車場代, 仕入高, ガソリン, 消耗品費, 事務用品, 運賃, その他交通費, 会議費, 交際費, 水道光熱, 租税公課, 福利厚生. Only return raw JSON object without markdown." }, 
+              { text: "Extract receipt info as JSON. Fields: {date:YYYY-MM-DD, amount:number, store, tax:10|8|0, category, memo}. Category must be one of: 駐車場代, 仕入高, ガソリン, 消耗品費, 事務用品, 運賃, その他交通費, 会議費, 交際費, 水道光熱, 租税公課, 福利厚生. Only return raw JSON object without markdown fences." }, 
               { inlineData: { mimeType: "image/jpeg", data: base64.split(',')[1] } }
             ] 
           }] 
         })
       });
       
-      const data = await res.json().catch(() => ({}));
-
       if (!res.ok) {
-        const errMsg = data.error?.message || `HTTPエラー ${res.status}`;
-        
-        // 1. APIキー無効化の確定エラー（致命的なので即中断）
-        if (res.status === 400 && errMsg.includes("API key not valid")) {
-            throw new Error(`🚨 <b>APIキーが無効です。</b><br>GitHub等に公開したため、Googleに自動停止（無効化）された可能性が高いです。<br>Google AI Studioで「新しいキー」を再発行し、設定し直してください。`);
-        }
-        
-        // 2. モデルが見つからないエラー（次のモデルを試す）
-        if (res.status === 404 && errMsg.includes("not found")) {
-            lastErrorMessage = `モデル ${model} が見つかりません。`;
-            continue; 
-        }
-
-        // その他のエラー
-        throw new Error(`APIエラー: ${errMsg}`);
+        throw new Error(`HTTP Error: ${res.status}`);
       }
 
+      const data = await res.json();
       const textContent = data.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!textContent) throw new Error('AIから有効な返答が得られませんでした。');
+      
+      if (!textContent) throw new Error('AIがデータを返しませんでした。');
 
-      // AI特有のマークダウンや余計な文字を強力に除去
+      // Markdown等を無視してJSONを抽出
       const match = textContent.match(/\{[\s\S]*\}/);
-      if (!match) throw new Error('AIの返答からデータを抽出できませんでした。');
+      if (!match) throw new Error('AIが文字を読み取れませんでした。');
       
       const r = JSON.parse(match[0]);
       if(r.date) document.getElementById('fDate').value = r.date;
@@ -372,25 +326,19 @@ async function analyzeAI(key, base64) {
       }, 3000);
 
       success = true;
-      break; // 成功した場合はループを抜ける
+      break; // 成功したのでループを抜ける
 
     } catch(e) { 
-      console.error('AI読み取り失敗:', e);
-      lastErrorMessage = e.message;
-      
-      // 致命的なキーエラーの場合は他のモデルを試しても無駄なのでループを抜ける
-      if (lastErrorMessage.includes("APIキーが無効です")) {
-          break;
-      }
+      lastError = e.message;
+      // リトライを続けるためエラーログは出さない
     }
   }
 
-  // 全てのモデルで失敗した場合
   if (!success) {
-      showStatus(`❌ ${lastErrorMessage}`, "error");
+      showStatus(`❌ 解析エラー: 手動で入力してください。<br><span style="font-size:11px;font-weight:normal">(${lastError})</span>`, "error");
   }
   
-  toggleFormState(false); // フォームのロックを解除
+  toggleFormState(false); 
 }
 
 function saveExpense() {
@@ -409,7 +357,7 @@ function saveExpense() {
     switchTab('list', document.getElementById('nav-li'));
   } catch (e) {
     expenses.shift();
-    alert('【保存失敗】スマホのブラウザ保存容量（約5MB）がいっぱいです。\n「リスト」タブからデータを管理者へ出力した後、削除して空き容量を作ってください。');
+    alert('【保存失敗】スマホのブラウザ保存容量がいっぱいです。\n「リスト」タブからデータを管理者へ出力した後、削除して空き容量を作ってください。');
   }
 }
 
