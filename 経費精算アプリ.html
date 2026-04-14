@@ -3,12 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>経費精算アプリ（手動入力版）</title>
+<title>経費精算アプリ（OCR自動入力版）</title>
+<script src='https://unpkg.com/tesseract.js@4/dist/tesseract.min.js'></script>
 <style>
 :root {
   --primary: #2563eb; --primary-light: #eff6ff; --success: #16a34a; --success-light: #f0fdf4;
   --danger: #dc2626; --gray-50: #f9fafb; --gray-100: #f3f4f6; --gray-200: #e5e7eb;
-  --gray-400: #9ca3af; --gray-500: #6b7280; --gray-800: #1f2937; 
+  --gray-300: #d1d5db; --gray-400: #9ca3af; --gray-500: #6b7280; --gray-800: #1f2937;
   --shadow: 0 1px 3px rgba(0,0,0,.1);
   --r: 10px; --bottom-nav-h: 64px; --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
@@ -25,41 +26,59 @@ body{font-family:-apple-system,sans-serif;background:#f0f4f8;color:var(--gray-80
 .form-label.req::after{content:"*";color:var(--danger);margin-left:2px}
 .form-control{width:100%;padding:12px;border:1.5px solid var(--gray-200);border-radius:6px;font-size:16px;outline:none;background:white;margin-bottom:10px;font-family:inherit}
 .form-control:focus{border-color:var(--primary)}
+.form-control.auto-filled{border-color:#22c55e;background:#f0fdf4}
 
 .capture-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
-.capture-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:20px 10px;border:2px dashed var(--gray-300);border-radius:var(--r);background:var(--gray-50);cursor:pointer;position:relative}
+.capture-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:20px 10px;border:2px dashed var(--gray-300);border-radius:var(--r);background:var(--gray-50);cursor:pointer;position:relative;font-size:14px;font-weight:600;color:var(--gray-500)}
+.capture-btn:hover{background:#eff6ff;border-color:var(--primary)}
 .capture-btn input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.capture-btn .icon{font-size:28px}
 
 .preview-wrap{display:none}
 .preview-wrap.show{display:block}
-.receipt-thumb{width:100%;border-radius:6px;border:2px solid var(--gray-200);overflow:hidden;margin-bottom:14px;background:#000}
+.receipt-thumb{width:100%;border-radius:6px;border:2px solid var(--gray-200);overflow:hidden;margin-bottom:14px;background:#000;position:relative}
 .receipt-thumb img{width:100%;max-height:300px;object-fit:contain;display:block;margin:0 auto}
+
+/* OCR Loading Overlay */
+.ocr-overlay{position:absolute;inset:0;background:rgba(0,0,0,0.7);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;border-radius:6px;display:none}
+.ocr-overlay.show{display:flex}
+.ocr-spinner{width:40px;height:40px;border:4px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ocr-text{color:white;font-size:13px;font-weight:600}
+.ocr-progress-bar{width:80%;height:6px;background:rgba(255,255,255,0.2);border-radius:3px;overflow:hidden}
+.ocr-progress-fill{height:100%;background:#22c55e;border-radius:3px;transition:width 0.3s;width:0%}
+
+/* OCR Result Banner */
+.ocr-result-banner{display:none;padding:10px 12px;border-radius:8px;margin-bottom:12px;font-size:13px;font-weight:600;align-items:center;gap:8px}
+.ocr-result-banner.show{display:flex}
+.ocr-result-banner.success{background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0}
+.ocr-result-banner.partial{background:#fffbeb;color:#92400e;border:1px solid #fde68a}
+.ocr-result-banner.error{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}
 
 .btn{width:100%;padding:14px;border:none;border-radius:6px;font-size:15px;font-weight:700;cursor:pointer}
 .btn-success{background:var(--success);color:white}
 .btn-primary{background:var(--primary);color:white}
-.btn-ghost{background:transparent;color:var(--gray-600);border:1px solid var(--gray-200)}
+.btn-ghost{background:transparent;color:var(--gray-500);border:1px solid var(--gray-200)}
+.btn:disabled{opacity:0.5;cursor:not-allowed}
 
 .bottom-nav{position:fixed;bottom:0;left:0;right:0;height:calc(var(--bottom-nav-h) + var(--safe-bottom));background:white;border-top:1px solid var(--gray-200);display:flex;z-index:200}
-.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:var(--gray-400);background:none;border:none}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:var(--gray-400);background:none;border:none;gap:2px}
 .nav-btn.active{color:var(--primary)}
 
 .expense-card{display:flex;align-items:center;justify-content:space-between;padding:12px;border-bottom:1px solid var(--gray-100)}
 .cat-badge{font-size:10px;padding:2px 6px;border-radius:10px;background:var(--gray-100)}
 
-.genba-section {
-  background: #f0f7ff; 
-  padding: 12px; 
-  border-radius: 8px; 
-  margin-bottom: 12px; 
-  border: 1.5px solid #bfdbfe;
-}
+.genba-section{background:#f0f7ff;padding:12px;border-radius:8px;margin-bottom:12px;border:1.5px solid #bfdbfe}
+
+/* OCR Badge on fields */
+.field-wrap{position:relative}
+.ocr-badge{position:absolute;right:8px;top:50%;transform:translateY(-80%);font-size:10px;background:#22c55e;color:white;padding:2px 6px;border-radius:10px;font-weight:700;pointer-events:none}
 </style>
 </head>
 <body>
 
 <header class="app-header">
-  <div class="app-title">📝 経費精算（手動入力）</div>
+  <div class="app-title">📸 経費精算（OCR自動入力）</div>
 </header>
 
 <main class="main">
@@ -71,21 +90,49 @@ body{font-family:-apple-system,sans-serif;background:#f0f4f8;color:var(--gray-80
   <div class="tab-panel active" id="panel-input">
     <div class="card">
       <div id="uploadSection">
+        <div style="font-size:13px;color:var(--gray-500);margin-bottom:12px;text-align:center">
+          📷 レシートを撮影 or 選択すると自動解析します
+        </div>
         <div class="capture-btns">
-          <label class="capture-btn"><input type="file" accept="image/*" capture="environment" onchange="handleFile(this.files[0])">📸 カメラ</label>
-          <label class="capture-btn"><input type="file" accept="image/*" onchange="handleFile(this.files[0])">🖼️ 写真選択</label>
+          <label class="capture-btn">
+            <input type="file" accept="image/*" capture="environment" onchange="handleFile(this.files[0])">
+            <span class="icon">📸</span>
+            <span>カメラで撮影</span>
+          </label>
+          <label class="capture-btn">
+            <input type="file" accept="image/*" onchange="handleFile(this.files[0])">
+            <span class="icon">🖼️</span>
+            <span>写真を選択</span>
+          </label>
+        </div>
+        <div style="font-size:11px;color:var(--gray-400);text-align:center;margin-top:-4px">
+          ※初回起動時は言語データ（約12MB）を自動ダウンロードします
         </div>
       </div>
 
       <div class="preview-wrap" id="previewWrap">
-        <div class="receipt-thumb"><img id="receiptImg" src=""></div>
+        <div class="receipt-thumb">
+          <img id="receiptImg" src="">
+          <div class="ocr-overlay" id="ocrOverlay">
+            <div class="ocr-spinner"></div>
+            <div class="ocr-text" id="ocrStatusText">🔍 レシートを解析中...</div>
+            <div class="ocr-progress-bar"><div class="ocr-progress-fill" id="ocrProgressFill"></div></div>
+          </div>
+        </div>
+
+        <div class="ocr-result-banner" id="ocrResultBanner"></div>
+
         <div class="form-grid" id="formGrid">
           <label class="form-label req">📅 日付</label>
-          <input type="date" class="form-control" id="fDate">
-          
+          <div class="field-wrap">
+            <input type="date" class="form-control" id="fDate">
+          </div>
+
           <label class="form-label req">💴 金額（税込）</label>
-          <input type="number" class="form-control" id="fAmount" placeholder="0" inputmode="numeric">
-          
+          <div class="field-wrap">
+            <input type="number" class="form-control" id="fAmount" placeholder="0" inputmode="numeric">
+          </div>
+
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
             <div>
               <label class="form-label">📊 税率</label>
@@ -113,9 +160,11 @@ body{font-family:-apple-system,sans-serif;background:#f0f4f8;color:var(--gray-80
               </select>
             </div>
           </div>
-          
+
           <label class="form-label req">🏪 店名</label>
-          <input type="text" class="form-control" id="fStore" placeholder="例：コーナン">
+          <div class="field-wrap">
+            <input type="text" class="form-control" id="fStore" placeholder="例：コーナン">
+          </div>
 
           <div class="genba-section">
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
@@ -129,10 +178,10 @@ body{font-family:-apple-system,sans-serif;background:#f0f4f8;color:var(--gray-80
               </div>
             </div>
           </div>
-          
+
           <label class="form-label">📝 メモ</label>
           <input type="text" class="form-control" id="fMemo" placeholder="任意">
-          
+
           <button class="btn btn-success" id="saveBtn" onclick="saveExpense()">💾 保存して次へ</button>
           <button class="btn btn-ghost" style="margin-top:8px" onclick="resetForm()">キャンセル</button>
         </div>
@@ -152,8 +201,12 @@ body{font-family:-apple-system,sans-serif;background:#f0f4f8;color:var(--gray-80
 </main>
 
 <nav class="bottom-nav">
-  <button class="nav-btn active" id="nav-in" onclick="switchTab('input',this)">📝 入力</button>
-  <button class="nav-btn" id="nav-li" onclick="switchTab('list',this)">📋 リスト</button>
+  <button class="nav-btn active" id="nav-in" onclick="switchTab('input',this)">
+    <span style="font-size:20px">📝</span>入力
+  </button>
+  <button class="nav-btn" id="nav-li" onclick="switchTab('list',this)">
+    <span style="font-size:20px">📋</span>リスト
+  </button>
 </nav>
 
 <script>
@@ -176,13 +229,235 @@ function switchTab(tab, btn) {
 
 async function handleFile(file) {
   if(!file || !file.type.startsWith('image/')) return;
-  currentImg = await resizeImg(file, 800);
+  currentImg = await resizeImg(file, 1200); // Higher res for better OCR
   document.getElementById('uploadSection').style.display = 'none';
   document.getElementById('receiptImg').src = currentImg;
   document.getElementById('previewWrap').classList.add('show');
-  document.getElementById('fAmount').focus();
+
+  // Start OCR
+  await runOCR(currentImg);
 }
 
+// ==============================
+// OCR Engine (Tesseract.js)
+// ==============================
+async function runOCR(imgSrc) {
+  const overlay = document.getElementById('ocrOverlay');
+  const statusText = document.getElementById('ocrStatusText');
+  const progressFill = document.getElementById('ocrProgressFill');
+  const banner = document.getElementById('ocrResultBanner');
+
+  overlay.classList.add('show');
+  banner.className = 'ocr-result-banner';
+  banner.innerHTML = '';
+
+  try {
+    const worker = await Tesseract.createWorker('jpn', 1, {
+      logger: m => {
+        if (m.status === 'loading tesseract core') {
+          statusText.textContent = '⬇️ OCRエンジン読み込み中...';
+          progressFill.style.width = '10%';
+        } else if (m.status === 'loading language traineddata') {
+          statusText.textContent = '⬇️ 日本語データ読み込み中...';
+          progressFill.style.width = '30%';
+        } else if (m.status === 'initializing api') {
+          statusText.textContent = '🔧 初期化中...';
+          progressFill.style.width = '50%';
+        } else if (m.status === 'recognizing text') {
+          const pct = Math.round((m.progress || 0) * 100);
+          statusText.textContent = `🔍 文字認識中... ${pct}%`;
+          progressFill.style.width = `${50 + pct * 0.5}%`;
+        }
+      }
+    });
+
+    progressFill.style.width = '80%';
+    statusText.textContent = '🧠 テキスト解析中...';
+
+    const { data: { text } } = await worker.recognize(imgSrc);
+    await worker.terminate();
+
+    progressFill.style.width = '100%';
+
+    // Parse the OCR text
+    const parsed = parseReceiptText(text);
+    const filledCount = applyParsedData(parsed);
+
+    overlay.classList.remove('show');
+
+    if (filledCount >= 2) {
+      banner.className = 'ocr-result-banner success show';
+      banner.innerHTML = `✅ ${filledCount}項目を自動入力しました。内容を確認してください。`;
+    } else if (filledCount === 1) {
+      banner.className = 'ocr-result-banner partial show';
+      banner.innerHTML = `⚠️ ${filledCount}項目のみ読み取れました。手動で補完してください。`;
+    } else {
+      banner.className = 'ocr-result-banner error show';
+      banner.innerHTML = `❌ 読み取りが難しいレシートです。手動で入力してください。`;
+    }
+
+  } catch (err) {
+    overlay.classList.remove('show');
+    banner.className = 'ocr-result-banner error show';
+    banner.innerHTML = `❌ OCRエラー: 手動で入力してください。`;
+    console.error('OCR Error:', err);
+  }
+}
+
+// ==============================
+// Receipt Text Parser
+// ==============================
+function parseReceiptText(rawText) {
+  console.log('OCR Raw Text:\n', rawText); // For debugging
+
+  // Normalize text: full-width numbers to half-width
+  const text = rawText
+    .replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0))
+    .replace(/[，、]/g, ',')
+    .replace(/[¥￥]/g, '¥');
+
+  const result = {};
+  const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+
+  // ---- AMOUNT ----
+  // Priority: 合計 / 税込合計 / 請求金額 → largest ¥ number
+  const amountPatterns = [
+    /(?:税込)?(?:合\s*計|請求金額|お支払|ご請求)[^\d]*([0-9,]{3,})/i,
+    /合\s*計\s*¥?\s*([0-9,]{3,})/i,
+    /¥\s*([0-9,]{4,})/,
+    /([0-9,]{4,})\s*円/,
+    /([0-9]{4,})/,
+  ];
+  for (const pat of amountPatterns) {
+    const m = text.match(pat);
+    if (m) {
+      const num = parseInt(m[1].replace(/,/g, ''), 10);
+      if (num > 0 && num < 10000000) { // Sanity check: < 10 million
+        result.amount = num;
+        break;
+      }
+    }
+  }
+  // Fallback: find the largest number on any line
+  if (!result.amount) {
+    let maxNum = 0;
+    for (const line of lines) {
+      const nums = line.match(/[0-9,]{4,}/g) || [];
+      for (const n of nums) {
+        const val = parseInt(n.replace(/,/g, ''), 10);
+        if (val > maxNum && val < 1000000) maxNum = val;
+      }
+    }
+    if (maxNum > 0) result.amount = maxNum;
+  }
+
+  // ---- DATE ----
+  const datePats = [
+    // YYYY年MM月DD日
+    { re: /(\d{4})\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日/, fn: m => `${m[1]}-${pad(m[2])}-${pad(m[3])}` },
+    // 令和Y年MM月DD日
+    { re: /令和\s*(\d+)\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日/, fn: m => `${2018+parseInt(m[1])}-${pad(m[2])}-${pad(m[3])}` },
+    // R06.MM.DD or R6.MM.DD
+    { re: /[Rr][\s.]?(\d{1,2})[.\-\/](\d{1,2})[.\-\/](\d{1,2})/, fn: m => `${2018+parseInt(m[1])}-${pad(m[2])}-${pad(m[3])}` },
+    // YYYY/MM/DD or YYYY-MM-DD
+    { re: /(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/, fn: m => `${m[1]}-${pad(m[2])}-${pad(m[3])}` },
+    // YY/MM/DD (assume 20xx)
+    { re: /(\d{2})\/(\d{1,2})\/(\d{1,2})/, fn: m => `20${m[1]}-${pad(m[2])}-${pad(m[3])}` },
+  ];
+  for (const { re, fn } of datePats) {
+    const m = text.match(re);
+    if (m) {
+      const d = fn(m);
+      // Validate date
+      const dt = new Date(d);
+      if (!isNaN(dt) && dt.getFullYear() >= 2000 && dt.getFullYear() <= 2035) {
+        result.date = d;
+        break;
+      }
+    }
+  }
+
+  // ---- TAX RATE ----
+  if (/軽減税率|[※\*]?\s*8\s*%/.test(text)) {
+    result.tax = '8';
+  } else if (/10\s*%/.test(text) || /消費税/.test(text)) {
+    result.tax = '10';
+  }
+
+  // ---- STORE NAME ----
+  // Heuristic: first meaningful line (not pure numbers, not dates, len > 2)
+  const skipPats = [/^\d+$/, /^\d{4}[年\/\-]/, /^[Rr]\d/, /^tel/i, /^〒/, /^[0-9\-\(\)]+$/, /^https?/i];
+  for (const line of lines.slice(0, 8)) {
+    const cleaned = line.replace(/[\s　]/g, ' ').trim();
+    if (cleaned.length < 2) continue;
+    if (skipPats.some(p => p.test(cleaned))) continue;
+    if (/^[\d,¥\s]+$/.test(cleaned)) continue;
+    // Skip if it contains too many numbers
+    const numRatio = (cleaned.match(/\d/g) || []).length / cleaned.length;
+    if (numRatio > 0.6) continue;
+    result.store = cleaned.substring(0, 30); // Max 30 chars
+    break;
+  }
+
+  // ---- CATEGORY DETECTION ----
+  const catKeywords = {
+    'ガソリン': ['ガソリン', 'エネオス', 'エッソ', 'ENE', 'ENEOS', '出光', 'コスモ', '燃料'],
+    '駐車場代': ['駐車', 'パーキング', 'タイムズ', 'コインパーク', '駐車場'],
+    '消耗品費': ['コーナン', 'コメリ', 'カインズ', 'ホームセンター', '資材', '材料'],
+    '事務用品': ['文具', 'コクヨ', '事務', 'プリンタ', 'インク'],
+    '会議費': ['カフェ', '喫茶', 'スターバックス', 'ドトール', 'コーヒー'],
+    '運賃': ['宅急便', 'ヤマト', '佐川', '運賃', '配送', '郵便'],
+    '水道光熱': ['電気', 'ガス', '水道', '東電', '関電'],
+  };
+  for (const [cat, keywords] of Object.entries(catKeywords)) {
+    if (keywords.some(k => text.includes(k))) {
+      result.category = cat;
+      break;
+    }
+  }
+
+  return result;
+}
+
+function pad(n) { return String(parseInt(n)).padStart(2, '0'); }
+
+// Apply parsed data to form fields
+function applyParsedData(parsed) {
+  let count = 0;
+
+  if (parsed.date) {
+    setField('fDate', parsed.date);
+    count++;
+  }
+  if (parsed.amount) {
+    setField('fAmount', parsed.amount);
+    count++;
+  }
+  if (parsed.store) {
+    setField('fStore', parsed.store);
+    count++;
+  }
+  if (parsed.tax) {
+    document.getElementById('fTax').value = parsed.tax;
+    count++;
+  }
+  if (parsed.category) {
+    document.getElementById('fCategory').value = parsed.category;
+  }
+
+  return count;
+}
+
+function setField(id, value) {
+  const el = document.getElementById(id);
+  el.value = value;
+  el.classList.add('auto-filled');
+  el.addEventListener('input', () => el.classList.remove('auto-filled'), { once: true });
+}
+
+// ==============================
+// Save & Form Logic
+// ==============================
 function saveExpense() {
   const name = document.getElementById('userName').value.trim();
   const date = document.getElementById('fDate').value;
@@ -190,30 +465,34 @@ function saveExpense() {
   const store = document.getElementById('fStore').value.trim();
   const motouke = document.getElementById('fMotouke').value.trim();
   const genba = document.getElementById('fGenba').value.trim();
-  
+
   if(!name || !date || !amount || !store) return alert('氏名・日付・金額・店名をすべて入力してください');
 
-  const newExpense = { 
+  const newExpense = {
     id: Date.now(), date, amount, store, motouke, genba,
-    tax: document.getElementById('fTax').value, 
-    category: document.getElementById('fCategory').value, 
-    memo: document.getElementById('fMemo').value, 
-    img: currentImg 
+    tax: document.getElementById('fTax').value,
+    category: document.getElementById('fCategory').value,
+    memo: document.getElementById('fMemo').value,
+    img: currentImg
   };
-  
+
   expenses.unshift(newExpense);
   localStorage.setItem('exp_v5', JSON.stringify(expenses));
-  resetForm(); 
+  resetForm();
   switchTab('list', document.getElementById('nav-li'));
 }
 
 function resetForm() {
-  currentImg = null; 
+  currentImg = null;
   document.getElementById('uploadSection').style.display = 'block';
   document.getElementById('previewWrap').classList.remove('show');
-  document.getElementById('fAmount').value = ''; 
+  document.getElementById('fAmount').value = '';
   document.getElementById('fStore').value = '';
   document.getElementById('fMemo').value = '';
+  document.getElementById('fDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('ocrResultBanner').className = 'ocr-result-banner';
+  // Remove auto-filled highlights
+  document.querySelectorAll('.auto-filled').forEach(el => el.classList.remove('auto-filled'));
   document.querySelectorAll('input[type=file]').forEach(i => i.value = '');
 }
 
@@ -259,7 +538,7 @@ async function resizeImg(file, max) {
         const c = document.createElement('canvas'); const ratio = Math.min(1, max/img.width, max/img.height);
         c.width = img.width*ratio; c.height = img.height*ratio;
         const ctx = c.getContext('2d'); ctx.fillStyle='#fff'; ctx.fillRect(0,0,c.width,c.height); ctx.drawImage(img,0,0,c.width,c.height);
-        res(c.toDataURL('image/jpeg', 0.6));
+        res(c.toDataURL('image/jpeg', 0.85));
       }; img.src = e.target.result;
     }; r.readAsDataURL(file);
   });
