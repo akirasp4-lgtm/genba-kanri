@@ -83,7 +83,7 @@ body{
 .api-hint{font-size:11px;color:var(--gray-400);width:100%;margin-top:4px}
 
 /* ===== UPLOAD AREA ===== */
-.capture-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.capture-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
 .capture-btn{
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:20px 10px;
   border:2px dashed var(--gray-300);border-radius:var(--r);background:var(--gray-50);cursor:pointer;position:relative;
@@ -91,7 +91,23 @@ body{
 .capture-btn input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}
 .capture-btn-icon{font-size:28px}
 .capture-btn-text{font-size:12px;font-weight:600;color:var(--gray-600)}
-.manual-btn{width:100%;padding:10px;text-align:center;color:var(--primary);font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--primary-light);border-radius:var(--rs);background:var(--primary-light);margin-top:10px;}
+
+/* PC用 ドロップエリア */
+.upload-zone{
+  display:none;
+  border:2px dashed var(--gray-300);border-radius:var(--r);
+  padding:28px 16px;text-align:center;cursor:pointer;
+  transition:all .2s;background:var(--gray-50);position:relative;
+  margin-bottom:10px;
+}
+@media(min-width:640px) { .upload-zone { display:block; } }
+.upload-zone:hover,.upload-zone.drag-over{border-color:var(--primary);background:var(--primary-light)}
+.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}
+.upload-icon{font-size:36px;margin-bottom:10px;display:block}
+.upload-text{font-size:13px;color:var(--gray-600);margin-bottom:3px;font-weight:bold}
+.upload-sub{font-size:11px;color:var(--gray-400)}
+
+.manual-btn{width:100%;padding:10px;text-align:center;color:var(--primary);font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--primary-light);border-radius:var(--rs);background:var(--primary-light)}
 
 /* ===== PREVIEW & FORM ===== */
 .preview-wrap{display:none}
@@ -191,6 +207,13 @@ body{
       <div class="card-body">
         
         <div id="uploadSection">
+          <div class="upload-zone" id="dropZone">
+            <input type="file" accept="image/*" onchange="processFile(this.files[0])">
+            <span class="upload-icon">📄</span>
+            <div class="upload-text">ここにレシート画像をドロップ（PC用）</div>
+            <div class="upload-sub">クリックしてファイルを選択することもできます</div>
+          </div>
+
           <div class="capture-btns">
             <label class="capture-btn">
               <input type="file" accept="image/*" capture="environment" onchange="processFile(this.files[0])">
@@ -203,6 +226,7 @@ body{
               <span class="capture-btn-text">写真を選ぶ</span>
             </label>
           </div>
+          
           <div class="manual-btn" onclick="startManualInput()">手動で入力する（レシートなし）</div>
         </div>
 
@@ -258,7 +282,10 @@ body{
     <div class="card">
       <div class="card-header">
         <span class="card-title">📋 経費一覧</span>
-        <button class="btn btn-primary btn-sm" onclick="exportData()">📤 申請ファイル出力</button>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-ghost btn-sm" onclick="clearAllData()">🗑️ クリア</button>
+          <button class="btn btn-primary btn-sm" onclick="exportData()">📤 申請ファイル出力</button>
+        </div>
       </div>
       <div class="expense-cards" id="expenseList"></div>
     </div>
@@ -291,7 +318,7 @@ body{
 <script>
 // ===== STATE =====
 let expenses = JSON.parse(localStorage.getItem('expenses_v4') || '[]');
-let currentAiData = null; // nullなら手入力モード
+let currentAiData = null; 
 let currentImgBase64 = null;
 let isManualMode = false;
 
@@ -299,6 +326,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('userName').value = localStorage.getItem('exp_name') || '';
   document.getElementById('apiKey').value = localStorage.getItem('exp_key') || '';
   renderList(); renderSummary();
+  setupDropZone();
 });
 
 function saveConfig() {
@@ -318,22 +346,69 @@ function switchTab(tab, desktopBtn, navId) {
   if (tab === 'summary') renderSummary();
 }
 
-// ===== MANUAL INPUT =====
-function startManualInput() {
+// ===== DRAG & DROP (PC用) =====
+function setupDropZone() {
+  const zone = document.getElementById('dropZone');
+  if(!zone) return;
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('drag-over');
+    const f = e.dataTransfer.files[0];
+    if (f && f.type.startsWith('image/')) processFile(f);
+  });
+}
+
+// ===== PROCESS FILE & AI =====
+async function processFile(file) {
+  if(!file) return;
+  const key = document.getElementById('apiKey').value;
+
+  isManualMode = false;
+  document.getElementById('uploadSection').style.display = 'none';
+  const loading = document.getElementById('aiLoading');
+  
+  try {
+    currentImgBase64 = await resizeImageToJPEG(file, 800);
+    
+    document.getElementById('receiptThumbWrap').classList.add('has-img');
+    document.getElementById('receiptImg').src = currentImgBase64;
+    
+    if(!key) {
+      setupManualModeWithImage();
+      return;
+    }
+
+    loading.classList.add('show');
+    currentAiData = await callClaude(key, currentImgBase64);
+    
+    document.getElementById('fDate').value = currentAiData.date || '';
+    document.getElementById('fStore').value = currentAiData.store || '';
+    document.getElementById('fAmount').value = currentAiData.amount || '';
+    
+    const catSelect = document.getElementById('fCategory');
+    const validCats = Array.from(catSelect.options).map(o=>o.value);
+    catSelect.value = validCats.includes(currentAiData.category) ? currentAiData.category : 'その他';
+
+    ['date','store','amount','category'].forEach(checkDiff);
+
+  } catch (err) {
+    setupManualModeWithImage();
+  } finally {
+    loading.classList.remove('show');
+    document.getElementById('previewWrap').classList.add('show');
+  }
+}
+
+function setupManualModeWithImage() {
   isManualMode = true;
   currentAiData = null;
-  currentImgBase64 = null;
   
-  document.getElementById('uploadSection').style.display = 'none';
-  document.getElementById('receiptThumbWrap').classList.remove('has-img');
-  
-  // フォーム初期化
   document.getElementById('fDate').value = new Date().toISOString().split('T')[0];
   document.getElementById('fAmount').value = '';
   document.getElementById('fStore').value = '';
   document.getElementById('fCategory').value = '交通費';
   
-  // 手入力の表示
   ['date','amount','store','category'].forEach(field => {
     const el = document.getElementById('f' + field.charAt(0).toUpperCase() + field.slice(1));
     const msg = document.getElementById('msg-' + field);
@@ -341,52 +416,15 @@ function startManualInput() {
     msg.className = 'diff-msg show manual';
     msg.innerHTML = '✍️ 手入力';
   });
-  
-  document.getElementById('previewWrap').classList.add('show');
 }
 
-// ===== PROCESS FILE & AI =====
-async function processFile(file) {
-  if(!file) return;
-  const key = document.getElementById('apiKey').value;
-  if(!key) { alert('APIキーを入力してください'); return; }
-
-  isManualMode = false;
+function startManualInput() {
+  currentImgBase64 = null; 
   document.getElementById('uploadSection').style.display = 'none';
-  const loading = document.getElementById('aiLoading');
-  loading.classList.add('show');
+  document.getElementById('receiptThumbWrap').classList.remove('has-img');
   
-  try {
-    // 画像を強制的にJPEG変換＋圧縮 (最大600px) 
-    // これによりAPI非対応フォーマット（HEIC等）のクラッシュを防ぐ
-    currentImgBase64 = await resizeImageToJPEG(file, 600);
-    
-    document.getElementById('receiptThumbWrap').classList.add('has-img');
-    document.getElementById('receiptImg').src = currentImgBase64;
-    
-    // AI呼び出し
-    currentAiData = await callClaude(key, currentImgBase64);
-    
-    // フォームへセット
-    document.getElementById('fDate').value = currentAiData.date || '';
-    document.getElementById('fStore').value = currentAiData.store || '';
-    document.getElementById('fAmount').value = currentAiData.amount || '';
-    
-    // カテゴリのセット
-    const catSelect = document.getElementById('fCategory');
-    const validCats = Array.from(catSelect.options).map(o=>o.value);
-    catSelect.value = validCats.includes(currentAiData.category) ? currentAiData.category : 'その他';
-
-    // 差分チェックを初期実行
-    ['date','store','amount','category'].forEach(checkDiff);
-
-  } catch (err) {
-    alert('解析エラー: ' + err.message);
-    startManualInput(); // エラー時は手入力へフォールバック
-  } finally {
-    loading.classList.remove('show');
-    document.getElementById('previewWrap').classList.add('show');
-  }
+  setupManualModeWithImage();
+  document.getElementById('previewWrap').classList.add('show');
 }
 
 async function callClaude(key, base64) {
@@ -419,7 +457,6 @@ async function callClaude(key, base64) {
   const jsonStr = data.content[0].text.match(/\{[\s\S]*\}/)[0];
   const parsed = JSON.parse(jsonStr);
   
-  // AIのカンマ混入バグを防ぐため、数字のみ抽出
   if (parsed.amount && typeof parsed.amount === 'string') {
     parsed.amount = Number(parsed.amount.replace(/[^0-9]/g, ''));
   }
@@ -453,8 +490,7 @@ function saveExpense() {
   
   if(!date || !amount || !store) { alert('日付・金額・店名を正しく入力してください'); return; }
 
-  // ステータスの厳格化
-  let status = 'manual'; // デフォルトは手入力
+  let status = 'manual';
   if (!isManualMode && currentAiData) {
     status = document.querySelector('.form-control.modified') !== null ? 'modified' : 'verified';
   }
@@ -463,15 +499,26 @@ function saveExpense() {
     id: Date.now(),
     date, store, amount,
     category: document.getElementById('fCategory').value,
-    aiData: currentAiData, // 比較用オリジナルデータ (手入力ならnull)
-    img: currentImgBase64, // 証跡画像 (手入力ならnull)
-    status: status // 'manual' | 'verified' | 'modified'
+    aiData: currentAiData,
+    img: currentImgBase64,
+    status: status
   };
 
   expenses.unshift(entry);
-  localStorage.setItem('expenses_v4', JSON.stringify(expenses));
-  resetForm();
-  switchTab('list', document.querySelectorAll('.tab-btn')[1], 'nav-list');
+  
+  try {
+    localStorage.setItem('expenses_v4', JSON.stringify(expenses));
+    resetForm();
+    const desktopListBtn = document.querySelectorAll('.desktop-tabs .tab-btn')[1];
+    switchTab('list', desktopListBtn, 'nav-list');
+  } catch (e) {
+    if (e.name === 'QuotaExceededError' || e.message.includes('quota')) {
+      alert('⚠️ 保存容量が限界に達しました。\n「一覧」から申請ファイルを出力後、「クリア」ボタンで過去のデータを削除してください。');
+      expenses.shift();
+    } else {
+      alert('保存に失敗しました: ' + e.message);
+    }
+  }
 }
 
 function resetForm() {
@@ -493,7 +540,7 @@ function renderList() {
     let badgeHtml = '';
     if (e.status === 'verified') badgeHtml = '<span class="badge badge-ai">✨AI一致</span>';
     else if (e.status === 'modified') badgeHtml = '<span class="badge badge-mod">⚠️修正有</span>';
-    else badgeHtml = '<span class="badge badge-manual">✍️手入力</span>'; // 偽装を防止
+    else badgeHtml = '<span class="badge badge-manual">✍️手入力</span>';
 
     return `
       <div class="expense-card">
@@ -520,6 +567,17 @@ function deleteEntry(id) {
   renderList();
 }
 
+function clearAllData() {
+  if(!expenses.length) { alert('削除するデータがありません。'); return; }
+  if(!confirm('⚠️ すべてのデータを削除します。\n（必ず事前に「出力」を行ってPCや管理者に送信してください）\n\n本当によろしいですか？')) return;
+  
+  expenses = [];
+  localStorage.removeItem('expenses_v4');
+  renderList();
+  renderSummary();
+  alert('データをクリアしました。');
+}
+
 // ===== SUMMARY =====
 function renderSummary() {
   const total = expenses.reduce((s,e)=>s+e.amount,0);
@@ -540,7 +598,6 @@ function renderSummary() {
     </div>
   `;
 
-  // Chart
   const months = [...new Set(expenses.map(e=>e.date.substring(0,7)))].sort();
   const c = document.getElementById('monthChart');
   if(!months.length) { c.innerHTML = '<div style="color:var(--gray-400);font-size:12px">データなし</div>'; return; }
@@ -569,22 +626,22 @@ function exportData() {
   a.click();
 }
 
-async function resizeImageToJPEG(file, maxWidth) {
+async function resizeImageToJPEG(file, maxDim) {
   return new Promise((res, rej) => {
     const reader = new FileReader();
     reader.onload = e => {
       const img = new Image();
       img.onload = () => {
-        // 全ての画像をCanvas経由でJPEGに変換（APIの対応エラーを防ぐ）
         const canvas = document.createElement('canvas');
-        let ratio = maxWidth / img.width;
-        if(ratio > 1) ratio = 1; // 拡大はしない
+        let ratio = 1;
+        if (img.width > maxDim || img.height > maxDim) {
+          ratio = Math.min(maxDim / img.width, maxDim / img.height);
+        }
         
         canvas.width = img.width * ratio; 
         canvas.height = img.height * ratio;
         
         const ctx = canvas.getContext('2d');
-        // 背景を白にする (透過PNG対策)
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
