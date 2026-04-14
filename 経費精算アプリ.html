@@ -99,13 +99,13 @@ body{font-family:-apple-system,sans-serif;background:#f0f4f8;color:var(--gray-80
     <label class="form-label req">👤 あなたの氏名</label>
     <input type="text" class="form-control" id="userName" placeholder="山田 太郎" oninput="saveConfig()">
     
-    <details>
-      <summary style="font-size: 12px; color: var(--gray-500); cursor: pointer; margin-top: 5px;">🔧 AI自動入力の設定 (GitHubでも安全)</summary>
+    <details id="apiConfigDetails">
+      <summary style="font-size: 12px; color: var(--gray-500); cursor: pointer; margin-top: 5px;">🔧 AI自動入力の設定</summary>
       <div style="padding-top: 10px;">
         <div id="apiStatusBadge" class="api-badge api-off">AI未設定</div>
         <label class="form-label">Gemini APIキー</label>
         <input type="password" class="form-control" id="apiKey" placeholder="AIza..." oninput="saveConfig()">
-        <p style="font-size: 11px; color: var(--gray-500);">※キーはブラウザにのみ保存されます。GitHubにアップしても漏洩しません。</p>
+        <p style="font-size: 11px; color: var(--gray-500);">※コード内に直接キーを貼り付けている場合は、この設定は無視されます。</p>
       </div>
     </details>
   </div>
@@ -198,6 +198,13 @@ body{font-family:-apple-system,sans-serif;background:#f0f4f8;color:var(--gray-80
 </nav>
 
 <script>
+/**
+ * 【管理者設定】
+ * この "" の中に直接APIキー（AIza...）を貼り付けてもOKです。
+ * 注意：GitHubにプッシュするとキーが自動で無効化されるため、公開リポジトリには上げないでください。
+ */
+const embeddedApiKey = ""; 
+
 let expenses = JSON.parse(localStorage.getItem('exp_v5') || '[]');
 let currentImg = null;
 
@@ -220,9 +227,15 @@ function saveConfig() {
 
 function updateApiStatus() {
   const badge = document.getElementById('apiStatusBadge');
-  const key = localStorage.getItem('api_key_v5');
-  if (key) {
-    badge.textContent = "✅ AI自動入力が有効です";
+  const details = document.getElementById('apiConfigDetails');
+  const keyInStorage = localStorage.getItem('api_key_v5');
+  
+  if (embeddedApiKey) {
+    badge.textContent = "✅ 社内共通AIが有効です";
+    badge.className = "api-badge api-on";
+    details.style.display = "none"; // 埋め込みがある場合は設定を隠す
+  } else if (keyInStorage) {
+    badge.textContent = "✅ 個別AI設定が有効です";
     badge.className = "api-badge api-on";
   } else {
     badge.textContent = "AI未設定 (手動入力)";
@@ -270,7 +283,8 @@ async function handleFile(file) {
   document.getElementById('receiptImg').src = currentImg;
   document.getElementById('previewWrap').classList.add('show');
   
-  const key = localStorage.getItem('api_key_v5')?.trim();
+  // 埋め込みキーを優先
+  const key = embeddedApiKey || localStorage.getItem('api_key_v5')?.trim();
   if(key) {
     analyzeAI(key, currentImg);
   }
@@ -278,7 +292,6 @@ async function handleFile(file) {
 
 async function analyzeAI(key, base64) {
   showStatus("✨ AIが読み取りを行っています...", "loading");
-  // モデル名をより標準的なものに変更して修正
   const modelName = "gemini-1.5-flash"; 
   try {
     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${key}`, {
@@ -301,14 +314,12 @@ async function analyzeAI(key, base64) {
 
     const data = await res.json();
     const textContent = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    
     if (!textContent) throw new Error('AIから返答がありませんでした。');
 
     const match = textContent.match(/\{[\s\S]*\}/);
     if (!match) throw new Error('AIの返答からデータを読み取れませんでした。');
     
     const r = JSON.parse(match[0]);
-    
     if(r.date) document.getElementById('fDate').value = r.date;
     if(r.amount) document.getElementById('fAmount').value = r.amount;
     if(r.store) document.getElementById('fStore').value = r.store;
