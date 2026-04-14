@@ -6,15 +6,17 @@
 <title>レシート管理者ビュー</title>
 <style>
 :root {
-  --primary: #2563eb; --bg: #f3f4f6; --card: #ffffff;
+  --primary: #2563eb; --primary-light: #eff6ff; --bg: #f3f4f6; --card: #ffffff;
   --text: #1f2937; --text-light: #6b7280; --border: #e5e7eb;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: sans-serif; background: var(--bg); color: var(--text); padding: 20px; }
 
 .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-.btn { background: var(--primary); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+.btn { background: var(--primary); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: opacity 0.2s; }
+.btn:active { opacity: 0.8; }
 .btn-danger { background: #dc2626; }
+.btn-success { background: #16a34a; }
 
 .drop-zone { background: white; border: 2px dashed #9ca3af; border-radius: 12px; padding: 40px; text-align: center; cursor: pointer; margin-bottom: 24px; transition: background 0.2s; }
 .drop-zone.over { background: #eff6ff; border-color: var(--primary); }
@@ -24,13 +26,18 @@ body { font-family: sans-serif; background: var(--bg); color: var(--text); paddi
 .person-header { font-size: 20px; font-weight: bold; border-bottom: 2px solid var(--border); padding-bottom: 10px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: flex-end;}
 .person-total { font-size: 16px; color: var(--primary); }
 
-/* 画像ギャラリー */
+/* 画像ギャラリー & 入力 */
 .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
 .receipt-card { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: #fafafa; }
 .receipt-img { width: 100%; height: 200px; object-fit: cover; cursor: zoom-in; display: block; background: #eee; border-bottom: 1px solid var(--border); }
 .receipt-info { padding: 12px; font-size: 13px; line-height: 1.5; }
-.r-amount { font-size: 16px; font-weight: bold; color: var(--primary); }
-.r-date { color: var(--text-light); font-size: 11px; }
+.r-date { color: var(--text-light); font-size: 11px; margin-bottom: 4px; }
+
+/* 金額入力フィールド */
+.amount-input { width: 100%; padding: 8px; border: 2px solid var(--border); border-radius: 4px; font-size: 16px; font-weight: bold; color: var(--primary); outline: none; text-align: right; transition: border-color 0.2s; }
+.amount-input:focus { border-color: var(--primary); background: var(--primary-light); }
+.amount-input::placeholder { color: #cbd5e1; font-weight: normal; }
+.amount-input.is-empty { background-color: #fef08a; border-color: #eab308; }
 
 /* モーダル */
 #modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
@@ -40,29 +47,35 @@ body { font-family: sans-serif; background: var(--bg); color: var(--text); paddi
 <body>
 
 <div class="header">
-  <h2>🗂️ レシート管理者ビュー</h2>
-  <button class="btn btn-danger" onclick="clearAll()">🗑️ 全データクリア</button>
+  <h2>🗂️ レシート管理者ビュー（現場入力・確認用）</h2>
+  <div>
+    <button class="btn btn-success" onclick="exportCSV()" style="margin-right:8px;">⬇️ CSV出力</button>
+    <button class="btn btn-danger" onclick="clearAll()">🗑️ 全データクリア</button>
+  </div>
 </div>
 
 <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInp').click()">
   <input type="file" id="fileInp" multiple accept=".json" style="display:none" onchange="loadFiles(this.files)">
   <div style="font-size: 32px; margin-bottom: 8px;">📂</div>
   <h3>社員から送られたJSONファイルをドロップ</h3>
-  <p style="color:var(--text-light); font-size:13px;">複数ファイルまとめてドロップ可能です</p>
+  <p style="color:var(--text-light); font-size:13px;">現場で入力された金額が自動的に反映されます</p>
 </div>
 
-<div id="board">
-  <!-- ここに人別のギャラリーが生成される -->
-</div>
+<div id="board"></div>
 
 <div id="modal" onclick="this.style.display='none'">
   <img id="modalImg">
 </div>
 
 <script>
-let allData = []; // { name, date, amount, memo, img }
+let allData = []; 
+let globalId = 0;
 
-// ドラッグ＆ドロップ処理
+// XSS対策
+function esc(s) {
+  return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]);
+}
+
 const dz = document.getElementById('dropZone');
 dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('over'); });
 dz.addEventListener('dragleave', () => dz.classList.remove('over'));
@@ -81,9 +94,10 @@ async function loadFiles(files) {
       
       json.expenses.forEach(e => {
         allData.push({
+          id: globalId++,
           name: name,
           date: e.date,
-          amount: Number(e.amount) || 0,
+          amount: Math.max(0, Number(e.amount) || 0), // マイナス値をここで遮断
           memo: e.memo || '',
           img: e.img
         });
@@ -102,7 +116,6 @@ function renderBoard() {
     return;
   }
 
-  // 名前ごとにグループ化
   const grouped = {};
   allData.forEach(item => {
     if(!grouped[item.name]) grouped[item.name] = [];
@@ -113,24 +126,25 @@ function renderBoard() {
   for(const [name, items] of Object.entries(grouped)) {
     const totalAmount = items.reduce((sum, i) => sum + i.amount, 0);
     
-    // ギャラリーHTMLの生成
     const cardsHtml = items.map(i => `
       <div class="receipt-card">
         ${i.img ? `<img src="${i.img}" class="receipt-img" onclick="zoomImage(this.src)" title="クリックで拡大">` : '<div class="receipt-img" style="display:flex;align-items:center;justify-content:center;color:#999">画像なし</div>'}
         <div class="receipt-info">
-          <div class="r-date">${i.date}</div>
-          <div class="r-amount">${i.amount > 0 ? '¥'+i.amount.toLocaleString() : '<span style="color:#9ca3af">金額未入力</span>'}</div>
-          <div>${i.memo || '<span style="color:#9ca3af">メモなし</span>'}</div>
+          <div class="r-date">${esc(i.date)}</div>
+          <div style="display:flex; align-items:center; gap:4px; margin-bottom:4px;">
+            <span style="font-weight:bold; color:var(--text-light)">¥</span>
+            <input type="number" class="amount-input ${!i.amount ? 'is-empty' : ''}" value="${i.amount || ''}" placeholder="0" min="0" oninput="updateAmount(${i.id}, this)">
+          </div>
+          <div style="font-size:12px; color:var(--text-light); word-break:break-all;">${esc(i.memo) || '<span style="color:#cbd5e1">メモなし</span>'}</div>
         </div>
       </div>
     `).join('');
 
-    // 人別セクションHTML
     html += `
       <div class="person-section">
         <div class="person-header">
-          <span>👤 ${name} <span style="font-size:14px; color:var(--text-light); font-weight:normal">(${items.length}枚)</span></span>
-          <span class="person-total">合計: ¥${totalAmount.toLocaleString()}</span>
+          <span>👤 ${esc(name)} <span style="font-size:14px; color:var(--text-light); font-weight:normal">(${items.length}枚)</span></span>
+          <span class="person-total" data-name="${esc(name)}">合計: ¥${totalAmount.toLocaleString()}</span>
         </div>
         <div class="gallery">
           ${cardsHtml}
@@ -142,6 +156,57 @@ function renderBoard() {
   board.innerHTML = html;
 }
 
+function updateAmount(id, inputElement) {
+  let val = Number(inputElement.value) || 0;
+  if (val < 0) {
+    val = 0; 
+    inputElement.value = 0; // 不正なマイナス入力をUI上もリセット
+  }
+  
+  const item = allData.find(i => i.id === id);
+  if (item) {
+    item.amount = val;
+    
+    if (!item.amount) {
+      inputElement.classList.add('is-empty');
+    } else {
+      inputElement.classList.remove('is-empty');
+    }
+    
+    updateTotals();
+  }
+}
+
+function updateTotals() {
+  const groupedTotals = {};
+  allData.forEach(item => {
+    if(!groupedTotals[item.name]) groupedTotals[item.name] = 0;
+    groupedTotals[item.name] += item.amount;
+  });
+  
+  document.querySelectorAll('.person-total').forEach(el => {
+    const name = el.getAttribute('data-name');
+    if(groupedTotals[name] !== undefined) {
+      el.textContent = '合計: ¥' + groupedTotals[name].toLocaleString();
+    }
+  });
+}
+
+function exportCSV() {
+  if(allData.length === 0) {
+    alert('出力するデータがありません。');
+    return;
+  }
+  const header = '氏名,日付,金額,メモ\n';
+  // エスケープせずに純粋な文字列としてCSV構築（表計算ソフトで読むため）
+  const csv = allData.map(e => `"${e.name.replace(/"/g, '""')}",${e.date},${e.amount},"${e.memo.replace(/"/g, '""')}"`).join('\n');
+  const blob = new Blob(['\uFEFF' + header + csv], {type: 'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `経費集計結果_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+
 function zoomImage(src) {
   if(!src) return;
   document.getElementById('modalImg').src = src;
@@ -149,7 +214,7 @@ function zoomImage(src) {
 }
 
 function clearAll() {
-  if(!confirm('画面上のデータを全て消去しますか？')) return;
+  if(!confirm('画面上のデータを全て消去しますか？\n（CSV出力は完了しましたか？）')) return;
   allData = [];
   renderBoard();
 }
