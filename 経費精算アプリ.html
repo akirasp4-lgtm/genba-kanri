@@ -97,7 +97,6 @@ body{font-family:-apple-system,sans-serif;background:#f0f4f8;color:var(--gray-80
   <div class="tab-panel active" id="panel-input">
     <div class="card">
       <div id="uploadSection">
-        <!-- PC用ドロップゾーン (復活) -->
         <div class="upload-zone" id="dropZone">
           <input type="file" accept="image/*" onchange="handleFile(this.files[0])">
           <div style="font-size:32px;margin-bottom:8px">📂</div>
@@ -105,7 +104,6 @@ body{font-family:-apple-system,sans-serif;background:#f0f4f8;color:var(--gray-80
           <div style="font-size:12px;color:var(--gray-500)">またはクリックしてファイルを選択</div>
         </div>
 
-        <!-- スマホ用ボタン -->
         <div class="capture-btns">
           <label class="capture-btn"><input type="file" accept="image/*" capture="environment" onchange="handleFile(this.files[0])">📸 カメラ</label>
           <label class="capture-btn"><input type="file" accept="image/*" onchange="handleFile(this.files[0])">🖼️ 写真選択</label>
@@ -183,7 +181,8 @@ body{font-family:-apple-system,sans-serif;background:#f0f4f8;color:var(--gray-80
 
 <script>
 /**
- * 【重要】取得したAPIキーをここに貼り付けてください
+ * 【ここを書き換えてください！】
+ * 下の "" の中に、取得した AIza... で始まる APIキーを貼り付けてください。
  */
 const embeddedApiKey = "AIzaSyCK7L0Sbh6MucBh1IqUUwKLLV0_VdHHz8I"; 
 
@@ -207,7 +206,6 @@ function switchTab(tab, btn) {
   document.querySelectorAll('.tab-btn, .nav-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   
-  // デスクトップとスマホのタブ状態を同期
   if(tab==='input') {
     document.getElementById('nav-in').classList.add('active');
     document.getElementById('desk-in').classList.add('active');
@@ -236,8 +234,11 @@ async function handleFile(file) {
   document.getElementById('receiptImg').src = currentImg;
   document.getElementById('previewWrap').classList.add('show');
   
+  // キーが入っている場合のみAIを起動
   if(embeddedApiKey) {
     analyzeAI(embeddedApiKey, currentImg);
+  } else {
+    console.warn("APIキーが設定されていないため、自動入力はスキップされました。");
   }
 }
 
