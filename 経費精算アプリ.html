@@ -305,73 +305,69 @@ async function handleFile(file) {
   analyzeAI(key, currentImg);
 }
 
+/**
+ * 安定化されたAI解析エンジン（一般公開されている正規のモデルに固定）
+ */
 async function analyzeAI(key, base64) {
   toggleFormState(true); 
   showStatus("✨ AIがレシートを解析しています...", "loading");
   
-  const models = ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-2.5-flash-preview-09-2025"];
+  // 一般公開用で最も安定している正規モデル
+  const model = "gemini-1.5-flash";
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+  
+  // エラー時の再試行間隔（指数バックオフ: 1秒, 2秒, 4秒）
   const delays = [1000, 2000, 4000];
   let success = false;
   let lastErr = "解析に失敗しました。";
 
-  for (const model of models) {
-    if (success) break;
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
-    
-    for (let i = 0; i <= delays.length; i++) {
-      try {
-        const res = await fetch(url, {
-          method: 'POST', 
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ contents: [{ parts: [
-            { text: "Extract receipt info as JSON. Fields: {date:YYYY-MM-DD, amount:number, store, tax:10|8|0, category, memo}. Only return raw JSON object without markdown fences." }, 
-            { inlineData: { mimeType: "image/jpeg", data: base64.split(',')[1] } }
-          ] }] })
-        });
-        
-        const data = await res.json().catch(() => ({}));
-        
-        if (!res.ok) {
-          const errMsg = data.error?.message || `Error ${res.status}`;
-          
-          if (res.status === 429 || errMsg.includes("Quota")) {
-            if (i < delays.length) {
-              await new Promise(r => setTimeout(r, delays[i]));
-              continue;
-            } else {
-              throw new Error("QUOTA_ERROR");
-            }
-          }
-          // 400や403などのエラーは、そのモデルが使えないと判断して次のモデルへ
-          throw new Error(`MODEL_ERROR`);
+  for (let i = 0; i <= delays.length; i++) {
+    try {
+      const res = await fetch(url, {
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ parts: [
+          { text: "Extract receipt info as JSON. Fields: {date:YYYY-MM-DD, amount:number, store, tax:10|8|0, category, memo}. Only return raw JSON object without markdown fences." }, 
+          { inlineData: { mimeType: "image/jpeg", data: base64.split(',')[1] } }
+        ] }] })
+      });
+      
+      const data = await res.json().catch(() => ({}));
+      
+      if (!res.ok) {
+        const errMsg = data.error?.message || `Error ${res.status}`;
+        // キー無効や存在しない等の致命的エラーはリトライしない
+        if (res.status === 400 || res.status === 403 || res.status === 404 || errMsg.includes("API key not valid")) {
+          throw new Error("APIキーが無効、またはアクセス権がありません。");
         }
-        
-        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        const match = text?.match(/\{[\s\S]*\}/);
-        if (!match) throw new Error('AIが読み取れませんでした。');
-        
-        const r = JSON.parse(match[0]);
-        if(r.date) document.getElementById('fDate').value = r.date;
-        if(r.amount) document.getElementById('fAmount').value = r.amount;
-        if(r.store) document.getElementById('fStore').value = r.store;
-        if(r.tax !== undefined) document.getElementById('fTax').value = String(r.tax);
-        if(r.category) document.getElementById('fCategory').value = r.category;
-        if(r.memo) document.getElementById('fMemo').value = r.memo;
-        
-        showStatus("✅ 自動入力を完了しました", "success");
-        success = true;
-        break; 
-
-      } catch(e) { 
-        if (e.message === "QUOTA_ERROR") {
-          lastErr = `制限に達しました。時間をおいてお試しください。`;
-          break; // 次のモデルへ
-        } else if (e.message.startsWith("MODEL_ERROR")) {
-          lastErr = `APIキーが間違っているか、権限がありません。`;
-          break; // 次のモデルへ
+        // 429(通信制限)などは再試行
+        if (i < delays.length) {
+            await new Promise(r => setTimeout(r, delays[i]));
+            continue;
+        } else {
+            throw new Error("通信が混雑しています。");
         }
-        lastErr = e.message;
       }
+      
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      const match = text?.match(/\{[\s\S]*\}/);
+      if (!match) throw new Error('AIが読み取れませんでした。');
+      
+      const r = JSON.parse(match[0]);
+      if(r.date) document.getElementById('fDate').value = r.date;
+      if(r.amount) document.getElementById('fAmount').value = r.amount;
+      if(r.store) document.getElementById('fStore').value = r.store;
+      if(r.tax !== undefined) document.getElementById('fTax').value = String(r.tax);
+      if(r.category) document.getElementById('fCategory').value = r.category;
+      if(r.memo) document.getElementById('fMemo').value = r.memo;
+      
+      showStatus("✅ 自動入力を完了しました", "success");
+      success = true;
+      break; 
+
+    } catch(e) { 
+      lastErr = e.message;
+      if (lastErr.includes("APIキーが無効")) break;
     }
   }
 
