@@ -278,8 +278,10 @@ async function handleFile(file) {
 
 async function analyzeAI(key, base64) {
   showStatus("✨ AIが読み取りを行っています...", "loading");
+  // モデル名をより標準的なものに変更して修正
+  const modelName = "gemini-1.5-flash"; 
   try {
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${key}`, {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${key}`, {
       method: 'POST', 
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
@@ -302,7 +304,6 @@ async function analyzeAI(key, base64) {
     
     if (!textContent) throw new Error('AIから返答がありませんでした。');
 
-    // 正規表現でJSON部分だけを抽出（```json ... ``` も除去）
     const match = textContent.match(/\{[\s\S]*\}/);
     if (!match) throw new Error('AIの返答からデータを読み取れませんでした。');
     
