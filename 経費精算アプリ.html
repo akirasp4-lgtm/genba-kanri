@@ -17,7 +17,6 @@
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:-apple-system,sans-serif;background:#f0f4f8;color:var(--gray-800);min-height:100vh;padding-bottom:calc(var(--bottom-nav-h) + var(--safe-bottom))}
 
-/* ===== HEADER & DESKTOP NAV ===== */
 .app-header{background:white;border-bottom:1px solid var(--gray-200);padding:0 16px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:var(--shadow)}
 .app-title{font-size:17px;font-weight:700;color:var(--primary)}
 
@@ -29,19 +28,16 @@ body{font-family:-apple-system,sans-serif;background:#f0f4f8;color:var(--gray-80
 .tab-btn{padding:6px 14px;border:none;background:transparent;color:var(--gray-500);font-size:13px;font-weight:500;border-radius:4px;cursor:pointer}
 .tab-btn.active{background:white;color:var(--primary);box-shadow:var(--shadow);font-weight:600}
 
-/* ===== MAIN ===== */
 .main{max-width:640px;margin:0 auto;padding:16px 12px;display:flex;flex-direction:column;gap:14px}
 @media(min-width:640px){.main{max-width:800px;padding:24px 16px}}
 .card{background:white;border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;padding:16px;margin-bottom:14px}
 
-/* ===== FORM ELEMENTS ===== */
 .form-label{display:block;font-size:11px;font-weight:700;color:var(--gray-500);margin-bottom:4px;text-transform:uppercase}
 .form-label.req::after{content:"*";color:var(--danger);margin-left:2px}
 .form-control{width:100%;padding:12px;border:1.5px solid var(--gray-200);border-radius:6px;font-size:16px;outline:none;background:white;margin-bottom:10px;font-family:inherit;transition:opacity 0.2s;}
 .form-control:focus{border-color:var(--primary)}
 .form-control:disabled {background-color: var(--gray-100); opacity: 0.7;}
 
-/* ===== UPLOAD AREA (PC & MOBILE) ===== */
 .upload-zone{
   display:none;border:2px dashed var(--gray-300);border-radius:var(--r);
   padding:40px 20px;text-align:center;cursor:pointer;background:var(--gray-50);
@@ -60,7 +56,6 @@ body{font-family:-apple-system,sans-serif;background:#f0f4f8;color:var(--gray-80
 .ai-status-bar.error { display: block; background: #fee2e2; color: var(--danger); border: 1px solid #fca5a5; }
 .ai-status-bar.success { display: block; background: var(--success-light); color: var(--success); border: 1px solid #bbf7d0; }
 
-/* ===== PREVIEW & LIST ===== */
 .preview-wrap{display:none}
 .preview-wrap.show{display:block}
 .receipt-thumb{width:120px;border-radius:6px;border:2px solid var(--gray-200);overflow:hidden;margin-bottom:14px}
@@ -102,10 +97,10 @@ body{font-family:-apple-system,sans-serif;background:#f0f4f8;color:var(--gray-80
     <input type="text" class="form-control" id="userName" placeholder="山田 太郎" oninput="saveConfig()">
     
     <details id="apiConfigDetails">
-      <summary style="font-size: 12px; color: var(--gray-500); cursor: pointer; margin-top: 5px;">🔧 AI自動入力の設定 (必須)</summary>
+      <summary style="font-size: 12px; color: var(--gray-500); cursor: pointer; margin-top: 5px;">🔧 AI自動入力の設定</summary>
       <div style="padding-top: 10px;">
         <div id="apiStatusBadge" class="api-badge api-off">AI未設定</div>
-        <label class="form-label req">Gemini APIキー</label>
+        <label class="form-label">Gemini APIキー</label>
         <input type="password" class="form-control" id="apiKey" placeholder="AIza..." oninput="saveConfig()">
         <p style="font-size: 11px; color: var(--gray-500);">※キーはブラウザにのみ保存されます。GitHubにアップしても安全です。</p>
       </div>
@@ -240,7 +235,6 @@ function showStatus(text, type) {
   bar.className = 'ai-status-bar ' + type;
 }
 
-// フォームの入力可否を切り替える
 function toggleFormState(disabled) {
   const inputs = document.getElementById('formGrid').querySelectorAll('input, select');
   inputs.forEach(el => el.disabled = disabled);
@@ -288,44 +282,44 @@ async function handleFile(file) {
   
   const key = localStorage.getItem('api_key_v5')?.trim();
   if(!key) {
-    showStatus("⚠️ APIキーが設定されていません。「🔧 AI自動入力の設定」から入力してください。", "error");
+    showStatus("⚠️ AI自動入力を利用する場合は「🔧 AI自動入力の設定」からAPIキーを入力してください。", "error");
+    document.getElementById('fAmount').focus();
     return;
   }
   analyzeAI(key, currentImg);
 }
 
 /**
- * 安定化されたAI解析エンジン（厳密なエラーハンドリング版）
+ * 安定化されたAI解析エンジン（モデル自動フォールバック + リトライ版）
  */
 async function analyzeAI(key, base64) {
   toggleFormState(true); 
-  
-  // 公式に存在する確実なモデルのリスト
-  const officialModels = [
+  showStatus("✨ AIがレシートを解析しています...", "loading");
+
+  // 環境によって使えるモデル名が異なるため、優先順位をつけて順番に試行
+  const modelsToTry = [
     "gemini-1.5-flash",
     "gemini-1.5-flash-latest",
-    "gemini-1.5-pro",
-    "gemini-1.5-pro-latest"
+    "gemini-2.0-flash",
+    "gemini-2.5-flash"
   ];
 
   let success = false;
-  let lastError = "すべてのモデルで解析に失敗しました。";
+  let lastErrorMsg = "モデルが見つかりませんでした。";
 
-  for (const model of officialModels) {
+  for (const model of modelsToTry) {
     if (success) break;
-    showStatus(`✨ AI [${model}] に接続中...`, "loading");
-
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
-    
-    // 429(通信制限)の場合のみ待機してリトライするループ
-    const retries = 2;
-    for (let attempt = 0; attempt <= retries; attempt++) {
-      try {
-        if (attempt > 0) {
-          showStatus(`✨ [${model}] 通信混雑。1秒待機して再試行中... (${attempt}/${retries})`, "loading");
-          await new Promise(r => setTimeout(r, 1000 * attempt));
-        }
 
+    const retries = 2; // 各モデルで最大2回リトライ（合計3回試行）
+
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      if (attempt > 0) {
+        showStatus(`✨ [${model}] 制限にかかりました。待機して再試行中... (${attempt}/${retries})`, "loading");
+        await new Promise(r => setTimeout(r, 2000 * attempt)); // 2秒、4秒と待機時間を延ばす
+      }
+
+      try {
         const res = await fetch(url, {
           method: 'POST', 
           headers: { 'Content-Type': 'application/json' },
@@ -343,19 +337,18 @@ async function analyzeAI(key, base64) {
 
         if (!res.ok) {
           const errMsg = data.error?.message || "";
-          
-          // 1. キー自体が無効な場合 -> 即座に全処理を完全停止
           if (res.status === 400 || res.status === 403 || errMsg.includes("API key not valid")) {
               throw new Error("FATAL_KEY_ERROR");
           }
-          // 2. 404エラーの場合 -> このモデルは使えないので次のモデルへ
+          if (res.status === 429 || errMsg.includes("Quota")) {
+              if (attempt < retries) {
+                  continue; // リトライ回数が残っていれば、同じモデルで待機ループへ
+              } else {
+                  throw new Error("QUOTA_ERROR"); // リトライ上限なら次のモデルへフォールバック
+              }
+          }
           if (res.status === 404 || errMsg.includes("not found")) {
               throw new Error("MODEL_NOT_FOUND");
-          }
-          // 3. 429制限の場合 -> このモデルのまま時間を空けてリトライ
-          if (res.status === 429 || errMsg.includes("Quota")) {
-              if (attempt === retries) throw new Error("QUOTA_EXCEEDED");
-              continue; // 待機ループへ
           }
           throw new Error(`HTTP Error: ${res.status}`);
         }
@@ -385,26 +378,31 @@ async function analyzeAI(key, base64) {
 
       } catch(e) { 
         if (e.message === "FATAL_KEY_ERROR") {
-          lastError = "🚨 <b>APIキーが無効、または設定されていません。</b><br>設定から正しいキーを入力してください。";
-          break; // リトライループを抜ける
-        } else if (e.message === "MODEL_NOT_FOUND") {
-          lastError = `[${model}] はこのキーでは使えません(404)。`;
+          lastErrorMsg = "🚨 <b>APIキーが無効です。</b><br>キーのコピーミスがないか確認してください。";
+          break; // 致命的エラーなのでリトライループを抜ける
+        } else if (e.message === "QUOTA_ERROR") {
+          lastErrorMsg = `[${model}] 制限に達しました。`;
           break; // 次のモデルへ移行するためリトライループを抜ける
-        } else if (e.message === "QUOTA_EXCEEDED") {
-          lastError = `[${model}] の利用枠が上限です。`;
-          break; // 次のモデルへ移行
+        } else if (e.message === "MODEL_NOT_FOUND") {
+          lastErrorMsg = `[${model}] が見つかりません。`;
+          break; // 次のモデルへ移行するためリトライループを抜ける
         } else {
-          lastError = e.message;
+          lastErrorMsg = e.message;
+          if (attempt === retries) break; 
         }
       }
-    }
-    
-    // キーが無効な場合は、他のモデルを試しても無駄なので全ループを終了
-    if (lastError.includes("APIキーが無効")) break; 
-  }
+    } // リトライループ終了
+
+    // キーが無効な場合は、他のモデルを試しても無駄なので全体のループを終了
+    if (lastErrorMsg.includes("APIキーが無効です")) break; 
+  } // モデル切替ループ終了
 
   if (!success) {
-      showStatus(`❌ 解析エラー: 手動で入力してください。<br><span style="font-size:11px;font-weight:normal">${lastError}</span>`, "error");
+    if(lastErrorMsg.includes("制限に達しました")) {
+        lastErrorMsg = "❌ <b>すべてのモデルで連続アクセス制限に達しました。</b><br>約1分ほど待ってから再度お試しください。";
+    }
+    console.error('AI読み取り失敗:', lastErrorMsg);
+    showStatus(lastErrorMsg.includes("❌") || lastErrorMsg.includes("🚨") ? lastErrorMsg : `❌ 解析エラー: 手動で入力してください。<br><span style="font-size:11px;font-weight:normal">${lastErrorMsg}</span>`, "error");
   }
   
   toggleFormState(false); 
