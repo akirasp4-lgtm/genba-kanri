@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>経費精算アプリ（OCR自動入力版）</title>
-<script src='https://cdn.jsdelivr.net/npm/tesseract.js@4.1.4/dist/tesseract.min.js'></script>
 <style>
 :root {
   --primary: #2563eb; --primary-light: #eff6ff; --success: #16a34a; --success-light: #f0fdf4;
@@ -18,6 +17,7 @@ body{font-family:-apple-system,sans-serif;background:#f0f4f8;color:var(--gray-80
 
 .app-header{background:white;border-bottom:1px solid var(--gray-200);padding:0 16px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:var(--shadow)}
 .app-title{font-size:17px;font-weight:700;color:var(--primary)}
+.header-key-btn{font-size:11px;padding:6px 10px;border:1px solid var(--gray-200);border-radius:6px;background:white;color:var(--gray-500);cursor:pointer;white-space:nowrap}
 
 .main{max-width:640px;margin:0 auto;padding:16px 12px;display:flex;flex-direction:column;gap:14px}
 .card{background:white;border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;padding:16px;margin-bottom:14px}
@@ -28,11 +28,16 @@ body{font-family:-apple-system,sans-serif;background:#f0f4f8;color:var(--gray-80
 .form-control:focus{border-color:var(--primary)}
 .form-control.auto-filled{border-color:#22c55e;background:#f0fdf4}
 
-.capture-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.capture-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
 .capture-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:20px 10px;border:2px dashed var(--gray-300);border-radius:var(--r);background:var(--gray-50);cursor:pointer;position:relative;font-size:14px;font-weight:600;color:var(--gray-500)}
 .capture-btn:hover{background:#eff6ff;border-color:var(--primary)}
 .capture-btn input{position:absolute;inset:0;opacity:0;cursor:pointer}
 .capture-btn .icon{font-size:28px}
+
+/* APIキー未設定バナー */
+.no-key-banner{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px;margin-bottom:12px;font-size:13px;color:#92400e;display:none}
+.no-key-banner.show{display:block}
+.no-key-banner a{color:var(--primary);font-weight:700}
 
 .preview-wrap{display:none}
 .preview-wrap.show{display:block}
@@ -40,17 +45,17 @@ body{font-family:-apple-system,sans-serif;background:#f0f4f8;color:var(--gray-80
 .receipt-thumb img{width:100%;max-height:300px;object-fit:contain;display:block;margin:0 auto}
 
 /* OCR Loading Overlay */
-.ocr-overlay{position:absolute;inset:0;background:rgba(0,0,0,0.7);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;border-radius:6px;display:none}
+.ocr-overlay{position:absolute;inset:0;background:rgba(0,0,0,0.72);display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;border-radius:4px}
 .ocr-overlay.show{display:flex}
 .ocr-spinner{width:40px;height:40px;border:4px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:spin 0.8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .ocr-text{color:white;font-size:13px;font-weight:600}
 .ocr-progress-bar{width:80%;height:6px;background:rgba(255,255,255,0.2);border-radius:3px;overflow:hidden}
-.ocr-progress-fill{height:100%;background:#22c55e;border-radius:3px;transition:width 0.3s;width:0%}
+.ocr-progress-fill{height:100%;background:#22c55e;border-radius:3px;transition:width 0.4s}
 
 /* OCR Result Banner */
-.ocr-result-banner{display:none;padding:10px 12px;border-radius:8px;margin-bottom:12px;font-size:13px;font-weight:600;align-items:center;gap:8px}
-.ocr-result-banner.show{display:flex}
+.ocr-result-banner{display:none;padding:10px 12px;border-radius:8px;margin-bottom:12px;font-size:13px;font-weight:600;line-height:1.5}
+.ocr-result-banner.show{display:block}
 .ocr-result-banner.success{background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0}
 .ocr-result-banner.partial{background:#fffbeb;color:#92400e;border:1px solid #fde68a}
 .ocr-result-banner.error{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}
@@ -59,7 +64,6 @@ body{font-family:-apple-system,sans-serif;background:#f0f4f8;color:var(--gray-80
 .btn-success{background:var(--success);color:white}
 .btn-primary{background:var(--primary);color:white}
 .btn-ghost{background:transparent;color:var(--gray-500);border:1px solid var(--gray-200)}
-.btn:disabled{opacity:0.5;cursor:not-allowed}
 
 .bottom-nav{position:fixed;bottom:0;left:0;right:0;height:calc(var(--bottom-nav-h) + var(--safe-bottom));background:white;border-top:1px solid var(--gray-200);display:flex;z-index:200}
 .nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:var(--gray-400);background:none;border:none;gap:2px}
@@ -67,18 +71,53 @@ body{font-family:-apple-system,sans-serif;background:#f0f4f8;color:var(--gray-80
 
 .expense-card{display:flex;align-items:center;justify-content:space-between;padding:12px;border-bottom:1px solid var(--gray-100)}
 .cat-badge{font-size:10px;padding:2px 6px;border-radius:10px;background:var(--gray-100)}
-
 .genba-section{background:#f0f7ff;padding:12px;border-radius:8px;margin-bottom:12px;border:1.5px solid #bfdbfe}
 
-/* OCR Badge on fields */
-.field-wrap{position:relative}
-.ocr-badge{position:absolute;right:8px;top:50%;transform:translateY(-80%);font-size:10px;background:#22c55e;color:white;padding:2px 6px;border-radius:10px;font-weight:700;pointer-events:none}
+/* APIキー設定モーダル */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;display:none;align-items:flex-end;justify-content:center}
+.modal-bg.show{display:flex}
+.modal-sheet{background:white;border-radius:20px 20px 0 0;padding:24px 20px 40px;width:100%;max-width:640px;max-height:90vh;overflow-y:auto}
+.modal-title{font-size:17px;font-weight:700;margin-bottom:4px}
+.modal-sub{font-size:13px;color:var(--gray-500);margin-bottom:20px}
+.step-row{display:flex;gap:12px;margin-bottom:14px;align-items:flex-start}
+.step-num{width:24px;height:24px;border-radius:50%;background:var(--primary);color:white;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+.step-text{font-size:13px;line-height:1.6;color:var(--gray-800)}
+.step-text a{color:var(--primary);font-weight:700;word-break:break-all}
 </style>
 </head>
 <body>
 
+<!-- APIキー設定モーダル -->
+<div class="modal-bg" id="keyModal">
+  <div class="modal-sheet">
+    <div class="modal-title">🔑 OCR APIキー設定</div>
+    <div class="modal-sub">無料キーの取得は1〜2分で完了します（初回のみ）</div>
+
+    <div class="step-row">
+      <div class="step-num">1</div>
+      <div class="step-text">下のリンクにアクセス<br><a href="https://ocr.space/OCRAPI" target="_blank">https://ocr.space/OCRAPI</a></div>
+    </div>
+    <div class="step-row">
+      <div class="step-num">2</div>
+      <div class="step-text">「Free」プランの「Get API Key」をタップしてメールアドレスを登録</div>
+    </div>
+    <div class="step-row">
+      <div class="step-num">3</div>
+      <div class="step-text">届いたメールに記載のAPIキーを下に貼り付けて保存</div>
+    </div>
+
+    <label class="form-label" style="margin-top:8px">APIキー</label>
+    <input type="text" class="form-control" id="keyInput" placeholder="例：K12345678901234" autocomplete="off" autocorrect="off" spellcheck="false">
+    <div id="keyError" style="font-size:12px;color:var(--danger);margin-top:-6px;margin-bottom:10px;display:none"></div>
+
+    <button class="btn btn-primary" onclick="saveApiKey()">💾 保存してOCRを使う</button>
+    <button class="btn btn-ghost" style="margin-top:10px" onclick="closeKeyModal()">あとで設定する（手動入力）</button>
+  </div>
+</div>
+
 <header class="app-header">
   <div class="app-title">📸 経費精算（OCR自動入力）</div>
+  <button class="header-key-btn" onclick="openKeyModal()">🔑 APIキー</button>
 </header>
 
 <main class="main">
@@ -90,8 +129,11 @@ body{font-family:-apple-system,sans-serif;background:#f0f4f8;color:var(--gray-80
   <div class="tab-panel active" id="panel-input">
     <div class="card">
       <div id="uploadSection">
-        <div style="font-size:13px;color:var(--gray-500);margin-bottom:12px;text-align:center">
-          📷 レシートを撮影 or 選択すると自動解析します
+        <div class="no-key-banner" id="noKeyBanner">
+          ⚠️ OCR APIキーが未設定です。<a href="#" onclick="openKeyModal();return false;">ここをタップ</a>して無料キーを設定するとレシートを自動読み取りできます。
+        </div>
+        <div style="font-size:13px;color:var(--gray-500);margin-bottom:12px;text-align:center" id="ocrReadyMsg" style="display:none">
+          📷 レシートを撮影すると金額・日付・店名を自動入力します
         </div>
         <div class="capture-btns">
           <label class="capture-btn">
@@ -105,9 +147,6 @@ body{font-family:-apple-system,sans-serif;background:#f0f4f8;color:var(--gray-80
             <span>写真を選択</span>
           </label>
         </div>
-        <div style="font-size:11px;color:var(--gray-400);text-align:center;margin-top:-4px">
-          ※初回起動時は言語データ（約12MB）を自動ダウンロードします
-        </div>
       </div>
 
       <div class="preview-wrap" id="previewWrap">
@@ -115,23 +154,19 @@ body{font-family:-apple-system,sans-serif;background:#f0f4f8;color:var(--gray-80
           <img id="receiptImg" src="">
           <div class="ocr-overlay" id="ocrOverlay">
             <div class="ocr-spinner"></div>
-            <div class="ocr-text" id="ocrStatusText">🔍 レシートを解析中...</div>
+            <div class="ocr-text" id="ocrStatusText">🔍 解析中...</div>
             <div class="ocr-progress-bar"><div class="ocr-progress-fill" id="ocrProgressFill"></div></div>
           </div>
         </div>
 
         <div class="ocr-result-banner" id="ocrResultBanner"></div>
 
-        <div class="form-grid" id="formGrid">
+        <div id="formGrid">
           <label class="form-label req">📅 日付</label>
-          <div class="field-wrap">
-            <input type="date" class="form-control" id="fDate">
-          </div>
+          <input type="date" class="form-control" id="fDate">
 
           <label class="form-label req">💴 金額（税込）</label>
-          <div class="field-wrap">
-            <input type="number" class="form-control" id="fAmount" placeholder="0" inputmode="numeric">
-          </div>
+          <input type="number" class="form-control" id="fAmount" placeholder="0" inputmode="numeric">
 
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
             <div>
@@ -162,9 +197,7 @@ body{font-family:-apple-system,sans-serif;background:#f0f4f8;color:var(--gray-80
           </div>
 
           <label class="form-label req">🏪 店名</label>
-          <div class="field-wrap">
-            <input type="text" class="form-control" id="fStore" placeholder="例：コーナン">
-          </div>
+          <input type="text" class="form-control" id="fStore" placeholder="例：コーナン">
 
           <div class="genba-section">
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
@@ -182,7 +215,7 @@ body{font-family:-apple-system,sans-serif;background:#f0f4f8;color:var(--gray-80
           <label class="form-label">📝 メモ</label>
           <input type="text" class="form-control" id="fMemo" placeholder="任意">
 
-          <button class="btn btn-success" id="saveBtn" onclick="saveExpense()">💾 保存して次へ</button>
+          <button class="btn btn-success" onclick="saveExpense()">💾 保存して次へ</button>
           <button class="btn btn-ghost" style="margin-top:8px" onclick="resetForm()">キャンセル</button>
         </div>
       </div>
@@ -216,9 +249,48 @@ let currentImg = null;
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('userName').value = localStorage.getItem('user_name_v5') || '';
   document.getElementById('fDate').value = new Date().toISOString().split('T')[0];
+  updateKeyUI();
   renderList();
 });
 
+// ==============================
+// APIキー管理
+// ==============================
+function getApiKey() { return localStorage.getItem('ocr_api_key') || ''; }
+
+function updateKeyUI() {
+  const hasKey = !!getApiKey();
+  document.getElementById('noKeyBanner').classList.toggle('show', !hasKey);
+  const msg = document.getElementById('ocrReadyMsg');
+  if (msg) msg.style.display = hasKey ? 'block' : 'none';
+}
+
+function openKeyModal() {
+  document.getElementById('keyInput').value = getApiKey();
+  document.getElementById('keyError').style.display = 'none';
+  document.getElementById('keyModal').classList.add('show');
+}
+
+function closeKeyModal() {
+  document.getElementById('keyModal').classList.remove('show');
+}
+
+function saveApiKey() {
+  const key = document.getElementById('keyInput').value.trim();
+  const errEl = document.getElementById('keyError');
+  if (!key) {
+    errEl.textContent = 'APIキーを入力してください';
+    errEl.style.display = 'block';
+    return;
+  }
+  localStorage.setItem('ocr_api_key', key);
+  closeKeyModal();
+  updateKeyUI();
+}
+
+// ==============================
+// 画像ハンドリング
+// ==============================
 function switchTab(tab, btn) {
   document.querySelectorAll('.tab-panel').forEach(p => p.style.display = 'none');
   document.getElementById('panel-' + tab).style.display = 'block';
@@ -229,225 +301,204 @@ function switchTab(tab, btn) {
 
 async function handleFile(file) {
   if(!file || !file.type.startsWith('image/')) return;
-  currentImg = await resizeImg(file, 1200); // Higher res for better OCR
+  currentImg = await resizeImg(file, 1200);
   document.getElementById('uploadSection').style.display = 'none';
   document.getElementById('receiptImg').src = currentImg;
   document.getElementById('previewWrap').classList.add('show');
 
-  // Start OCR
-  await runOCR(currentImg);
+  const key = getApiKey();
+  if (!key) {
+    showBanner('partial', '⚠️ APIキー未設定のため自動入力はスキップ。手動で入力してください。<br><a href="#" onclick="openKeyModal();return false;" style="color:#1d4ed8">🔑 APIキーを設定する</a>');
+    return;
+  }
+  await runOCR(currentImg, key);
 }
 
 // ==============================
-// OCR Engine (Tesseract.js)
+// OCR（OCR.space API）
 // ==============================
-async function runOCR(imgSrc) {
+async function runOCR(imgSrc, apiKey) {
   const overlay = document.getElementById('ocrOverlay');
   const statusText = document.getElementById('ocrStatusText');
   const progressFill = document.getElementById('ocrProgressFill');
-  const banner = document.getElementById('ocrResultBanner');
 
   overlay.classList.add('show');
-  banner.className = 'ocr-result-banner';
-  banner.innerHTML = '';
+  statusText.textContent = '📤 送信中...';
+  progressFill.style.width = '20%';
+  hideBanner();
 
   try {
-    const worker = await Tesseract.createWorker('jpn', 1, {
-      workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@4.1.4/dist/worker.min.js',
-      langPath: 'https://tessdata.projectnaptha.com/4.0.0',
-      corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@4.0.4/tesseract-core-simd-lstm.wasm.js',
-      logger: m => {
-        if (m.status === 'loading tesseract core') {
-          statusText.textContent = '⬇️ OCRエンジン読み込み中...';
-          progressFill.style.width = '10%';
-        } else if (m.status === 'loading language traineddata') {
-          statusText.textContent = '⬇️ 日本語データ読み込み中...';
-          progressFill.style.width = '30%';
-        } else if (m.status === 'initializing api') {
-          statusText.textContent = '🔧 初期化中...';
-          progressFill.style.width = '50%';
-        } else if (m.status === 'recognizing text') {
-          const pct = Math.round((m.progress || 0) * 100);
-          statusText.textContent = `🔍 文字認識中... ${pct}%`;
-          progressFill.style.width = `${50 + pct * 0.5}%`;
-        }
-      }
+    statusText.textContent = '🔍 OCR解析中...';
+    progressFill.style.width = '50%';
+
+    const formData = new FormData();
+    formData.append('apikey', apiKey);
+    formData.append('base64Image', imgSrc);   // data:image/jpeg;base64,... をそのまま送る
+    formData.append('language', 'jpn');
+    formData.append('isOverlayRequired', 'false');
+    formData.append('detectOrientation', 'true');
+    formData.append('scale', 'true');
+    formData.append('isTable', 'false');
+    formData.append('OCREngine', '2');  // Engine2 = 精度重視
+
+    const res = await fetch('https://api.ocr.space/parse/image', {
+      method: 'POST',
+      body: formData
     });
 
     progressFill.style.width = '80%';
-    statusText.textContent = '🧠 テキスト解析中...';
 
-    const { data: { text } } = await worker.recognize(imgSrc);
-    await worker.terminate();
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
+    const data = await res.json();
+
+    if (data.IsErroredOnProcessing) {
+      const msg = Array.isArray(data.ErrorMessage) ? data.ErrorMessage.join(' ') : (data.ErrorMessage || 'OCRエラー');
+      // APIキーが無効な場合はリセット
+      if (msg.includes('Invalid') || msg.includes('invalid') || res.status === 403) {
+        localStorage.removeItem('ocr_api_key');
+        updateKeyUI();
+      }
+      throw new Error(msg);
+    }
+
+    const rawText = data.ParsedResults?.[0]?.ParsedText || '';
     progressFill.style.width = '100%';
-
-    // Parse the OCR text
-    const parsed = parseReceiptText(text);
-    const filledCount = applyParsedData(parsed);
-
     overlay.classList.remove('show');
 
-    if (filledCount >= 2) {
-      banner.className = 'ocr-result-banner success show';
-      banner.innerHTML = `✅ ${filledCount}項目を自動入力しました。内容を確認してください。`;
-    } else if (filledCount === 1) {
-      banner.className = 'ocr-result-banner partial show';
-      banner.innerHTML = `⚠️ ${filledCount}項目のみ読み取れました。手動で補完してください。`;
+    console.log('OCR text:', rawText);
+
+    if (!rawText.trim()) {
+      showBanner('error', '❌ テキストを読み取れませんでした。明るい場所でまっすぐ撮影してみてください。');
+      return;
+    }
+
+    const parsed = parseReceiptText(rawText);
+    const count = applyParsedData(parsed);
+
+    if (count >= 3) {
+      showBanner('success', `✅ ${count}項目を自動入力しました。内容を確認してください。`);
+    } else if (count >= 1) {
+      showBanner('partial', `⚠️ ${count}項目を入力しました。残りは手動で補完してください。`);
     } else {
-      banner.className = 'ocr-result-banner error show';
-      banner.innerHTML = `❌ 読み取りが難しいレシートです。手動で入力してください。`;
+      showBanner('error', '❌ 読み取れませんでした。手動で入力してください。');
     }
 
   } catch (err) {
     overlay.classList.remove('show');
-    banner.className = 'ocr-result-banner error show';
-    banner.innerHTML = `❌ OCR失敗: ${err.message || '読み込みエラー'}。<br><span style="font-size:11px;font-weight:normal">手動で入力してください。</span>`;
+    showBanner('error', `❌ エラー: ${err.message}<br><span style="font-size:11px;font-weight:normal">手動で入力するか、APIキーを確認してください。</span>`);
     console.error('OCR Error:', err);
   }
 }
 
+function showBanner(type, html) {
+  const b = document.getElementById('ocrResultBanner');
+  b.className = `ocr-result-banner ${type} show`;
+  b.innerHTML = html;
+}
+function hideBanner() {
+  document.getElementById('ocrResultBanner').className = 'ocr-result-banner';
+}
+
 // ==============================
-// Receipt Text Parser
+// レシートテキスト解析
 // ==============================
 function parseReceiptText(rawText) {
-  console.log('OCR Raw Text:\n', rawText); // For debugging
-
-  // Normalize text: full-width numbers to half-width
+  // 全角数字→半角、スペース正規化
   const text = rawText
     .replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0))
     .replace(/[，、]/g, ',')
-    .replace(/[¥￥]/g, '¥');
+    .replace(/[¥￥]/g, '¥')
+    .replace(/\r\n/g, '\n');
 
   const result = {};
   const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
 
-  // ---- AMOUNT ----
-  // Priority: 合計 / 税込合計 / 請求金額 → largest ¥ number
-  const amountPatterns = [
-    /(?:税込)?(?:合\s*計|請求金額|お支払|ご請求)[^\d]*([0-9,]{3,})/i,
+  // ---- 金額 ----
+  const amountPats = [
+    /(?:税込)?(?:合\s*計|領収金額|請求金額|お支払|ご請求)[^\d]*([0-9,]{3,})/i,
     /合\s*計\s*¥?\s*([0-9,]{3,})/i,
     /¥\s*([0-9,]{4,})/,
     /([0-9,]{4,})\s*円/,
-    /([0-9]{4,})/,
   ];
-  for (const pat of amountPatterns) {
+  for (const pat of amountPats) {
     const m = text.match(pat);
     if (m) {
       const num = parseInt(m[1].replace(/,/g, ''), 10);
-      if (num > 0 && num < 10000000) { // Sanity check: < 10 million
-        result.amount = num;
-        break;
-      }
+      if (num > 0 && num < 10000000) { result.amount = num; break; }
     }
   }
-  // Fallback: find the largest number on any line
+  // フォールバック：最大の数値
   if (!result.amount) {
     let maxNum = 0;
     for (const line of lines) {
-      const nums = line.match(/[0-9,]{4,}/g) || [];
-      for (const n of nums) {
-        const val = parseInt(n.replace(/,/g, ''), 10);
-        if (val > maxNum && val < 1000000) maxNum = val;
+      for (const n of (line.match(/[0-9,]{3,}/g) || [])) {
+        const v = parseInt(n.replace(/,/g, ''), 10);
+        if (v > maxNum && v < 1000000) maxNum = v;
       }
     }
     if (maxNum > 0) result.amount = maxNum;
   }
 
-  // ---- DATE ----
+  // ---- 日付 ----
   const datePats = [
-    // YYYY年MM月DD日
-    { re: /(\d{4})\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日/, fn: m => `${m[1]}-${pad(m[2])}-${pad(m[3])}` },
-    // 令和Y年MM月DD日
-    { re: /令和\s*(\d+)\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日/, fn: m => `${2018+parseInt(m[1])}-${pad(m[2])}-${pad(m[3])}` },
-    // R06.MM.DD or R6.MM.DD
-    { re: /[Rr][\s.]?(\d{1,2})[.\-\/](\d{1,2})[.\-\/](\d{1,2})/, fn: m => `${2018+parseInt(m[1])}-${pad(m[2])}-${pad(m[3])}` },
-    // YYYY/MM/DD or YYYY-MM-DD
-    { re: /(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/, fn: m => `${m[1]}-${pad(m[2])}-${pad(m[3])}` },
-    // YY/MM/DD (assume 20xx)
-    { re: /(\d{2})\/(\d{1,2})\/(\d{1,2})/, fn: m => `20${m[1]}-${pad(m[2])}-${pad(m[3])}` },
+    { re: /(\d{4})\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日/, fn: m => `${m[1]}-${p2(m[2])}-${p2(m[3])}` },
+    { re: /令和\s*(\d+)\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日/, fn: m => `${2018+parseInt(m[1])}-${p2(m[2])}-${p2(m[3])}` },
+    { re: /[Rr][\s.]?(\d{1,2})[.\-\/](\d{1,2})[.\-\/](\d{1,2})/, fn: m => `${2018+parseInt(m[1])}-${p2(m[2])}-${p2(m[3])}` },
+    { re: /(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/, fn: m => `${m[1]}-${p2(m[2])}-${p2(m[3])}` },
+    { re: /(\d{2})\/(\d{1,2})\/(\d{1,2})/, fn: m => `20${m[1]}-${p2(m[2])}-${p2(m[3])}` },
   ];
   for (const { re, fn } of datePats) {
     const m = text.match(re);
     if (m) {
       const d = fn(m);
-      // Validate date
       const dt = new Date(d);
-      if (!isNaN(dt) && dt.getFullYear() >= 2000 && dt.getFullYear() <= 2035) {
-        result.date = d;
-        break;
-      }
+      if (!isNaN(dt) && dt.getFullYear() >= 2000 && dt.getFullYear() <= 2035) { result.date = d; break; }
     }
   }
 
-  // ---- TAX RATE ----
-  if (/軽減税率|[※\*]?\s*8\s*%/.test(text)) {
-    result.tax = '8';
-  } else if (/10\s*%/.test(text) || /消費税/.test(text)) {
-    result.tax = '10';
-  }
+  // ---- 税率 ----
+  if (/軽減税率|[※\*]\s*8\s*%|8\s*%/.test(text)) result.tax = '8';
+  else if (/10\s*%|消費税/.test(text)) result.tax = '10';
 
-  // ---- STORE NAME ----
-  // Heuristic: first meaningful line (not pure numbers, not dates, len > 2)
-  const skipPats = [/^\d+$/, /^\d{4}[年\/\-]/, /^[Rr]\d/, /^tel/i, /^〒/, /^[0-9\-\(\)]+$/, /^https?/i];
-  for (const line of lines.slice(0, 8)) {
-    const cleaned = line.replace(/[\s　]/g, ' ').trim();
-    if (cleaned.length < 2) continue;
-    if (skipPats.some(p => p.test(cleaned))) continue;
-    if (/^[\d,¥\s]+$/.test(cleaned)) continue;
-    // Skip if it contains too many numbers
-    const numRatio = (cleaned.match(/\d/g) || []).length / cleaned.length;
-    if (numRatio > 0.6) continue;
-    result.store = cleaned.substring(0, 30); // Max 30 chars
+  // ---- 店名 ----
+  const skipPats = [/^\d+$/, /^\d{4}[年\/\-]/, /^[Rr]\d/, /^tel/i, /^〒/, /^[0-9\-\(\)\s]+$/, /^https?/i, /^No\./i, /^T\d{13}/];
+  for (const line of lines.slice(0, 10)) {
+    const cl = line.replace(/[\s　]+/g, ' ').trim();
+    if (cl.length < 2) continue;
+    if (skipPats.some(p => p.test(cl))) continue;
+    if (/^[\d,¥\s]+$/.test(cl)) continue;
+    if ((cl.match(/\d/g) || []).length / cl.length > 0.55) continue;
+    result.store = cl.substring(0, 30);
     break;
   }
 
-  // ---- CATEGORY DETECTION ----
-  const catKeywords = {
-    'ガソリン': ['ガソリン', 'エネオス', 'エッソ', 'ENE', 'ENEOS', '出光', 'コスモ', '燃料'],
-    '駐車場代': ['駐車', 'パーキング', 'タイムズ', 'コインパーク', '駐車場'],
-    '消耗品費': ['コーナン', 'コメリ', 'カインズ', 'ホームセンター', '資材', '材料'],
-    '事務用品': ['文具', 'コクヨ', '事務', 'プリンタ', 'インク'],
-    '会議費': ['カフェ', '喫茶', 'スターバックス', 'ドトール', 'コーヒー'],
-    '運賃': ['宅急便', 'ヤマト', '佐川', '運賃', '配送', '郵便'],
-    '水道光熱': ['電気', 'ガス', '水道', '東電', '関電'],
+  // ---- カテゴリ推定 ----
+  const cats = {
+    'ガソリン': ['ガソリン','エネオス','ENEOS','出光','コスモ','燃料','SS','ＳＳ'],
+    '駐車場代': ['駐車','パーキング','タイムズ','コインパーク','Parking'],
+    '消耗品費': ['コーナン','コメリ','カインズ','ホームセンター','資材','材料'],
+    '事務用品': ['文具','コクヨ','事務用','プリンタ','インク'],
+    '会議費': ['カフェ','喫茶','スターバックス','ドトール','コーヒー','珈琲'],
+    '運賃': ['宅急便','ヤマト','佐川','運賃','配送','郵便'],
+    '水道光熱': ['電気','ガス料','水道','東電','関電'],
   };
-  for (const [cat, keywords] of Object.entries(catKeywords)) {
-    if (keywords.some(k => text.includes(k))) {
-      result.category = cat;
-      break;
-    }
+  for (const [cat, kws] of Object.entries(cats)) {
+    if (kws.some(k => text.includes(k))) { result.category = cat; break; }
   }
 
   return result;
 }
 
-function pad(n) { return String(parseInt(n)).padStart(2, '0'); }
+function p2(n) { return String(parseInt(n)).padStart(2, '0'); }
 
-// Apply parsed data to form fields
 function applyParsedData(parsed) {
   let count = 0;
-
-  if (parsed.date) {
-    setField('fDate', parsed.date);
-    count++;
-  }
-  if (parsed.amount) {
-    setField('fAmount', parsed.amount);
-    count++;
-  }
-  if (parsed.store) {
-    setField('fStore', parsed.store);
-    count++;
-  }
-  if (parsed.tax) {
-    document.getElementById('fTax').value = parsed.tax;
-    count++;
-  }
-  if (parsed.category) {
-    document.getElementById('fCategory').value = parsed.category;
-  }
-
+  if (parsed.date)     { setField('fDate', parsed.date); count++; }
+  if (parsed.amount)   { setField('fAmount', parsed.amount); count++; }
+  if (parsed.store)    { setField('fStore', parsed.store); count++; }
+  if (parsed.tax)      { document.getElementById('fTax').value = parsed.tax; count++; }
+  if (parsed.category) { document.getElementById('fCategory').value = parsed.category; }
   return count;
 }
 
@@ -459,27 +510,24 @@ function setField(id, value) {
 }
 
 // ==============================
-// Save & Form Logic
+// 保存・フォームリセット
 // ==============================
 function saveExpense() {
-  const name = document.getElementById('userName').value.trim();
-  const date = document.getElementById('fDate').value;
+  const name   = document.getElementById('userName').value.trim();
+  const date   = document.getElementById('fDate').value;
   const amount = Number(document.getElementById('fAmount').value);
-  const store = document.getElementById('fStore').value.trim();
-  const motouke = document.getElementById('fMotouke').value.trim();
-  const genba = document.getElementById('fGenba').value.trim();
-
+  const store  = document.getElementById('fStore').value.trim();
   if(!name || !date || !amount || !store) return alert('氏名・日付・金額・店名をすべて入力してください');
 
-  const newExpense = {
-    id: Date.now(), date, amount, store, motouke, genba,
-    tax: document.getElementById('fTax').value,
+  expenses.unshift({
+    id: Date.now(), date, amount, store,
+    motouke: document.getElementById('fMotouke').value.trim(),
+    genba:   document.getElementById('fGenba').value.trim(),
+    tax:      document.getElementById('fTax').value,
     category: document.getElementById('fCategory').value,
-    memo: document.getElementById('fMemo').value,
+    memo:     document.getElementById('fMemo').value,
     img: currentImg
-  };
-
-  expenses.unshift(newExpense);
+  });
   localStorage.setItem('exp_v5', JSON.stringify(expenses));
   resetForm();
   switchTab('list', document.getElementById('nav-li'));
@@ -489,12 +537,9 @@ function resetForm() {
   currentImg = null;
   document.getElementById('uploadSection').style.display = 'block';
   document.getElementById('previewWrap').classList.remove('show');
-  document.getElementById('fAmount').value = '';
-  document.getElementById('fStore').value = '';
-  document.getElementById('fMemo').value = '';
+  ['fAmount','fStore','fMemo','fMotouke','fGenba'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('fDate').value = new Date().toISOString().split('T')[0];
-  document.getElementById('ocrResultBanner').className = 'ocr-result-banner';
-  // Remove auto-filled highlights
+  hideBanner();
   document.querySelectorAll('.auto-filled').forEach(el => el.classList.remove('auto-filled'));
   document.querySelectorAll('input[type=file]').forEach(i => i.value = '');
 }
@@ -506,14 +551,13 @@ function renderList() {
     <div class="expense-card">
       <div>
         <div style="font-weight:bold;font-size:14px">${esc(e.store)}</div>
-        <div style="font-size:11px;color:#666">${e.date} · <span class="cat-badge">${e.category}</span><br>🏢 ${esc(e.motouke)} / ${esc(e.genba)}</div>
+        <div style="font-size:11px;color:#666">${e.date} · <span class="cat-badge">${e.category}</span><br>🏢 ${esc(e.motouke||'')} / ${esc(e.genba||'')}</div>
       </div>
       <div style="text-align:right">
         <div style="font-weight:bold;color:var(--primary);font-size:16px">¥${e.amount.toLocaleString()}</div>
         <button onclick="del(${e.id})" style="font-size:10px;color:var(--danger);border:none;background:none;padding:4px">削除</button>
       </div>
-    </div>
-  `).join('');
+    </div>`).join('');
 }
 
 function del(id) {
@@ -527,20 +571,22 @@ function exportJSON() {
   const name = document.getElementById('userName').value.trim();
   if(!expenses.length) return alert('データなし');
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([JSON.stringify({ name, expenses })], {type:'application/json'}));
+  a.href = URL.createObjectURL(new Blob([JSON.stringify({name, expenses})], {type:'application/json'}));
   a.download = `経費申請_${name}_${new Date().toISOString().slice(0,10)}.json`;
   a.click();
 }
 
-function esc(s) { return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]); }
+function esc(s) { return String(s||'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]); }
 
 async function resizeImg(file, max) {
   return new Promise(res => {
     const r = new FileReader(); r.onload = e => {
       const img = new Image(); img.onload = () => {
-        const c = document.createElement('canvas'); const ratio = Math.min(1, max/img.width, max/img.height);
+        const c = document.createElement('canvas');
+        const ratio = Math.min(1, max/img.width, max/img.height);
         c.width = img.width*ratio; c.height = img.height*ratio;
-        const ctx = c.getContext('2d'); ctx.fillStyle='#fff'; ctx.fillRect(0,0,c.width,c.height); ctx.drawImage(img,0,0,c.width,c.height);
+        const ctx = c.getContext('2d');
+        ctx.fillStyle='#fff'; ctx.fillRect(0,0,c.width,c.height); ctx.drawImage(img,0,0,c.width,c.height);
         res(c.toDataURL('image/jpeg', 0.85));
       }; img.src = e.target.result;
     }; r.readAsDataURL(file);
