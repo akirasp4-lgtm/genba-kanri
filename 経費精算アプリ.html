@@ -570,7 +570,10 @@ function handleFile(file) {
   reader.onload = e => {
     showPreview(e.target.result);
     if (apiKey) analyzeWithAI(e.target.result);
-    else toast('APIキーを入力するとAI自動読み取りが使えます');
+    else {
+      toast('手動で入力してください（APIキーでAI自動読み取りも可能）');
+      document.getElementById('expenseForm').style.display = 'block';
+    }
   };
   reader.readAsDataURL(file);
 }
