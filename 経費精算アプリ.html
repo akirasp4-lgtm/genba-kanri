@@ -75,12 +75,16 @@ body{font-family:-apple-system,sans-serif;background:#f0f4f8;color:var(--gray-80
 
 .expense-card{display:flex;align-items:center;justify-content:space-between;padding:12px;border-bottom:1px solid var(--gray-100)}
 .cat-badge{font-size:10px;padding:2px 6px;border-radius:10px;background:var(--gray-100)}
+
+.api-badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-bottom: 8px; display: inline-block; }
+.api-off { background: var(--gray-200); color: var(--gray-500); }
+.api-on { background: var(--success-light); color: var(--success); }
 </style>
 </head>
 <body>
 
 <header class="app-header">
-  <div class="app-title">📝 経費精算アプリ (AI搭載)</div>
+  <div class="app-title">📝 経費精算アプリ</div>
   <nav class="desktop-tabs">
     <button class="tab-btn active" id="desk-in" onclick="switchTab('input',this)">📝 入力</button>
     <button class="tab-btn" id="desk-li" onclick="switchTab('list',this)">📋 リスト</button>
@@ -88,9 +92,20 @@ body{font-family:-apple-system,sans-serif;background:#f0f4f8;color:var(--gray-80
 </header>
 
 <main class="main">
+  <!-- CONFIG AREA -->
   <div class="card">
     <label class="form-label req">👤 あなたの氏名</label>
     <input type="text" class="form-control" id="userName" placeholder="山田 太郎" oninput="saveConfig()">
+    
+    <details>
+      <summary style="font-size: 12px; color: var(--gray-500); cursor: pointer; margin-top: 5px;">🔧 AI自動入力の設定 (GitHubでも安全)</summary>
+      <div style="padding-top: 10px;">
+        <div id="apiStatusBadge" class="api-badge api-off">AI未設定</div>
+        <label class="form-label">Gemini APIキー</label>
+        <input type="password" class="form-control" id="apiKey" placeholder="AIza..." oninput="saveConfig()">
+        <p style="font-size: 11px; color: var(--gray-500);">※キーはブラウザにのみ保存されます。GitHubにアップしても漏洩しません。</p>
+      </div>
+    </details>
   </div>
 
   <!-- INPUT PANEL -->
@@ -180,24 +195,36 @@ body{font-family:-apple-system,sans-serif;background:#f0f4f8;color:var(--gray-80
 </nav>
 
 <script>
-/**
- * 【ここを書き換えてください！】
- * 下の "" の中に、取得した AIza... で始まる APIキーを貼り付けてください。
- */
-const embeddedApiKey = "AIzaSyCK7L0Sbh6MucBh1IqUUwKLLV0_VdHHz8I"; 
-
 let expenses = JSON.parse(localStorage.getItem('exp_v5') || '[]');
 let currentImg = null;
 
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('userName').value = localStorage.getItem('user_name_v5') || '';
+  document.getElementById('apiKey').value = localStorage.getItem('api_key_v5') || '';
   document.getElementById('fDate').value = new Date().toISOString().split('T')[0];
+  updateApiStatus();
   setupDrop();
   renderList();
 });
 
 function saveConfig() {
-  localStorage.setItem('user_name_v5', document.getElementById('userName').value.trim());
+  const name = document.getElementById('userName').value.trim();
+  const key = document.getElementById('apiKey').value.trim();
+  localStorage.setItem('user_name_v5', name);
+  localStorage.setItem('api_key_v5', key);
+  updateApiStatus();
+}
+
+function updateApiStatus() {
+  const badge = document.getElementById('apiStatusBadge');
+  const key = localStorage.getItem('api_key_v5');
+  if (key) {
+    badge.textContent = "✅ AI自動入力が有効です";
+    badge.className = "api-badge api-on";
+  } else {
+    badge.textContent = "AI未設定 (手動入力)";
+    badge.className = "api-badge api-off";
+  }
 }
 
 function switchTab(tab, btn) {
@@ -234,11 +261,9 @@ async function handleFile(file) {
   document.getElementById('receiptImg').src = currentImg;
   document.getElementById('previewWrap').classList.add('show');
   
-  // キーが入っている場合のみAIを起動
-  if(embeddedApiKey) {
-    analyzeAI(embeddedApiKey, currentImg);
-  } else {
-    console.warn("APIキーが設定されていないため、自動入力はスキップされました。");
+  const key = localStorage.getItem('api_key_v5');
+  if(key) {
+    analyzeAI(key, currentImg);
   }
 }
 
