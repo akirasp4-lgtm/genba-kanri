@@ -371,8 +371,9 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 </div>
 
 <script>
-// ご指定のURLを設定しました
-const GAS_URL='https://script.google.com/macros/s/AKfycbwL9WVnuGlfRWnVx_VpWq493vT25LuC9hHZ3abGqOOAf8SC7NiN5lhq_KgVUrI-2xXnKg/exec';
+// 【重要】ここで新しいデプロイURLに書き換えています
+const GAS_URL='https://script.google.com/macros/s/AKfycbxBMZ6oHXHDdtQBM7ZMoIU3JmvfLiJ5i7pu33WJ1PFBYQNnf1LwPxPTBVeVWNukuHXU9Q/exec';
+
 const COMPANIES=['グローライズ','和信カインド','ビジネスサポート','ラーテル','GRHD'];
 const MODES=['souko','yakin','yasumi','yotei'];
 const CAL_COLORS=['#1D9E75','#3B82F6','#E8384F','#F59E0B','#8B5CF6','#EC4899','#2C2C5A','#8B5E3C','#64748B','#0EA5E9'];
@@ -601,7 +602,6 @@ async function submitNippo(){
   const color=selectedColor.s||CAL_COLORS[0];
   const dates=getDateRange(dateStart,dateEnd);
 
-  // 既存予定との重複チェック
   const conflicts=[];
   dates.forEach(date=>{
     members.forEach(m=>{
@@ -734,7 +734,6 @@ function renderCalendar(){
   const firstDay=new Date(year,month,1).getDay();
   const daysInMonth=new Date(year,month+1,0).getDate();
   const groups=groupNippos(filteredNippos()).filter(g=>g.date.startsWith(listMonth));
-  // 日付ごとにグループをまとめる
   const byDate={};
   groups.forEach(g=>{if(!byDate[g.date])byDate[g.date]=[];byDate[g.date].push(g);});
   const today=new Date();
@@ -743,7 +742,6 @@ function renderCalendar(){
   let html='<div class="cal-header">';
   DOW.forEach(d=>{html+=`<div class="cal-header-cell">${d}</div>`;});
   html+='</div><div class="cal-grid">';
-  // 空白セル
   for(let i=0;i<firstDay;i++)html+='<div class="cal-cell empty"></div>';
   for(let d=1;d<=daysInMonth;d++){
     const dateStr=year+'-'+String(month+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
@@ -754,7 +752,6 @@ function renderCalendar(){
     if(dow===0)cls+=' sun';
     if(dow===6)cls+=' sat';
     if(isToday)cls+=' today';
-    // イベントラベル表示（最大5件、超過分は +N）
     const MAX_SHOW=5;
     const shown=dayGroups.slice(0,MAX_SHOW);
     const overflow=dayGroups.length-MAX_SHOW;
